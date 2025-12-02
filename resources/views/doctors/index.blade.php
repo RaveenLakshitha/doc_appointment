@@ -1,252 +1,304 @@
-{{-- resources/views/doctors/index.blade.php --}}
 @extends('layouts.app')
-
 @section('title', __('file.doctors'))
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">{{ __('file.doctors') }}</h1>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('file.manage_doctor_records') }}</p>
         </div>
-        <a href="{{ route('doctors.create') }}"
-           class="inline-flex items-center px-4 py-2.5 bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors shadow-sm">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            {{ __('file.add_doctor') }}
-        </a>
+
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <div class="flex-1 sm:flex-initial">
+                <input type="text" id="live-search" value="{{ request('search') }}"
+                       placeholder="{{ __('file.search_doctors') }}"
+                       class="w-full sm:w-80 px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition">
+            </div>
+
+            <!-- Updated Button: Icon only + always active style since panel is open -->
+            <button type="button" id="toggle-filters"
+                    class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium 
+                           bg-blue-600 text-white hover:bg-blue-700 
+                           dark:bg-blue-500 dark:hover:bg-blue-600 
+                           rounded-lg transition shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+            </button>
+
+            <a href="{{ route('doctors.create') }}"
+               class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span class="hidden sm:inline">{{ __('file.add_doctor') }}</span>
+            </a>
+        </div>
     </div>
 
-    <!-- Bulk Delete -->
+    <!-- Filters Panel – NOW OPEN BY DEFAULT -->
+    <div id="filters-panel"
+         class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 mb-6 
+                transition-all duration-300 ease-in-out overflow-hidden origin-top">
+        <form id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Specialty</label>
+                <select name="specialty" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white">
+                    <option value="">All Specialties</option>
+                    @foreach($specialties as $id => $name)
+                        <option value="{{ $id }}" {{ request('specialty') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white">
+                    <option value="">All Status</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+                <select name="gender" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white">
+                    <option value="">All Gender</option>
+                    <option value="male" {{ request('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                    <option value="female" {{ request('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                    <option value="other" {{ request('gender') == 'other' ? 'selected' : '' }}>Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
+                <select name="department" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white">
+                    <option value="">All Departments</option>
+                    @foreach($departments as $id => $name)
+                        <option value="{{ $id }}" {{ request('department') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="flex items-end">
+                <a href="{{ route('doctors.index') }}"
+                   class="w-full px-4 py-2 text-center text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Clear All
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Rest of your content (bulk delete, mobile sort, table, etc.) remains unchanged -->
     <form method="POST" action="{{ route('doctors.bulkDelete') }}" id="bulk-delete-form" class="hidden mb-6">
         @csrf @method('DELETE')
         <input type="hidden" name="ids" id="bulk-ids">
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-red-800 dark:text-red-300">
-                    <span id="selected-count">0</span> {{ __('file.doctor_selected') }}
-                </span>
-                <button type="submit" onclick="return confirm('{{ __('file.confirm_delete_selected') }}')"
-                        class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition">
-                    {{ __('file.delete') }}
-                </button>
-            </div>
+        <div class="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-800 rounded-lg p-4 flex items-center justify-between">
+            <span class="text-red-800 dark:text-red-300 font-medium">
+                <span id="selected-count">0</span> doctors selected
+            </span>
+            <button type="submit" onclick="return confirm('Permanently delete selected doctors?')"
+                    class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition">
+                Delete Selected
+            </button>
         </div>
     </form>
 
-    <!-- Mobile Results Info -->
-    <div class="sm:hidden text-sm text-gray-600 dark:text-gray-400 mb-4">
-        {{ __('file.showing_results', ['from' => $doctors->firstItem(), 'to' => $doctors->lastItem(), 'total' => $doctors->total()]) }}
-    </div>
-
-    <!-- Mobile Sort -->
-    <div class="sm:hidden mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ __('file.sort_by') }}</h3>
+    <div class="sm:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-4">
+        <h3 class="text-sm font-semibold mb-3">Sort by</h3>
         <div class="grid grid-cols-2 gap-3 text-sm">
-            <x-sort-link field="name" :sort="$sort" :direction="$direction">{{ __('file.name') }}</x-sort-link>
-            <x-sort-link field="primary_specialty" :sort="$sort" :direction="$direction">{{ __('file.specialty') }}</x-sort-link>
-            <x-sort-link field="is_active" :sort="$sort" :direction="$direction">{{ __('file.status') }}</x-sort-link>
-            <x-sort-link field="appointments_count" :sort="$sort" :direction="$direction">{{ __('file.appointments') }}</x-sort-link>
+            <a href="#" data-sort="name" class="text-blue-600 hover:underline">Name</a>
+            <a href="#" data-sort="specialty" class="text-blue-600 hover:underline">Specialty</a>
+            <a href="#" data-sort="is_active" class="text-blue-600 hover:underline">Status</a>
+            <a href="#" data-sort="appointments_count" class="text-blue-600 hover:underline">Appointments</a>
         </div>
     </div>
 
-    <!-- Mobile Cards -->
-    <div class="space-y-4 sm:hidden">
-        @forelse($doctors as $doctor)
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-4">
-                        <input type="checkbox" name="ids[]" value="{{ $doctor->id }}" class="row-checkbox w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-gray-900 focus:ring-gray-900">
-
-                        <div class="flex-shrink-0">
-                            @if($doctor->profile_photo)
-                                <img class="h-14 w-14 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-                                     src="{{ asset('storage/' . $doctor->profile_photo) }}" alt="{{ $doctor->full_name }}">
-                            @else
-                                <div class="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                                    {{ substr($doctor->first_name, 0, 1) }}{{ substr($doctor->last_name, 0, 1) }}
-                                </div>
-                            @endif
-                        </div>
-
-                        <div>
-                            <h3 class="font-semibold text-gray-900 dark:text-white">{{ $doctor->full_name }}</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $doctor->license_number }}</p>
-                        </div>
-                    </div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $doctor->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' }}">
-                        {{ $doctor->is_active ? __('file.active') : __('file.inactive') }}
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 text-sm mb-5">
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400 text-xs">{{ __('file.specialty') }}</span>
-                        <p class="font-medium truncate">{{ $doctor->primary_specialty ?? '—' }}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400 text-xs">{{ __('file.appointments') }}</span>
-                        <p class="font-medium">{{ $doctor->appointments_count }}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400 text-xs">{{ __('file.contact') }}</span>
-                        <p class="font-medium">{{ $doctor->phone ?? '—' }}</p>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <a href="{{ route('doctors.show', $doctor) }}" class="p-2.5 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                    </a>
-                    <a href="{{ route('doctors.edit', $doctor) }}" class="p-2.5 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                    </a>
-                    <form method="POST" action="{{ route('doctors.destroy', $doctor) }}" class="inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" onclick="return confirm('{{ __('file.confirm_delete_doctor') }}')"
-                                class="p-2.5 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @empty
-            <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                </svg>
-                <p class="mt-4 text-gray-500">{{ __('file.no_doctors_found') }}</p>
-            </div>
-        @endforelse
-    </div>
-
-    <!-- Desktop Table -->
-    <div class="hidden sm:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-900/50">
-                    <tr>
-                        <th class="px-4 py-3 text-left"><input type="checkbox" id="select-all" class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"></th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{{ __('file.doctor') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                            <x-sort-link field="primary_specialty" :sort="$sort" :direction="$direction">{{ __('file.specialty') }}</x-sort-link>
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                            <x-sort-link field="is_active" :sort="$sort" :direction="$direction">{{ __('file.status') }}</x-sort-link>
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 text-center dark:text-gray-300 uppercase tracking-wider">
-                            <x-sort-link field="appointments_count" :sort="$sort" :direction="$direction">{{ __('file.appointments') }}</x-sort-link>
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                            <x-sort-link field="phone" :sort="$sort" :direction="$direction">{{ __('file.contact') }}</x-sort-link>
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{{ __('file.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse($doctors as $doctor)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition">
-                            <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $doctor->id }}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"></td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-shrink-0">
-                                        @if($doctor->profile_photo)
-                                            <img class="h-10 w-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-                                                 src="{{ asset('storage/' . $doctor->profile_photo) }}" alt="{{ $doctor->full_name }}">
-                                        @else
-                                            <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                                                {{ substr($doctor->first_name, 0, 1) }}{{ substr($doctor->last_name, 0, 1) }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $doctor->full_name }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $doctor->license_number }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 text-sm">
-                                <span class="inline-flex px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
-                                    {{ Str::limit($doctor->primary_specialty, 20) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-4 text-sm">
-                                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {{ $doctor->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' }}">
-                                    {{ $doctor->is_active ? __('file.active') : __('file.inactive') }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-4 text-center text-sm font-medium text-gray-900 dark:text-white">
-                                {{ $doctor->appointments_count }}
-                            </td>
-                            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $doctor->phone ?? '—' }}</td>
-                            <td class="px-4 py-4 text-sm">
-                                <div class="flex items-center gap-3">
-                                    <a href="{{ route('doctors.show', $doctor) }}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition" title="{{ __('file.view_profile') }}">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </a>
-                                    <a href="{{ route('doctors.edit', $doctor) }}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition" title="{{ __('file.edit') }}">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                    </a>
-                                    <form method="POST" action="{{ route('doctors.destroy', $doctor) }}" class="inline">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" onclick="return confirm('{{ __('file.confirm_delete_doctor') }}')"
-                                                class="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500 transition" title="{{ __('file.delete') }}">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                {{ __('file.no_doctors_found') }}
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Pagination -->
-    <div class="mt-8">
-        {{ $doctors->appends(request()->query())->links() }}
+    <div id="doctors-container">
+        @include('doctors.partials.table')
     </div>
 </div>
 
 <script>
-    document.getElementById('select-all')?.addEventListener('change', function () {
-        document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
-        updateBulkDelete();
-    });
-    document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', updateBulkDelete));
+    const filtersPanel    = document.getElementById('filters-panel');
+    const toggleBtnFilter = document.getElementById('toggle-filters');
+    const liveSearch      = document.getElementById('live-search');
+    const filterForm      = document.getElementById('filter-form');
+    let debounceTimer;
+    let isFilterOpen = true;
 
-    function updateBulkDelete() {
-        const checked = document.querySelectorAll('.row-checkbox:checked').length;
+    function hasActiveFilters() {
+        const params = new URLSearchParams(location.search);
+        return ['search','specialty','status','gender','department'].some(k => params.has(k) && params.get(k));
+    }
+
+    function setFilterHeight() {
+        if (isFilterOpen) {
+            filtersPanel.style.maxHeight = (filterForm.scrollHeight + 60) + 'px';
+            filtersPanel.style.opacity = '1';
+            filtersPanel.style.marginBottom = '1.5rem';
+        } else {
+            filtersPanel.style.maxHeight = '0';
+            filtersPanel.style.opacity = '0';
+            filtersPanel.style.marginBottom = '0';
+        }
+    }
+
+    function updateButtonState() {
+        if (isFilterOpen) {
+            toggleBtnFilter.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            toggleBtnFilter.classList.add('bg-blue-600', 'text-white', 'dark:bg-blue-500', 'hover:bg-blue-700');
+        } else {
+            toggleBtnFilter.classList.remove('bg-blue-600', 'text-white', 'dark:bg-blue-500', 'hover:bg-blue-700');
+            toggleBtnFilter.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        }
+    }
+
+    function buildUrl(params) {
+        const base = '{{ route("doctors.index") }}';
+        const sep = base.includes('?') ? '&' : '?';
+        return base + sep + params.toString();
+    }
+
+    function applyFilters() {
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams();
+
+        for (const [key, value] of formData) {
+            if (value) params.set(key, value);
+        }
+
+        if (liveSearch.value.trim()) {
+            params.set('search', liveSearch.value.trim());
+        } else {
+            params.delete('search');
+        }
+
+        const current = new URLSearchParams(location.search);
+        if (!params.has('sort')) params.set('sort', current.get('sort') || 'name');
+        if (!params.has('direction')) params.set('direction', current.get('direction') || 'asc');
+        params.delete('page');
+
+        const newUrl = buildUrl(params);
+        history.replaceState(null, '', newUrl);
+
+        fetch(newUrl, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('Network error');
+            return r.text();
+        })
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const container = doc.querySelector('#doctors-container');
+            if (container) {
+                document.getElementById('doctors-container').innerHTML = container.innerHTML;
+                bindEvents();
+                syncUI();
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function syncUI() {
+        if (hasActiveFilters() && !isFilterOpen) {
+            isFilterOpen = true;
+            setFilterHeight();
+            updateButtonState();
+        }
+    }
+
+    toggleBtnFilter.addEventListener('click', () => {
+        isFilterOpen = !isFilterOpen;
+        setFilterHeight();
+        updateButtonState();
+    });
+
+    liveSearch.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(applyFilters, 450);
+    });
+
+    filterForm.addEventListener('change', applyFilters);
+
+    document.addEventListener('click', e => {
+        const sortLink = e.target.closest('[data-sort]');
+        if (sortLink) {
+            e.preventDefault();
+            const sort = sortLink.dataset.sort;
+            const params = new URLSearchParams(location.search);
+            const curDir = params.get('direction') || 'asc';
+            const newDir = (params.get('sort') === sort && curDir === 'asc') ? 'desc' : 'asc';
+            params.set('sort', sort);
+            params.set('direction', newDir);
+            params.delete('page');
+            const url = buildUrl(params);
+            history.replaceState(null, '', url);
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.text())
+                .then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const container = doc.querySelector('#doctors-container');
+                    if (container) {
+                        document.getElementById('doctors-container').innerHTML = container.innerHTML;
+                        bindEvents();
+                        syncUI();
+                    }
+                });
+        }
+
+        const pageLink = e.target.closest('.pagination a');
+        if (pageLink) {
+            e.preventDefault();
+            const url = pageLink.href;
+            history.replaceState(null, '', url);
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.text())
+                .then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const container = doc.querySelector('#doctors-container');
+                    if (container) {
+                        document.getElementById('doctors-container').innerHTML = container.innerHTML;
+                        bindEvents();
+                        syncUI();
+                    }
+                });
+        }
+    });
+
+    function bindEvents() {
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.onchange = updateBulk);
+        const selectAll = document.getElementById('select-all');
+        if (selectAll) selectAll.onchange = () => document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = selectAll.checked);
+        updateBulk();
+    }
+
+    function updateBulk() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
         const form = document.getElementById('bulk-delete-form');
-        const idsInput = document.getElementById('bulk-ids');
-        document.getElementById('selected-count').textContent = checked;
-        if (checked > 0) {
+        const count = document.getElementById('selected-count');
+        const ids = document.getElementById('bulk-ids');
+        if (checked.length > 0) {
             form.classList.remove('hidden');
-            idsInput.value = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value).join(',');
+            count.textContent = checked.length;
+            ids.value = Array.from(checked).map(c => c.value).join(',');
         } else {
             form.classList.add('hidden');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setFilterHeight();
+        updateButtonState();
+        bindEvents();
+        syncUI();
+    });
+
+    window.addEventListener('resize', () => {
+        if (isFilterOpen) setFilterHeight();
+    });
 </script>
 @endsection

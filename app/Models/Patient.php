@@ -73,20 +73,17 @@ class Patient extends Model
         'preferred_billing_method', // insurance_first, self_pay, etc.
         'payment_methods',          // JSON: ['credit_card', 'debit_card', 'cash', ...]
 
-        // === Communication & Consent ===
         'receive_appointment_reminders',
         'receive_lab_results',
         'receive_prescription_notifications',
         'receive_newsletter',
 
-        // === Files ===
         'profile_photo_path',
         'consent_hipaa',
         'consent_treatment',
         'consent_financial',
-        'additional_documents',     // JSON array of paths
+        'additional_documents',     
 
-        // === Legacy / System ===
         'medical_record_number',
         'is_active',
         'is_deleted',
@@ -150,4 +147,5 @@ class Patient extends Model
     {
         return $query->where('is_active', true)->where('is_deleted', false);
     }
+    
 }

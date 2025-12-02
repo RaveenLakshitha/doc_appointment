@@ -15,17 +15,6 @@ class InventoryItemSeeder extends Seeder
         // Disable mass assignment protection
         InventoryItem::unguard();
 
-        // -----------------------------------------------------------------
-        // 1. Create Suppliers
-        // -----------------------------------------------------------------
-        Supplier::insert([
-            ['name' => 'Medico Supplies Ltd.',        'contact_email' => 'sales@medico.lk',      'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'PharmaCare Distributors',     'contact_email' => 'orders@pharmacare.lk', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'HealthTech Solutions',        'contact_email' => 'info@healthtech.lk',   'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'LabChem Lanka',               'contact_email' => 'lab@labchem.lk',       'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'SterileTech Pvt Ltd',         'contact_email' => 'sterile@tech.lk',      'created_at' => now(), 'updated_at' => now()],
-        ]);
-
         $medico     = Supplier::where('name', 'Medico Supplies Ltd.')->first();
         $pharma     = Supplier::where('name', 'PharmaCare Distributors')->first();
         $healthtech = Supplier::where('name', 'HealthTech Solutions')->first();
@@ -35,13 +24,13 @@ class InventoryItemSeeder extends Seeder
         // -----------------------------------------------------------------
         // 2. Create Units of Measure
         // -----------------------------------------------------------------
-        UnitOfMeasure::insert([
-            ['name' => 'Box',   'short' => 'bx', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Each',  'short' => 'ea', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Pack',  'short' => 'pk', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Vial',  'short' => 'vl', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Strip', 'short' => 'st', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        // UnitOfMeasure::insert([
+        //     ['name' => 'Box',   'short' => 'bx', 'created_at' => now(), 'updated_at' => now()],
+        //     ['name' => 'Each',  'short' => 'ea', 'created_at' => now(), 'updated_at' => now()],
+        //     ['name' => 'Pack',  'short' => 'pk', 'created_at' => now(), 'updated_at' => now()],
+        //     ['name' => 'Vial',  'short' => 'vl', 'created_at' => now(), 'updated_at' => now()],
+        //     ['name' => 'Strip', 'short' => 'st', 'created_at' => now(), 'updated_at' => now()],
+        // ]);
 
         $box   = UnitOfMeasure::where('name', 'Box')->first()->name;
         $each  = UnitOfMeasure::where('name', 'Each')->first()->name;

@@ -17,14 +17,21 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
         $this->call([
-                    //UnitOfMeasureSeeder::class,
-                     //CategorySeeder::class,
-                    //SupplierSeeder::class,
-                   //InventoryItemSeeder::class,
-                  // PatientSeeder::class,
-                    //AppointmentSeeder::class,
-                   // MedicationTemplateCategorySeeder::class,
-                    MedicationTemplateSeeder::class,
+            
+                //  UserSeeder::class,
+                //     RolePermissionSeeder::class,
+                //    UnitOfMeasureSeeder::class,
+                //     CategorySeeder::class,
+                //    SupplierSeeder::class,
+                //    InventoryItemSeeder::class,
+                //    PatientSeeder::class,
+                 //  AppointmentSeeder::class,
+                //     MedicationTemplateCategorySeeder::class,
+                //     DepartmentSeeder::class,
+                //     SpecializationSeeder::class,
+               //     DoctorSeeder::class,
+                //      MedicationTemplateSeeder::class,
+                    
                 ]);
 
         // User::factory()->create([

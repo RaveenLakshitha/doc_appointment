@@ -1,4 +1,5 @@
 <?php
+// 2024_01_01_000001_create_departments_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -10,13 +11,14 @@ return new class extends Migration
     {
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->foreignId('head_doctor_id')->nullable()->constrained('doctors')->onDelete('set null');
+            $table->string('name')->unique();
             $table->string('location')->nullable();
-            $table->boolean('status')->default(true);
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->text('description')->nullable();
+            $table->boolean('status')->default(true);
+            
+            // head_doctor_id will be added in a separate migration after doctors table exists
             $table->timestamps();
         });
     }

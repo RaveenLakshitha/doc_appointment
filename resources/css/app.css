@@ -1,3 +1,153 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─────────────────────── PATIENTS DATATABLE – FINAL PERFECT VERSION 2025 ─────────────────────── */
+
+#patients-table {
+    @apply w-full border-collapse;
+}
+
+/* Outer wrapper – clean card style */
+#patients-table_wrapper {
+    @apply border border-gray-200 dark:border-gray-700 
+           rounded-xl 
+           bg-white dark:bg-gray-800 
+           /* ← matches your dark theme */
+           shadow-lg 
+           p-6;
+}
+
+/* Inner table border */
+#patients-table,
+#patients-table_wrapper .dataTables_scrollBody table {
+    @apply border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden;
+}
+
+/* Header */
+#patients-table thead th {
+    @apply bg-gray-50 dark:bg-gray-900;
+}
+
+#patients-table thead th {
+    @apply px-6 py-4 
+           text-left text-xs font-bold uppercase tracking-wider
+           text-gray-700 dark:text-gray-300
+           border-b-2 border-gray-200 dark:border-gray-700
+           relative pr-12;
+}
+
+/* Vertical column borders */
+#patients-table thead th,
+#patients-table tbody td {
+    @apply border-r border-gray-200 dark:border-gray-700;
+}
+#patients-table thead th:last-child,
+#patients-table tbody td:last-child {
+    @apply border-r-0;
+}
+
+/* Body */
+#patients-table tbody td {
+    @apply px-6 py-4 text-sm 
+           text-gray-900 dark:text-gray-100
+           bg-white dark:bg-gray-800
+           border-b border-gray-200 dark:border-gray-700;
+}
+
+#patients-table tbody tr:hover {
+    @apply bg-gray-50 dark:bg-gray-700/60 transition-all duration-200;
+}
+
+#patients-table tbody tr:last-child td {
+    @apply border-b-0;
+}
+
+/* ─────────────────────── MAIN SORTING ARROWS (RIGHT CORNER) ─────────────────────── */
+#patients-table_wrapper .sorting,
+#patients-table_wrapper .sorting_asc,
+#patients-table_wrapper .sorting_desc {
+    @apply relative pr-8;
+}
+
+#patients-table_wrapper .sorting:after,
+#patients-table_wrapper .sorting_asc:after,
+#patients-table_wrapper .sorting_desc:after {
+    @apply absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black;
+}
+
+#patients-table_wrapper .sorting:after {
+    content: "UpDown";
+    @apply text-gray-400 dark:text-gray-500 opacity-60;
+}
+
+#patients-table_wrapper .sorting_asc:after {
+    content: "Up";
+    @apply text-blue-600 dark:text-blue-400;
+}
+
+#patients-table_wrapper .sorting_desc:after {
+    content: "Down";
+    @apply text-blue-600 dark:text-blue-400;
+}
+
+/* ─────────────────────── COLUMN ORDER BUTTONS (NO CIRCLE – CLEAN & VISIBLE) ─────────────────────── */
+#patients-table_wrapper .dt-column-order {
+    @apply absolute right-1 top-1/2 -translate-y-1/2 
+           w-6 h-6 flex items-center justify-center
+           text-sm font-bold
+           text-gray-500 dark:text-gray-400
+           hover:text-gray-800 dark:hover:text-white
+           hover:scale-125 transition-all;
+}
+
+#patients-table_wrapper .dt-column-order.dt-ordering-asc,
+#patients-table_wrapper .dt-column-order.dt-ordering-desc {
+    @apply text-blue-600 dark:text-blue-400 scale-150;
+}
+
+/* ─────────────────────── FIX: "SHOW ENTRIES" DROPDOWN – NO OVERLAP EVER AGAIN ─────────────────────── */
+#patients-table_wrapper .dataTables_length {
+    @apply mb-6;
+}
+
+#patients-table_wrapper .dataTables_length label {
+    @apply flex flex-wrap items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+#patients-table_wrapper .dataTables_length select {
+    @apply min-w-24 px-4 py-2.5 
+           text-sm font-medium
+           border border-gray-300 dark:border-gray-600 
+           bg-white dark:bg-gray-900 
+           text-gray-900 dark:text-gray-100 
+           rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
+           cursor-pointer;
+}
+
+/* ─────────────────────── SEARCH BOX & PAGINATION – CLEAN & MODERN ─────────────────────── */
+#patients-table_wrapper .dataTables_filter input {
+    @apply w-full max-w-xs px-4 py-2.5 
+           border border-gray-300 dark:border-gray-600 
+           bg-white dark:bg-gray-900 
+           text-gray-900 dark:text-gray-100 
+           rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+}
+
+#patients-table_wrapper .dataTables_paginate .paginate_button {
+    @apply px-3 py-1.5 mx-0.5 rounded 
+           text-sm font-medium 
+           text-gray-700 dark:text-gray-300
+           hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+#patients-table_wrapper .dataTables_paginate .paginate_button.current {
+    @apply bg-blue-600 dark:bg-blue-500 text-white font-bold;
+}
+
+#patients-table_wrapper .dataTables_info,
+#patients-table_wrapper .dataTables_length label {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+}

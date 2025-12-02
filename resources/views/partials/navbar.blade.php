@@ -68,21 +68,39 @@
 
             {{-- Theme Toggle Button --}}
             <button id="theme-toggle-navbar"
-        aria-label="Toggle dark mode"
-        class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 
-               dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 
-               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 
-               dark:focus:ring-offset-gray-800 transition">
-    <!-- Sun = Light mode | Moon = Dark mode -->
-    <svg id="sun-icon-navbar" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 3v1m0 16v1m8.485-11.485l-.707.707M5.636 18.364l-.707.707m12.021 0l-.707-.707M6.343 5.636l-.707-.707m12.728 12.728l-.707-.707M6.343 18.364l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
-    </svg>
-    <svg id="moon-icon-navbar" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-    </svg>
-</button>
+                    aria-label="Toggle dark mode"
+                    class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 
+                        dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 
+                        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 
+                        dark:focus:ring-offset-gray-800 transition">
+                <!-- Sun = Light mode | Moon = Dark mode -->
+                <svg id="sun-icon-navbar" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 3v1m0 16v1m8.485-11.485l-.707.707M5.636 18.364l-.707.707m12.021 0l-.707-.707M6.343 5.636l-.707-.707m12.728 12.728l-.707-.707M6.343 18.364l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
+                </svg>
+                <svg id="moon-icon-navbar" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+            </button>
+
+            <button id="fullscreen-toggle"
+                aria-label="Toggle fullscreen"
+                class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 
+                    dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 
+                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 
+                    dark:focus:ring-offset-gray-800 transition">
+                <!-- Enter Fullscreen Icon -->
+                <svg id="enter-fullscreen-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 8V4m0 0h4m-4 0l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"/>
+                </svg>
+                <!-- Exit Fullscreen Icon -->
+                <svg id="exit-fullscreen-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 8V4m0 0h4m-4 0l5 5m11-8v4m0-4h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0-4h-4m4 4l-5-5"/>
+                </svg>
+            </button>
 
             {{-- User Menu --}}
             <div class="relative" x-data="{ open: false }">
