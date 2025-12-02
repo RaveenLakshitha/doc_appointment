@@ -252,17 +252,25 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('home');
 
-// ========================
-// TOP-LEVEL RESOURCES (outside /admin)
-// ========================
-
-// Patients – admin | primary-therapist
-Route::middleware(['auth', 'role:admin|primary-therapist'])
-    ->resource('patients', PatientController::class);
+Route::get('/patients/datatable', [PatientController::class, 'datatable'])
+     ->name('patients.datatable')
+     ->middleware(['auth', 'role:admin|primary-therapist']);
 
 Route::post('/patients/bulk-delete', [PatientController::class, 'bulkDelete'])
-    ->name('patients.bulkDelete')
-    ->middleware(['auth', 'role:admin']);
+     ->name('patients.bulkDelete')
+     ->middleware(['auth', 'role:admin']);
+
+Route::middleware(['auth', 'role:admin|primary-therapist'])
+     ->resource('patients', PatientController::class);
+
+     Route::get('/patients/export/excel', [PatientController::class, 'exportExcel'])
+     ->name('patients.export.excel');
+
+Route::get('/patients/export/csv', [PatientController::class, 'exportCsv'])
+     ->name('patients.export.csv');
+
+Route::get('/patients/export/pdf', [PatientController::class, 'exportPdf'])
+     ->name('patients.export.pdf');
 
     
     Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {

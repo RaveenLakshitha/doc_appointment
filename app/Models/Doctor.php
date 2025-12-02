@@ -15,11 +15,10 @@ class Doctor extends Model
         'first_name','middle_name','last_name','date_of_birth','gender',
         'address','city','state','zip_code','email','phone',
         'emergency_contact_name','emergency_contact_phone',
-
-        'primary_specialty','secondary_specialty','license_number',
-        'license_expiry_date','qualifications','years_experience',
-        'education','certifications','department','position','hourly_rate',
-        'profile_photo','is_active',
+        'secondary_specialty','license_number','license_expiry_date',
+        'qualifications','years_experience','education','certifications',
+        'department_id','position','hourly_rate','profile_photo','is_active',
+        'primary_specialization_id'
     ];
 
     protected $casts = [
@@ -45,8 +44,13 @@ class Doctor extends Model
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
     }
 
-    public function specialization(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function primarySpecialization()
     {
-        return $this->belongsTo(Specialization::class, 'primary_specialization_id');
+        return $this->belongsTo(\App\Models\Specialization::class, 'primary_specialization_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(\App\Models\Department::class, 'department_id');
     }
 }

@@ -38,6 +38,7 @@ return [
     'search_placeholder'   => 'Search by name, email, or phone...',
     'search'               => 'Search',
     'name'                 => 'Name',
+    'age'                 => 'age',
     'email'                => 'Email',
     'phone'                => 'Phone',
     'status'               => 'Status',
@@ -275,5 +276,6 @@ return [
     'hazardous_material' => 'Hazardous Material',
     'sterile_item' => 'Sterile Item',
     'additional_information' => 'Additional Information',
+    'last_visit' => 'Last Visit',
 
 ];

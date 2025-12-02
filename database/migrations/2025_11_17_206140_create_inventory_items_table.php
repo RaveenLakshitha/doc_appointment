@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('inventory_items', function (Blueprint $table) {
@@ -17,10 +14,10 @@ return new class extends Migration
             $table->string('sku')->unique();
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->text('description')->nullable();
-            $table->string('unit_of_measure'); // e.g., "Box", "Each", "Pack"
-            $table->integer('unit_quantity')->default(1); // e.g., 1 box = 100 units
+            $table->string('unit_of_measure');
+            $table->integer('unit_quantity')->default(1);
             $table->string('storage_location')->nullable();
-            $table->json('additional_info')->nullable(); // flexible JSON field
+            $table->json('additional_info')->nullable();
             $table->string('manufacturer')->nullable();
             $table->string('brand')->nullable();
             $table->string('model_version')->nullable();
@@ -43,7 +40,6 @@ return new class extends Migration
             $table->integer('minimum_order_quantity')->nullable();
             $table->timestamps();
 
-            // Indexes for performance
             $table->index('sku');
             $table->index('category_id');
             $table->index('current_stock');
@@ -51,7 +47,6 @@ return new class extends Migration
             $table->index(['current_stock', 'reorder_point']);
         });
 
-        // Pivot table for multiple suppliers
         Schema::create('inventory_item_supplier', function (Blueprint $table) {
             $table->id();
             $table->foreignId('inventory_item_id')->constrained('inventory_items')->onDelete('cascade');
@@ -60,15 +55,13 @@ return new class extends Migration
             $table->decimal('supplier_price', 10, 2)->nullable();
             $table->integer('lead_time_days')->nullable();
             $table->integer('minimum_order_quantity')->nullable();
+            $table->boolean('is_primary')->default(false)->index();
             $table->timestamps();
 
             $table->unique(['inventory_item_id', 'supplier_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('inventory_item_supplier');
