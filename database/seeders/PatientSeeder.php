@@ -25,7 +25,7 @@ class PatientSeeder extends Seeder
                 'middle_name'              => $faker->optional(0.25)->firstName,
                 'last_name'                => $faker->lastName,
                 'date_of_birth'            => $faker->dateTimeBetween('-80 years', '-5 years')->format('Y-m-d'),
-                'gender'                   => $faker->randomElement(['male', 'female', 'other']),
+                'gender'                   => $faker->randomElement(['male', 'female']),
                 'marital_status'           => $faker->optional(0.8)->randomElement(['single', 'married', 'divorced', 'widowed']),
                 'address'                  => $faker->streetAddress,
                 'city'                     => $faker->city,

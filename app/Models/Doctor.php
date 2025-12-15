@@ -53,4 +53,9 @@ class Doctor extends Model
     {
         return $this->belongsTo(\App\Models\Department::class, 'department_id');
     }
+
+    public function services(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Service::class, 'doctor_service');
+    }
 }

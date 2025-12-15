@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;      
 use App\Exports\PatientsExport;   
-
+use DB;
 class PatientController extends Controller
 {
      public function index(Request $request)
@@ -28,23 +28,49 @@ class PatientController extends Controller
         $orderColumnIndex = $request->input('order.0.column');
         $orderDir = $request->input('order.0.dir', 'asc');
         $search = trim($request->input('search.value', ''));
+        $ageFrom = $request->age_from;
+        $ageTo   = $request->age_to;
+
+        $gender = $request->gender;
+        $status = $request->status;
+        $from   = $request->from;
+        $to     = $request->to;
 
         $query = Patient::query()
-            ->leftJoin('appointments', fn($join) =>
-                $join->on('appointments.patient_id', '=', 'patients.id')
-                    ->whereRaw('appointments.id = (SELECT MAX(id) FROM appointments a2 WHERE a2.patient_id = patients.id)')
+            ->leftJoin('appointments', fn($join) => $join
+                ->on('appointments.patient_id', '=', 'patients.id')
+                ->whereRaw('appointments.id = (SELECT MAX(id) FROM appointments a2 WHERE a2.patient_id = patients.id)')
             )
             ->select('patients.*', 'appointments.appointment_datetime as last_appointment_date')
             ->when($search !== '', fn($q) => $q
                 ->whereRaw("CONCAT(first_name, ' ', COALESCE(middle_name,''), ' ', last_name) LIKE ?", ["%{$search}%"])
                 ->orWhere('medical_record_number', 'like', "%{$search}%")
             )
+            ->when($gender, fn($q) => $q->where('patients.gender', $gender))
+            ->when($status !== null && $status !== '', fn($q) => $q->where('patients.is_active', $status))
+            ->when($ageFrom || $ageTo, fn($q) => $q->whereRaw("TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?", [
+                $ageFrom ?? 0,
+                $ageTo ?? 200
+            ]))
+            ->when($from || $to, fn($q) => $q
+                ->where(function ($q) use ($from, $to) {
+                    if ($from && $to) {
+                        $q->whereBetween('appointments.appointment_datetime', [
+                            $from . ' 00:00:00',
+                            $to . ' 23:59:59'
+                        ]);
+                    } elseif ($from) {
+                        $q->where('appointments.appointment_datetime', '>=', $from . ' 00:00:00');
+                    } elseif ($to) {
+                        $q->where('appointments.appointment_datetime', '<=', $to . ' 23:59:59');
+                    }
+                })
+            )
             ->active();
 
         $totalRecords = Patient::active()->count();
-        $filteredRecords = $search !== '' ? (clone $query)->count() : $totalRecords;
+        $filteredRecords = (clone $query)->count();
 
-        // Sorting
         if ($orderColumnIndex == 1) {
             $query->orderBy('medical_record_number', $orderDir);
         } elseif ($orderColumnIndex == 2) {
@@ -52,7 +78,7 @@ class PatientController extends Controller
         } elseif ($orderColumnIndex == 3) {
             $query->orderBy('date_of_birth', $orderDir);
         } elseif ($orderColumnIndex == 4) {
-            $query->orderByRaw("FIELD(LOWER(gender), 'male', 'female', 'other', NULL) {$orderDir}");
+            $query->orderByRaw("FIELD(LOWER(patients.gender), 'male', 'female', 'other', NULL) {$orderDir}");
         } elseif ($orderColumnIndex == 5) {
             $query->orderBy('last_appointment_date', $orderDir);
         } elseif ($orderColumnIndex == 6) {
@@ -65,13 +91,11 @@ class PatientController extends Controller
         $now = now();
 
         $data = $patients->map(function ($p) use ($now) {
-            $lastVisit = $p->last_appointment_date 
-                ? \Carbon\Carbon::parse($p->last_appointment_date)->format('M d, Y') 
+            $lastVisit = $p->last_appointment_date
+                ? \Carbon\Carbon::parse($p->last_appointment_date)->format('M d, Y')
                 : null;
 
-            $age = $p->date_of_birth 
-                ? $p->date_of_birth->diffInYears($now) 
-                : null;
+            $age = $p->date_of_birth ? $p->date_of_birth->diffInYears($now) : null;
 
             $genderBadge = match(strtolower($p->gender ?? '')) {
                 'male'   => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Male</span>',
@@ -214,4 +238,49 @@ class PatientController extends Controller
 
         return $pdf->download('patients-list-' . now()->format('Y-m-d') . '.pdf');
     }
+
+    public function filters(Request $request)
+{
+    $column = (int) $request->get('column');
+
+    return match ($column) {
+        1 => $this->uniqueValues('medical_record_number'),
+
+        2 => $this->uniqueValues(
+            raw: "TRIM(CONCAT(COALESCE(first_name,''), ' ', COALESCE(last_name,'')))",
+            alias: 'full_name'
+        ),
+
+        4 => $this->uniqueValues('gender'),
+
+        6 => $this->uniqueValues(
+            raw: "CASE WHEN is_active THEN 'Active' ELSE 'Inactive' END",
+            alias: 'status_label'
+        ),
+
+        default => response()->json([]),
+    };
+}
+
+private function uniqueValues(string $field = null, ?string $raw = null, string $alias = null)
+{
+    $query = Patient::query();
+
+    if ($raw) {
+        // Use selectRaw for expressions — this is the key!
+        $query->selectRaw("$raw AS `$alias`");
+        $orderBy = $alias;
+    } else {
+        $query->select($field);
+        $orderBy = $field;
+    }
+
+    return $query
+        ->distinct()
+        ->orderBy($orderBy)
+        ->pluck($orderBy)
+        ->filter()
+        ->values()
+        ->toArray();
+}
 }

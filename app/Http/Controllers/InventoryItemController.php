@@ -5,35 +5,104 @@ namespace App\Http\Controllers;
 use App\Models\InventoryItem;
 use App\Models\Category;
 use App\Models\Supplier;
-use App\Models\UnitOfMeasure;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class InventoryItemController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = InventoryItem::query()
-            ->with(['category', 'primarySupplier']);
+        return view('inventory.index');
+    }
 
-        // Search
-        if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%")
-                ->orWhereHas('category', fn($q) => $q->where('name', 'like', "%{$search}%"))
-                ->orWhereHas('primarySupplier', fn($q) => $q->where('name', 'like', "%{$search}%"));
+    public function datatable(Request $request)
+    {
+        $draw        = $request->input('draw');
+        $start       = $request->input('start', 0);
+        $length      = $request->input('length', 10);
+        $orderIdx    = $request->input('order.0.column');
+        $orderDir    = $request->input('order.0.dir', 'asc');
+        $searchValue = trim($request->input('search.value', ''));
+
+        $categoryFilter = $request->category;
+        $supplierFilter = $request->supplier;
+        $statusFilter   = $request->status;
+
+        $query = InventoryItem::query()
+            ->with(['category', 'primarySupplier'])
+            ->select('inventory_items.*')
+            ->when($searchValue !== '', function ($q) use ($searchValue) {
+                $q->where('name', 'like', "%{$searchValue}%")
+                  ->orWhere('sku', 'like', "%{$searchValue}%")
+                  ->orWhere('manufacturer', 'like', "%{$searchValue}%")
+                  ->orWhere('brand', 'like', "%{$searchValue}%")
+                  ->orWhere('model_version', 'like', "%{$searchValue}%")
+                  ->orWhereHas('category', fn($sq) => $sq->where('name', 'like', "%{$searchValue}%"))
+                  ->orWhereHas('primarySupplier', fn($sq) => $sq->where('name', 'like', "%{$searchValue}%"));
+            })
+            ->when($categoryFilter, fn($q) => $q->where('category_id', $categoryFilter))
+            ->when($supplierFilter, fn($q) => $q->where('primary_supplier_id', $supplierFilter))
+            ->when($statusFilter, function ($q) use ($statusFilter) {
+                return match ($statusFilter) {
+                    'low_stock'     => $q->lowStock(),
+                    'out_of_stock'  => $q->outOfStock(),
+                    'in_stock'      => $q->where('current_stock', '>', 10),
+                    default         => $q,
+                };
             });
+
+        $totalRecords     = InventoryItem::count();
+        $filteredRecords  = (clone $query)->count();
+
+        $sortColumn = match ((int)$orderIdx) {
+            1 => 'name',
+            2 => 'sku',
+            3 => 'category_id',
+            4 => 'primary_supplier_id',
+            5 => 'current_stock',
+            default => 'name',
+        };
+
+        if (in_array($sortColumn, ['category_id', 'primary_supplier_id'])) {
+            $relation = $sortColumn === 'category_id' ? 'category' : 'primarySupplier';
+            $query->join("{$relation}s", "inventory_items.{$sortColumn}", '=', "{$relation}s.id")
+                  ->orderBy("{$relation}s.name", $orderDir)
+                  ->select('inventory_items.*');
+        } else {
+            $query->orderBy($sortColumn, $orderDir);
         }
 
-        // Sort
-        $sort = $request->get('sort', 'name');
-        $direction = $request->get('direction', 'asc');
-        $query->orderBy($sort, $direction);
+        $items = $query->offset($start)->limit($length)->get();
 
-        $items = $query->paginate(20)->appends($request->query());
+        $data = $items->map(function ($item) {
+            $statusHtml = match (true) {
+                $item->current_stock == 0 => '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Out of Stock</span>',
+                $item->current_stock <= $item->reorder_point => '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">Low Stock</span>',
+                default => '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">In Stock</span>',
+            };
 
-        return view('inventory-items.index', compact('items', 'sort', 'direction'));
+            $stockColor = $item->current_stock == 0 ? 'text-red-600' :
+                          ($item->current_stock <= $item->reorder_point ? 'text-yellow-600' : 'text-green-600');
+
+            return [
+                'id'           => $item->id,
+                'name'         => $item->name,
+                'code'         => '<span class="font-mono text-sm text-gray-600 dark:text-gray-400">' . ($item->sku ?? '-') . '</span>',
+                'category'     => ['name' => $item->category?->name ?? '-'],
+                'supplier'     => ['name' => $item->primarySupplier?->name ?? '-'],
+                'quantity'     => "<span class=\"font-semibold {$stockColor}\">{$item->current_stock}</span>",
+                'status_html'  => $statusHtml,
+                'show_url'     => route('inventory.show', $item),
+                'edit_url'     => route('inventory.edit', $item),
+                'delete_url'   => route('inventory.destroy', $item),
+            ];
+        });
+
+        return response()->json([
+            'draw'            => (int)$draw,
+            'recordsTotal'    => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data'            => $data->toArray(),
+        ]);
     }
 
     public function details(InventoryItem $inventoryitem)
@@ -81,94 +150,34 @@ class InventoryItemController extends Controller
             ];
         })->toArray();
 
-        return view('inventory-items.show', compact(
+        return view('inventory.show', compact(
             'inventoryitem',
             'secondary_suppliers'
         ));
     }
 
-    public function create()
+    public function filters(Request $request)
     {
-        $categories = Category::active()->orderBy('name')->get();
-        $suppliers = Supplier::active()->orderBy('name')->get();
-        $units = UnitOfMeasure::active()->orderBy('name')->get();
+        $column = $request->query('column');
 
-        return view('inventory-items.create', compact('categories', 'suppliers', 'units'));
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:inventory_items,sku',
-            'category_id' => 'required|exists:categories,id',
-            'unit_of_measure' => 'required|exists:unit_of_measures,name',
-            'unit_quantity' => 'required|integer|min:1',
-            'current_stock' => 'required|integer|min:0',
-            'reorder_point' => 'required|integer|min:0',
-            'unit_cost' => 'required|numeric|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'primary_supplier_id' => 'nullable|exists:suppliers,id',
-        ]);
-
-        InventoryItem::create($request->all());
-
-        return redirect()
-            ->route('inventory-items.index')
-            ->with('success', 'Inventory item created.');
-    }
-
-    public function edit(InventoryItem $inventoryItem)
-    {
-        $categories = Category::active()->orderBy('name')->get();
-        $suppliers = Supplier::active()->orderBy('name')->get();
-        $units = UnitOfMeasure::active()->orderBy('name')->get();
-
-        return view('inventory-items.edit', compact('inventoryItem', 'categories', 'suppliers', 'units'));
-    }
-
-    public function update(Request $request, InventoryItem $inventoryItem)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => [
-                'required',
-                'string',
-                Rule::unique('inventory_items')->ignore($inventoryItem->id),
-            ],
-            'category_id' => 'required|exists:categories,id',
-            'unit_of_measure' => 'required|exists:unit_of_measures,name',
-            'unit_quantity' => 'required|integer|min:1',
-            'current_stock' => 'required|integer|min:0',
-            'reorder_point' => 'required|integer|min:0',
-            'unit_cost' => 'required|numeric|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'primary_supplier_id' => 'nullable|exists:suppliers,id',
-        ]);
-
-        $inventoryItem->update($request->all());
-
-        return redirect()
-            ->route('inventory-items.index')
-            ->with('success', 'Inventory item updated.');
-    }
-
-    public function destroy(InventoryItem $inventoryItem)
-    {
-        $inventoryItem->delete(); // Hard delete
-
-        return back()->with('success', 'Inventory item permanently deleted.');
+        return match ($column) {
+            'category' => Category::orderBy('name')->pluck('name', 'id'),
+            'supplier' => Supplier::orderBy('name')->pluck('name', 'id'),
+            default    => response()->json([]),
+        };
     }
 
     public function bulkDelete(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:inventory_items,id',
-        ]);
+        $ids = $request->input('ids', '');
+        $ids = is_string($ids) ? array_filter(explode(',', $ids)) : [];
 
-        InventoryItem::whereIn('id', $request->ids)->delete();
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No items selected']);
+        }
 
-        return back()->with('success', 'Selected items permanently deleted.');
+        InventoryItem::whereIn('id', $ids)->delete();
+
+        return response()->json(['success' => true]);
     }
 }

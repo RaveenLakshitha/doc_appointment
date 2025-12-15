@@ -7,7 +7,7 @@
     <!-- Header Section -->
     <div class="mb-8">
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
-            <a href="{{ route('inventoryitems.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <a href="{{ route('inventory.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                 {{ __('file.inventory_items') }}
             </a>
             <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <div class="flex gap-3">
-                <a href="{{ route('inventoryitems.edit', $inventoryitem) }}"
+                <a href="{{ route('inventory.edit', $inventoryitem) }}"
                    class="inline-flex items-center px-5 py-2.5 bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-all duration-200 shadow-sm hover:shadow-md">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,8 +106,8 @@
 
                         <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                             <div class="flex items-center justify-center mb-1">
-                                <svg class="w-5 h-5 text-green-600 dark:text-green-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ __('file.unit_price') }}</span>
                             </div>

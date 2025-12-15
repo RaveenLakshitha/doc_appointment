@@ -29,5 +29,10 @@ class Department extends Model
     public function doctors(): HasMany
     {
         return $this->hasMany(Doctor::class, 'department_id');
-}
+    }
+
+    public function services(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
 }

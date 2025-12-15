@@ -7,7 +7,8 @@
 
     <title>@yield('title', config('app.name'))</title>
 
-    <!-- ONLY THIS LINE — LOADS EVERYTHING INCLUDING DATATABLES CSS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @stack('styles')
@@ -59,17 +60,15 @@
             </header>
         @endif
 
-        <main class="flex-1 p-4 lg:p-8 bg-gray-50 dark:bg-gray-900/50">
+        <main class="flex-1 p-4 lg:p-2 bg-gray-50 dark:bg-gray-900/50">
             @yield('content')
         </main>
     </div>
 </div>
 
-<!-- Page-specific scripts (DataTables, Livewire, etc.) -->
 @stack('scripts')
 
 <script>
-    // === Sidebar Collapse ===
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-sidebar');
     const collapseIcon = document.getElementById('collapse-icon');
@@ -97,9 +96,9 @@
         sidebar.classList.toggle('sidebar-collapsed');
         const collapsed = sidebar.classList.contains('sidebar-collapsed');
         sidebar.style.width = collapsed ? '64px' : '16rem';
-        collapseIcon.innerHTML = collapsed
-            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>'
-            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>';
+        // collapseIcon.innerHTML = collapsed
+        //     ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>'
+        //     : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>';
         localStorage.setItem('sidebarCollapsed', collapsed);
     });
 
@@ -107,11 +106,10 @@
         if (localStorage.getItem('sidebarCollapsed') === 'true') {
             sidebar.classList.add('sidebar-collapsed');
             sidebar.style.width = '64px';
-            collapseIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>';
+           // collapseIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>';
         }
     });
 
-    // === Theme Toggle ===
     const html = document.documentElement;
     const themeToggle = document.getElementById('theme-toggle-navbar');
     const sunIcon = document.getElementById('sun-icon-navbar');
@@ -140,49 +138,30 @@
         applyTheme(html.classList.contains('dark') ? 'light' : 'dark');
     });
 
-    // === User Dropdown ===
-    const userBtn = document.getElementById('user-menu-button');
-    const userDrop = document.getElementById('user-dropdown');
-    userBtn?.addEventListener('click', e => {
-        e.stopPropagation();
-        userDrop.classList.toggle('hidden');
-    });
-    document.addEventListener('click', e => {
-        if (userBtn && userDrop && !userBtn.contains(e.target) && !userDrop.contains(e.target)) {
-            userDrop.classList.add('hidden');
-        }
-    });
-
-    // Request fullscreen (with prefixes + error handling)
     function enterFullscreen() {
         const elem = document.documentElement;
         const promise = elem.requestFullscreen?.() ||
                         elem.webkitRequestFullscreen?.() ||
                         elem.msRequestFullscreen?.();
-
         if (promise) {
             promise
                 .then(() => {
                     localStorage.setItem('autoFullscreen', 'true');
                     localStorage.setItem('lastFullscreenTime', Date.now().toString());
                 })
-                .catch((err) => {
-                    console.warn('Fullscreen entry failed:', err.message);
-                });
+                .catch(() => {});
         }
     }
 
-    // Exit fullscreen
     function exitFullscreen() {
         const promise = document.exitFullscreen?.() ||
                         document.webkitExitFullscreen?.() ||
                         document.msExitFullscreen?.();
-        if (promise) promise.catch(() => {});  // Silent catch
+        if (promise) promise.catch(() => {});
         localStorage.removeItem('autoFullscreen');
         localStorage.removeItem('lastFullscreenTime');
     }
 
-    // Update button icon
     function updateFullscreenIcon() {
         const isFullscreen = !!(
             document.fullscreenElement ||
@@ -194,7 +173,6 @@
         exitIcon?.classList.toggle('hidden', !isFullscreen);
     }
 
-    // Toggle (user gesture safe)
     fullscreenToggle?.addEventListener('click', () => {
         if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
             exitFullscreen();
@@ -203,7 +181,6 @@
         }
     });
 
-    // Listen to changes
     ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
         document.addEventListener(event, () => {
             updateFullscreenIcon();
@@ -213,7 +190,6 @@
         });
     });
 
-    // Auto-reenter (gesture-safe)
     document.addEventListener('DOMContentLoaded', () => {
         updateFullscreenIcon();
         if (localStorage.getItem('autoFullscreen') === 'true') {
@@ -225,6 +201,5 @@
         }
     });
 </script>
-
 </body>
 </html>
