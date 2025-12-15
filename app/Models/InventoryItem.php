@@ -130,4 +130,9 @@ class InventoryItem extends Model
             ? round((($this->unit_price - $this->unit_cost) / $this->unit_cost) * 100, 2)
             : 0;
     }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? Storage::url($this->image) : null;
+    }
 }

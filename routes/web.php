@@ -30,13 +30,13 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\StaffController;
-use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\admin\RoleController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Report\AppointmentReportController;
 use App\Http\Controllers\Report\FinancialReportController;
 use App\Http\Controllers\Report\PatientVisitReportController;
 use App\Http\Controllers\Report\InventoryReportController;
-use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\LanguageController;
 
@@ -75,10 +75,12 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
 
             // ---------- USER MANAGEMENT ----------
+                Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
+                Route::get('users/datatable', [UserController::class, 'datatable'])->name('users.datatable');
             Route::resource('users', UserController::class);
-            Route::get('users/data', [UserController::class, 'data'])->name('users.data');
-            Route::post('users/deletebyselection', [UserController::class, 'deletebyselection'])
-                ->name('users.deletebyselection');
+
+
+                 Route::resource('roles', RoleController::class)->except(['show']);
 
             // Doctor Schedule (separate resource – can be nested under doctors if you prefer)
             Route::resource('doctor-schedules', DoctorScheduleController::class);
@@ -137,8 +139,6 @@ Route::middleware(['auth'])->group(function () {
             Route::post('staff/bulk-delete', [StaffController::class, 'bulkDelete'])
                 ->name('staff.bulkDelete');
 
-            // Roles & Permissions (you may already have this under users, but keeping separate)
-            Route::resource('roles-permissions', RolePermissionController::class);
 
             // ---------- ATTENDANCE ----------
             Route::resource('attendance', AttendanceController::class);
@@ -157,17 +157,7 @@ Route::middleware(['auth'])->group(function () {
                     ->name('inventory');
             });
 
-            // ---------- SETTINGS ----------
-            Route::get('settings/general', [SettingController::class, 'general'])
-                ->name('settings.general');
-            Route::post('settings/general', [SettingController::class, 'saveGeneral'])
-                ->name('settings.general.save');
-
-            Route::get('settings/working-hours', [SettingController::class, 'workingHours'])
-                ->name('settings.working-hours');
-            Route::post('settings/working-hours', [SettingController::class, 'saveWorkingHours'])
-                ->name('settings.working-hours.save');
-
+            
             // ---------- EXISTING ADMIN FEATURES (unchanged) ----------
             Route::get('/therapist/appointments', [TherapistAppointmentController::class, 'index'])
                 ->name('therapist.appointments.index');
@@ -260,17 +250,22 @@ Route::post('/patients/bulk-delete', [PatientController::class, 'bulkDelete'])
      ->name('patients.bulkDelete')
      ->middleware(['auth', 'role:admin']);
 
-Route::middleware(['auth', 'role:admin|primary-therapist'])
-     ->resource('patients', PatientController::class);
+Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
 
-     Route::get('/patients/export/excel', [PatientController::class, 'exportExcel'])
-     ->name('patients.export.excel');
+    // Custom routes MUST come BEFORE resource routes
+    Route::get('/patients/filters', [PatientController::class, 'filters'])
+         ->name('patients.filters');
 
-Route::get('/patients/export/csv', [PatientController::class, 'exportCsv'])
-     ->name('patients.export.csv');
+    Route::get('/patients/export/excel', [PatientController::class, 'exportExcel'])
+         ->name('patients.export.excel');
+    Route::get('/patients/export/csv', [PatientController::class, 'exportCsv'])
+         ->name('patients.export.csv');
+    Route::get('/patients/export/pdf', [PatientController::class, 'exportPdf'])
+         ->name('patients.export.pdf');
 
-Route::get('/patients/export/pdf', [PatientController::class, 'exportPdf'])
-     ->name('patients.export.pdf');
+    // This must be last!
+    Route::resource('patients', PatientController::class);
+});
 
     
     Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
@@ -285,15 +280,26 @@ Route::get('/patients/export/pdf', [PatientController::class, 'exportPdf'])
     
     Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
 
-    // This creates /inventoryitems/{inventoryitem}
-    Route::resource('inventoryitems', InventoryItemController::class);
 
-    Route::post('inventoryitems/bulk-delete', [InventoryItemController::class, 'bulkDelete'])
-        ->name('inventoryitems.bulk-delete');
+    Route::get('inventory/datatable', [InventoryItemController::class, 'datatable'])
+        ->name('inventory.datatable');
 
-    // Use {inventoryitem} to match resource binding
-    Route::get('inventoryitems/{inventoryitem}/details', [InventoryItemController::class, 'details'])
-        ->name('inventoryitems.details');
+    Route::get('inventory/filters', [InventoryItemController::class, 'filters'])
+        ->name('inventory.filters');
+
+    Route::post('inventory/bulk-delete', [InventoryItemController::class, 'bulkDelete'])
+        ->name('inventory.bulkDelete');
+
+    Route::resource('inventory', InventoryItemController::class)
+        ->parameter('inventory', 'inventoryitem'); 
+
+    Route::get('services/datatable', [ServiceController::class, 'datatable'])
+    ->name('services.datatable');
+
+    Route::post('services/bulk-delete', [ServiceController::class, 'bulkDelete'])
+        ->name('services.bulkDelete');
+
+    Route::resource('services', ServiceController::class);
 });
 
     // ---------- INVENTORY ----------
@@ -310,53 +316,51 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('suppliers.bulkDelete');
 });
 
+Route::prefix('medication-templates')
+    ->as('medication-templates.')
+    ->group(function () {
 
+    Route::get('/datatable', [MedicationTemplateController::class, 'datatable'])
+        ->name('datatable');
 
-Route::prefix('medication-templates')->name('medication-templates.')->group(function () {
+    Route::get('/filters', [MedicationTemplateController::class, 'filters'])
+        ->name('filters');
 
-    Route::get('/', [MedicationTemplateController::class, 'index'])
-        ->name('index');
-
-    Route::get('/create', [MedicationTemplateController::class, 'create'])
-        ->name('create');
-
-    Route::post('/', [MedicationTemplateController::class, 'store'])
-        ->name('store');
-
-    Route::get('/{template}', [MedicationTemplateController::class, 'show'])
-        ->name('show');
-
-    Route::get('/{template}/edit', [MedicationTemplateController::class, 'edit'])
-        ->name('edit');
-
-    Route::put('/{template}', [MedicationTemplateController::class, 'update'])
-        ->name('update');
-
-    Route::delete('/{template}', [MedicationTemplateController::class, 'destroy'])
-        ->name('destroy');
-
-    Route::post('/bulk-delete', [MedicationTemplateController::class, 'bulkDelete'])
+    Route::delete('/bulk-delete', [MedicationTemplateController::class, 'bulkDelete'])
         ->name('bulkDelete');
 
-    // Nested categories
-    Route::prefix('categories')->name('categories.')->group(function () {
-        Route::post('/', [MedicationTemplateCategoryController::class, 'store'])
-            ->name('store');
+    Route::resource('', MedicationTemplateController::class)
+        ->parameters(['' => 'medicationTemplate']);
 
-        Route::put('/{category}', [MedicationTemplateCategoryController::class, 'update'])
-            ->name('update');
+    Route::prefix('categories')
+        ->as('categories.')
+        ->group(function () {
+            Route::post('/', [MedicationTemplateCategoryController::class, 'store'])
+                ->name('store');
 
-        Route::delete('/{category}', [MedicationTemplateCategoryController::class, 'destroy'])
-            ->name('destroy');
-    });
+            Route::put('/{category}', [MedicationTemplateCategoryController::class, 'update'])
+                ->name('update');
+
+            Route::delete('/{category}', [MedicationTemplateCategoryController::class, 'destroy'])
+                ->name('destroy');
+        });
 });
 
-Route::middleware(['auth', 'role:admin|primary-therapist'])
-->resource('doctors', DoctorController::class);
+Route::get('/doctors/datatable', [DoctorController::class, 'datatable'])
+    ->name('doctors.datatable')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
+
+Route::get('/doctors/filters', [DoctorController::class, 'filters'])
+    ->name('doctors.filters')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
 
 Route::post('/doctors/bulk-delete', [DoctorController::class, 'bulkDelete'])
     ->name('doctors.bulkDelete')
     ->middleware(['auth', 'role:admin']);
+
+// Then the resource route (must be last)
+Route::middleware(['auth', 'role:admin|primary-therapist'])
+    ->resource('doctors', DoctorController::class);
 
 Route::post('/therapists/bulk-delete', [TherapistController::class, 'bulkDelete'])
     ->name('therapists.bulkDelete')
@@ -396,12 +400,30 @@ Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
         ->middleware(['auth', 'role:admin']);
 
     Route::middleware(['auth', 'role:admin|primary-therapist'])
-    ->resource('specializations', SpecializationController::class);
+    ->resource('specializations', SpecializationController::class)->except(['show']);
 
 Route::post('/specializations/bulk-delete', [SpecializationController::class, 'bulkDelete'])
     ->name('specializations.bulkDelete')
     ->middleware(['auth', 'role:admin']);
+
+    Route::get('/specializations/datatable', [SpecializationController::class, 'datatable'])
+    ->name('specializations.datatable');
 // routes/web.php
+
+Route::middleware(['auth', 'role:admin'])->name('settings.')->group(function () {
+    Route::get('/settings/general', [SettingsController::class, 'general'])
+        ->name('general');
+
+    Route::get('/settings', [SettingsController::class, 'general'])
+        ->name('index');
+
+    Route::get('/settings/edit', [SettingsController::class, 'edit'])
+        ->name('edit');
+
+    Route::put('/settings/general', [SettingsController::class, 'update'])
+        ->name('update');
+});
+
 
 Route::post('/language', [LanguageController::class, 'switch'])
     ->name('language.switch');

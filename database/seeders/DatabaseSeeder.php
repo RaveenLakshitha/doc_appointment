@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
                 //     DepartmentSeeder::class,
                 //     SpecializationSeeder::class,
                //     DoctorSeeder::class,
+                   ServicesSeeder::class,
                 //      MedicationTemplateSeeder::class,
                     
                 ]);

@@ -12,4 +12,11 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    
+    optimizeDeps: {
+        include: [
+            'pdfmake/build/pdfmake',
+            'pdfmake/build/vfs_fonts.js'
+        ]
+    }
 });

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -18,7 +19,13 @@ class AuthController extends Controller
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        $setting = cache()->remember('clinic_settings', 3600, fn() => \App\Models\Setting::first());
+
+        return view('auth.login', [
+            'clinic_name'   => $setting?->clinic_name ?? config('app.name'),
+            'clinic_logo'   => $setting?->logo_path ? Storage::url($setting->logo_path) : null,
+            'primary_color' => $setting?->primary_color ?? '#1e40af',
+        ]);
     }
 
     public function showRegisterForm()

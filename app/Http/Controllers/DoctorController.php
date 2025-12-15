@@ -6,123 +6,117 @@ use App\Models\Doctor;
 use App\Models\Department;
 use App\Models\Specialization;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\DoctorsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DoctorController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Doctor::query()
-        ->with(['primarySpecialization', 'department'])
-        ->withCount('appointments');
-
-    // Search
-    if ($search = $request->filled('search') ? $request->string('search')->trim() : null) {
-        $query->where(function ($q) use ($search) {
-            $q->where('first_name', 'like', "%{$search}%")
-              ->orWhere('last_name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('phone', 'like', "%{$search}%")
-              ->orWhere('license_number', 'like', "%{$search}%")
-              ->orWhereHas('primarySpecialization', fn($q) => $q->where('name', 'like', "%{$search}%"));
-        });
-    }
-
-    // Filters
-    if ($request->filled('specialty')) {
-        $query->where('primary_specialization_id', $request->specialty);
-    }
-
-    if ($request->filled('department')) {
-        $query->where('department_id', $request->department);
-    }
-
-    if ($request->has('status') && in_array($request->status, ['active', 'inactive'])) {
-        $query->where('is_active', $request->status === 'active');
-    }
-
-    if ($request->filled('gender') && in_array($request->gender, ['male', 'female', 'other'])) {
-        $query->where('gender', $request->gender);
-    }
-
-    // Sorting - SAFE (no joins that break filters)
-    $sort = $request->get('sort', 'name');
-    $direction = $request->get('direction', 'asc') === 'desc' ? 'desc' : 'asc';
-
-    match ($sort) {
-        'name' => $query->orderByRaw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) {$direction}"),
-
-        'specialty' => $query->orderBy(
-            Specialization::select('name')
-                ->whereColumn('specializations.id', 'doctors.primary_specialization_id')
-                ->limit(1),
-            $direction
-        ),
-
-        'department' => $query->orderBy(
-            Department::select('name')
-                ->whereColumn('departments.id', 'doctors.department_id')
-                ->limit(1),
-            $direction
-        ),
-
-        default => $query->orderBy($sort, $direction),
-    };
-
-    $doctors = $query->paginate(10)->withQueryString();
-
-    $specialties = Specialization::orderBy('name')->pluck('name', 'id');
-    $departments = Department::orderBy('name')->pluck('name', 'id');
-
-    // THIS IS THE ONLY LINE THAT MATTERS FOR AJAX
-    if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
-        return view('doctors.partials.table', compact('doctors'));
-    }
-
-    return view('doctors.index', compact('doctors', 'specialties', 'departments'));
-}
-
-    public function create()
     {
-        return view('doctors.create');
+        $doctors = Doctor::with(['primarySpecialization', 'department'])
+            ->active()
+            ->orderByRaw("CONCAT(first_name, ' ', COALESCE(middle_name,''), ' ', last_name)")
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('doctors.index', compact('doctors'));
     }
 
-    public function store(Request $request)
+    public function datatable(Request $request)
     {
-        $validated = $request->validate([
-            'first_name'               => 'required|string|max:255',
-            'middle_name'              => 'nullable|string|max:255',
-            'last_name'                => 'required|string|max:255',
-            'date_of_birth'            => 'required|date',
-            'gender'                   => 'required|in:male,female,other',
-            'address'                  => 'nullable|string',
-            'city'                     => 'nullable|string|max:255',
-            'state'                    => 'nullable|string|max:255',
-            'zip_code'                 => 'nullable|string|max:20',
-            'email'                    => 'required|email|unique:doctors,email',
-            'phone'                    => 'required|string|max:20',
-            'emergency_contact_name'   => 'nullable|string|max:255',
-            'emergency_contact_phone'  => 'nullable|string|max:20',
-            'primary_specialization_id'=> 'required|exists:specializations,id',
-            'secondary_specialty'      => 'nullable|string|max:255',
-            'license_number'           => 'required|string|max:100|unique:doctors,license_number',
-            'license_expiry_date'      => 'required|date|after:today',
-            'qualifications'           => 'nullable|string',
-            'years_experience'         => 'required|integer|min:0|max:60',
-            'education'                => 'nullable|string',
-            'certifications'           => 'nullable|string',
-            'department_id'            => 'required|exists:departments,id',
-            'position'                 => 'required|string|max:255',
-            'hourly_rate'              => 'required|numeric|min:0',
-            'profile_photo'            => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        $draw        = $request->input('draw');
+        $start       = $request->input('start', 0);
+        $length      = $request->input('length', 10);
+        $orderIdx    = $request->input('order.0.column');
+        $orderDir    = $request->input('order.0.dir', 'asc');
+        $searchValue = trim($request->input('search.value', ''));
 
-        if ($request->hasFile('profile_photo')) {
-            $validated['profile_photo'] = $request->file('profile_photo')->store('doctors', 'public');
+        $genderFilter     = $request->gender;
+        $specialtyFilter  = $request->specialty;
+        $departmentFilter = $request->department;
+        $statusFilter     = $request->status;
+
+        $query = Doctor::query()
+            ->with(['primarySpecialization', 'department'])
+            ->select('doctors.*')
+            ->when($searchValue !== '', function ($q) use ($searchValue) {
+                $q->whereRaw("CONCAT(COALESCE(first_name,''), ' ', COALESCE(middle_name,''), ' ', COALESCE(last_name,'')) LIKE ?", ["%{$searchValue}%"])
+                ->orWhere('email', 'like', "%{$searchValue}%")
+                ->orWhere('phone', 'like', "%{$searchValue}%")
+                ->orWhereHas('primarySpecialization', fn($sq) => $sq->where('name', 'like', "%{$searchValue}%"))
+                ->orWhereHas('department', fn($sq) => $sq->where('name', 'like', "%{$searchValue}%"));
+            })
+            ->when($genderFilter, fn($q) => $q->where('gender', $genderFilter))
+            ->when($specialtyFilter, fn($q) => $q->where('primary_specialization_id', $specialtyFilter))
+            ->when($departmentFilter, fn($q) => $q->where('department_id', $departmentFilter))
+            ->when($statusFilter !== null && $statusFilter !== '', fn($q) => $q->where('is_active', $statusFilter))
+            ->active();
+
+        $totalRecords    = Doctor::active()->count();
+        $filteredRecords = (clone $query)->count();
+
+        // Adjusted column indices after removing License (old index 2)
+        switch ($orderIdx) {
+            case 1: // Name
+                $query->orderByRaw("CONCAT(COALESCE(first_name,''), ' ', COALESCE(middle_name,''), ' ', COALESCE(last_name,'')) {$orderDir}");
+                break;
+            case 2: // Gender
+                $query->orderByRaw("FIELD(gender, 'male', 'female', 'other') {$orderDir}");
+                break;
+            case 3: // Department
+                $query->join('departments', 'doctors.department_id', '=', 'departments.id')
+                    ->orderBy('departments.name', $orderDir);
+                break;
+            case 4: // Specialty
+                $query->join('specializations as spec', 'doctors.primary_specialization_id', '=', 'spec.id')
+                    ->orderBy('spec.name', $orderDir);
+                break;
+            case 5: // Status
+                $query->orderBy('is_active', $orderDir === 'desc' ? 'desc' : 'asc');
+                break;
+            case 6: // Phone
+                $query->orderBy('phone', $orderDir);
+                break;
+            default:
+                $query->orderByRaw("CONCAT(COALESCE(first_name,''), ' ', COALESCE(middle_name,''), ' ', COALESCE(last_name,'')) asc");
+                break;
         }
 
-        Doctor::create($validated);
+        $doctors = $query->offset($start)->limit($length)->get();
 
-        return redirect()->route('doctors.index')->with('success', __('file.doctor_created'));
+        $data = $doctors->map(function ($d) {
+            $statusHtml = $d->is_active
+                ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Active</span>'
+                : '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Inactive</span>';
+
+            $genderBadge = match(strtolower($d->gender ?? '')) {
+                'male'   => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Male</span>',
+                'female' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300">Female</span>',
+                default  => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Other</span>'
+            };
+
+            return [
+                'id'             => $d->id,
+                'full_name'      => $d->getFullNameAttribute() ?? '-',
+                'gender'         => $genderBadge,
+                'department'     => $d->department?->name ?? '-',
+                'specialty'      => $d->primarySpecialization?->name ?? '-',
+                'status_html'    => $statusHtml,
+                'phone'          => $d->phone ?? '-',
+                'show_url'       => route('doctors.show', $d),
+                'edit_url'       => route('doctors.edit', $d),
+                'delete_url'     => route('doctors.destroy', $d),
+            ];
+        });
+
+        return response()->json([
+            'draw'            => (int)$draw,
+            'recordsTotal'    => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data'            => $data->toArray(),
+        ]);
     }
 
     public function show(Doctor $doctor)
@@ -131,91 +125,62 @@ class DoctorController extends Controller
         return view('doctors.show', compact('doctor'));
     }
 
-    public function edit(Doctor $doctor)
+    public function filters(Request $request)
     {
-        return view('doctors.edit', compact('doctor'));
-    }
+        $column = $request->query('column');
 
-    public function update(Request $request, Doctor $doctor)
-    {
-        $request->validate([
-            'first_name'               => 'required|string|max:255',
-            'middle_name'              => 'nullable|string|max:255',
-            'last_name'                => 'required|string|max:255',
-            'date_of_birth'            => 'required|date',
-            'gender'                   => 'required|in:male,female,other',
-            'address'                  => 'nullable|string',
-            'city'                     => 'nullable|string|max:255',
-            'state'                    => 'nullable|string|max:255',
-            'zip_code'                 => 'nullable|string|max:20',
-            'email'                    => 'required|email|unique:doctors,email,' . $doctor->id,
-            'phone'                    => 'required|string|max:20',
-            'emergency_contact_name'   => 'nullable|string|max:255',
-            'emergency_contact_phone'  => 'nullable|string|max:20',
-            'primary_specialization_id'=> 'required|exists:specializations,id',
-            'secondary_specialty'      => 'nullable|string|max:255',
-            'license_number'           => 'required|string|max:100|unique:doctors,license_number,' . $doctor->id,
-            'license_expiry_date'      => 'required|date|after:today',
-            'qualifications'           => 'nullable|string',
-            'years_experience'         => 'required|integer|min:0|max:60',
-            'education'                => 'nullable|string',
-            'certifications'           => 'nullable|string',
-            'department_id'            => 'required|exists:departments,id',
-            'position'                 => 'required|string|max:255',
-            'hourly_rate'              => 'required|numeric|min:0',
-            'is_active'                => 'sometimes|boolean',
-            'profile_photo'            => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        $data = $request->only([
-            'first_name','middle_name','last_name','date_of_birth','gender',
-            'address','city','state','zip_code','email','phone',
-            'emergency_contact_name','emergency_contact_phone',
-            'primary_specialization_id','secondary_specialty','license_number',
-            'license_expiry_date','qualifications','years_experience',
-            'education','certifications','department_id','position',
-            'hourly_rate','is_active'
-        ]);
-
-        if ($request->hasFile('profile_photo')) {
-            if ($doctor->profile_photo) {
-                \Storage::disk('public')->delete($doctor->profile_photo);
-            }
-            $data['profile_photo'] = $request->file('profile_photo')->store('doctors', 'public');
+        if ($column === 'specialty') {
+            return Specialization::orderBy('name')->pluck('name', 'id');
         }
 
-        $doctor->update($data);
-
-        return redirect()->route('doctors.index')->with('success', __('file.doctor_updated'));
-    }
-
-    public function destroy(Doctor $doctor)
-    {
-        if ($doctor->profile_photo) {
-            \Storage::disk('public')->delete($doctor->profile_photo);
+        if ($column === 'department') {
+            return Department::orderBy('name')->pluck('name', 'id');
         }
 
-        $doctor->delete();
-
-        return back()->with('success', __('file.doctor_deleted'));
+        return response()->json([]);
     }
 
     public function bulkDelete(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:doctors,id',
-        ]);
-
-        $doctors = Doctor::whereIn('id', $request->ids)->get();
-
-        foreach ($doctors as $doctor) {
-            if ($doctor->profile_photo) {
-                \Storage::disk('public')->delete($doctor->profile_photo);
-            }
-            $doctor->delete();
+        $ids = $request->input('ids');
+        if (is_string($ids)) {
+            $ids = array_filter(explode(',', $ids));
         }
 
-        return back()->with('success', __('file.doctors_deleted'));
+        if (empty($ids)) {
+            return back()->with('error', 'No doctors selected.');
+        }
+
+        $doctors = Doctor::whereIn('id', $ids)->get();
+        foreach ($doctors as $doctor) {
+            if ($doctor->profile_photo) {
+                Storage::disk('public')->delete($doctor->profile_photo);
+            }
+        }
+
+        Doctor::whereIn('id', $ids)->update(['is_deleted' => true, 'is_active' => false]);
+
+        return back()->with('success', 'Selected doctors deleted successfully.');
+    }
+
+    private function uniqueValues(?string $field = null, ?string $raw = null, ?string $alias = null)
+    {
+        $query = Doctor::query()->active();
+
+        if ($raw) {
+            $query->selectRaw("$raw AS `$alias`");
+            $orderBy = $alias;
+        } else {
+            $query->select($field);
+            $orderBy = $field;
+        }
+
+        return $query
+            ->distinct()
+            ->orderBy($orderBy)
+            ->pluck($orderBy)
+            ->filter()
+            ->values()
+            ->toArray();
     }
 }

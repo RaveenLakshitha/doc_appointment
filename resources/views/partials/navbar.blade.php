@@ -2,7 +2,6 @@
 <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
 
-        {{-- Mobile menu button --}}
         <div class="flex items-center">
             <button id="open-sidebar"
                     class="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 
@@ -16,11 +15,9 @@
             </button>
         </div>
 
-        {{-- Right side: Language + Theme Toggle + User Menu --}}
         <div class="flex items-center space-x-4">
 
-            {{-- Language Selector --}}
-            <div x-data="{ open: false }" class="relative">
+            <div x-data="{ open: false }" x-init="open = false" class="relative">
                 <button @click="open = !open"
                         class="flex items-center space-x-1 text-sm font-medium text-gray-700 dark:text-gray-300 
                                hover:text-primary dark:hover:text-primary-400 
@@ -34,6 +31,7 @@
                 </button>
 
                 <div x-show="open"
+                     x-cloak
                      @click.away="open = false"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 scale-95"
@@ -43,37 +41,29 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      class="absolute right-0 mt-2 w-36 origin-top-right bg-white dark:bg-gray-800 
                             rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
-                    
                     <form method="POST" action="{{ route('language.switch') }}">
                         @csrf
                         <input type="hidden" name="locale" value="en">
-                        <button type="submit"
-                                class="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 
-                                       hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                             {{ __('English') }}
                         </button>
                     </form>
-
                     <form method="POST" action="{{ route('language.switch') }}">
                         @csrf
                         <input type="hidden" name="locale" value="es">
-                        <button type="submit"
-                                class="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 
-                                       hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                             {{ __('Español') }}
                         </button>
                     </form>
                 </div>
             </div>
 
-            {{-- Theme Toggle Button --}}
             <button id="theme-toggle-navbar"
                     aria-label="Toggle dark mode"
                     class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 
                         dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 
                         focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 
                         dark:focus:ring-offset-gray-800 transition">
-                <!-- Sun = Light mode | Moon = Dark mode -->
                 <svg id="sun-icon-navbar" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 3v1m0 16v1m8.485-11.485l-.707.707M5.636 18.364l-.707.707m12.021 0l-.707-.707M6.343 5.636l-.707-.707m12.728 12.728l-.707-.707M6.343 18.364l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
@@ -90,20 +80,17 @@
                     dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 
                     focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 
                     dark:focus:ring-offset-gray-800 transition">
-                <!-- Enter Fullscreen Icon -->
                 <svg id="enter-fullscreen-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 8V4m0 0h4m-4 0l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"/>
                 </svg>
-                <!-- Exit Fullscreen Icon -->
                 <svg id="exit-fullscreen-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 8V4m0 0h4m-4 0l5 5m11-8v4m0-4h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0-4h-4m4 4l-5-5"/>
                 </svg>
             </button>
 
-            {{-- User Menu --}}
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="{ open: false }" x-cloak x-init="open = false">
                 <button id="user-menu-button"
                         @click="open = !open"
                         class="flex items-center space-x-3 text-sm font-medium text-gray-700 dark:text-gray-300 
