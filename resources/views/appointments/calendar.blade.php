@@ -3,7 +3,7 @@
 @section('title', 'Appointment Calendar')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">Appointment Calendar</h1>
@@ -137,29 +137,46 @@ document.addEventListener('DOMContentLoaded', function () {
         },
 
         eventContent: function(arg) {
-            const p = arg.event.extendedProps;
-            if (arg.view.type === 'dayGridMonth') {
-                return { html: `
-                    <div class="fc-event-title fc-sticky text-xs leading-tight p-1">
-                        <div class="font-semibold text-xs opacity-90">${arg.timeText || ''}</div>
-                        <div class="font-medium truncate">${p.patient}</div>
-                        <div class="text-xs opacity-80">Dr. ${p.doctor}</div>
-                    </div>
-                `};
-            }
-            return { html: `
-                <div class="text-white text-xs leading-tight px-2 py-1.5">
-                    <div class="font-semibold">${p.patient}</div>
-                    <div class="opacity-90 text-xs">Dr. ${p.doctor}</div>
-                </div>
-            `};
-        },
+    const p = arg.event.extendedProps;
+    const timeText = arg.timeText || '';
 
-        eventDidMount: function(info) {
+    // Get the event colors (set in backend)
+    const bgColor = arg.event.backgroundColor || '#3b82f6'; // fallback blue
+    const textColor = arg.event.textColor || '#ffffff';     // fallback white
+
+    const commonHtml = `
+        <div class="fc-event-title fc-sticky text-xs leading-tight p-1 rounded" 
+             style="background-color: ${bgColor}; color: ${textColor};">
+            <div class="font-semibold text-xs opacity-90">${timeText}</div>
+            <div class="font-medium truncate">${p.patient}</div>
+            <div class="text-xs opacity-80">Dr. ${p.doctor}</div>
+            ${p.status ? `<div class="text-xs font-medium mt-0.5">${p.status}</div>` : ''}
+        </div>
+    `;
+
+    // Use the same colored block for both month and day views
+    if (arg.view.type === 'dayGridMonth') {
+        return { html: commonHtml };
+    }
+
+    // For timeGridDay (day view) — slightly larger text for better readability
+    return { html: `
+        <div class="flex flex-col justify-center h-full px-2 py-1.5 text-left rounded" 
+             style="background-color: ${bgColor}; color: ${textColor};">
+            <div class="text-sm leading-tight">${timeText ? timeText + ' - ' : ''}${p.patient}</div>
+            <div class="text-xs opacity-90">Dr. ${p.doctor}</div>
+            ${p.status ? `<div class="text-xs font-medium opacity-90">${p.status}</div>` : ''}
+        </div>
+    `};
+},
+
+       eventDidMount: function(info) {
             const p = info.event.extendedProps;
             const duration = p.duration ? ` (${p.duration})` : '';
             const time = info.event.start ? new Date(info.event.start).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '';
+            
             info.el.title = `${p.patient}\nDr. ${p.doctor}\n${time}${duration}\nStatus: ${p.status || 'Scheduled'}`;
+    
         }
     });
 

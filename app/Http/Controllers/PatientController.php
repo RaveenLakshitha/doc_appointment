@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;      
-use App\Exports\PatientsExport;   
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\PatientsExport;
 use DB;
+
 class PatientController extends Controller
 {
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $patients = Patient::active()
             ->orderBy('first_name')
@@ -39,9 +40,17 @@ class PatientController extends Controller
         $query = Patient::query()
             ->leftJoin('appointments', fn($join) => $join
                 ->on('appointments.patient_id', '=', 'patients.id')
-                ->whereRaw('appointments.id = (SELECT MAX(id) FROM appointments a2 WHERE a2.patient_id = patients.id)')
+                ->whereRaw('appointments.id = (
+                    SELECT MAX(a2.id)
+                    FROM appointments a2
+                    WHERE a2.patient_id = patients.id
+                    AND a2.deleted_at IS NULL
+                )')
             )
-            ->select('patients.*', 'appointments.appointment_datetime as last_appointment_date')
+            ->select(
+                'patients.*',
+                DB::raw('appointments.scheduled_start as last_appointment_date')
+            )
             ->when($search !== '', fn($q) => $q
                 ->whereRaw("CONCAT(first_name, ' ', COALESCE(middle_name,''), ' ', last_name) LIKE ?", ["%{$search}%"])
                 ->orWhere('medical_record_number', 'like', "%{$search}%")
@@ -52,25 +61,22 @@ class PatientController extends Controller
                 $ageFrom ?? 0,
                 $ageTo ?? 200
             ]))
-            ->when($from || $to, fn($q) => $q
-                ->where(function ($q) use ($from, $to) {
-                    if ($from && $to) {
-                        $q->whereBetween('appointments.appointment_datetime', [
-                            $from . ' 00:00:00',
-                            $to . ' 23:59:59'
-                        ]);
-                    } elseif ($from) {
-                        $q->where('appointments.appointment_datetime', '>=', $from . ' 00:00:00');
-                    } elseif ($to) {
-                        $q->where('appointments.appointment_datetime', '<=', $to . ' 23:59:59');
-                    }
-                })
-            )
+            ->when($from || $to, fn($q) => $q->havingRaw(
+                'last_appointment_date ' .
+                ($from && $to ? 'BETWEEN ? AND ?' :
+                 ($from ? '>= ?' :
+                  ($to ? '<= ?' : ''))),
+                collect([])
+                    ->when($from, fn($c) => $c->push($from . ' 00:00:00'))
+                    ->when($to, fn($c) => $c->push($to . ' 23:59:59'))
+                    ->toArray()
+            ))
             ->active();
 
         $totalRecords = Patient::active()->count();
         $filteredRecords = (clone $query)->count();
 
+        // Ordering
         if ($orderColumnIndex == 1) {
             $query->orderBy('medical_record_number', $orderDir);
         } elseif ($orderColumnIndex == 2) {
@@ -80,11 +86,12 @@ class PatientController extends Controller
         } elseif ($orderColumnIndex == 4) {
             $query->orderByRaw("FIELD(LOWER(patients.gender), 'male', 'female', 'other', NULL) {$orderDir}");
         } elseif ($orderColumnIndex == 5) {
+            // Order by last appointment date (nulls last)
             $query->orderBy('last_appointment_date', $orderDir);
         } elseif ($orderColumnIndex == 6) {
             $query->orderBy('is_active', $orderDir);
         } else {
-            $query->orderBy('first_name', 'asc');
+            $query->orderBy('created_at', 'desc');
         }
 
         $patients = $query->offset($start)->limit($length)->get();
@@ -128,52 +135,115 @@ class PatientController extends Controller
     }
 
     public function create() { return view('patients.create'); }
-    public function store(Request $request) {
+
+    public function store(Request $request)
+    {
         $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:patients,email',
-            'phone'                 => 'required|string|regex:/^\+?[0-9]{10,15}$/|unique:patients,phone',
-            'medical_record_number' => 'required|string|unique:patients,medical_record_number',
-            'date_of_birth'         => 'nullable|date',
-            'gender'                => 'nullable|in:male,female,other',
-            'address'               => 'nullable|string',
-            'emergency_contact_name'=> 'nullable|string',
-            'emergency_contact_phone'=> 'nullable|string',
+            'first_name'             => 'required|string|max:255',
+            'last_name'              => 'required|string|max:255',
+            'date_of_birth'          => 'required|date',
+            'gender'                 => 'required|in:male,female,other',
+            'phone'                  => 'nullable|string|regex:/^\+?[0-9]{10,15}$/|unique:patients,phone',
+            'email'                  => 'nullable|email|unique:patients,email',
+            'middle_name'            => 'nullable|string|max:255',
+            'marital_status'         => 'nullable|string',
+            'address'                => 'nullable|string',
+            'city'                   => 'nullable|string',
+            'state'                  => 'nullable|string',
+            'zip_code'               => 'nullable|string',
+            'alternative_phone'      => 'nullable|string',
+            'preferred_contact_method' => 'nullable|string',
+            'emergency_contact_name' => 'nullable|string',
+            'emergency_contact_relationship' => 'nullable|string',
+            'emergency_contact_phone' => 'nullable|string',
+            'emergency_contact_email' => 'nullable|email',
         ]);
 
-        Patient::create($request->only([
-            'name','email','phone','medical_record_number',
-            'date_of_birth','gender','address',
-            'emergency_contact_name','emergency_contact_phone'
-        ]) + ['is_active' => true, 'is_deleted' => false]);
+        $lastPatient = Patient::orderBy('id', 'desc')->first();
+        $nextNumber = $lastPatient ? $lastPatient->id + 1 : 1;
+        $medicalRecordNumber = 'MRN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-        return redirect()->route('patients.index')->with('success', 'Patient created.');
+        Patient::create($request->only([
+            'first_name',
+            'middle_name',
+            'last_name',
+            'date_of_birth',
+            'gender',
+            'marital_status',
+            'address',
+            'city',
+            'state',
+            'zip_code',
+            'phone',
+            'alternative_phone',
+            'email',
+            'preferred_contact_method',
+            'emergency_contact_name',
+            'emergency_contact_relationship',
+            'emergency_contact_phone',
+            'emergency_contact_email',
+        ]) + [
+            'medical_record_number' => $medicalRecordNumber,
+            'is_active'             => true,
+            'is_deleted'            => false,
+        ]);
+
+        return redirect()->route('patients.index')->with('success', 'Patient created successfully.');
     }
 
-    public function show(Patient $patient) { return view('patients.show', compact('patient')); }
+    public function show(Patient $patient)
+    {
+        $patient->load(['appointments', 'prescriptions', 'invoices.payments']);
+        return view('patients.show', compact('patient'));
+    }
+    
     public function edit(Patient $patient) { return view('patients.edit', compact('patient')); }
 
-    public function update(Request $request, Patient $patient) {
+    public function update(Request $request, Patient $patient)
+    {
         $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:patients,email,'.$patient->id,
-            'phone'                 => 'required|string|regex:/^\+?[0-9]{10,15}$/|unique:patients,phone,'.$patient->id,
-            'medical_record_number' => 'required|string|unique:patients,medical_record_number,'.$patient->id,
-            'date_of_birth'         => 'nullable|date',
-            'gender'                => 'nullable|in:male,female,other',
-            'address'               => 'nullable|string',
-            'emergency_contact_name'=> 'nullable|string',
-            'emergency_contact_phone'=> 'nullable|string',
-            'is_active'             => 'sometimes|boolean',
+            'first_name'             => 'required|string|max:255',
+            'last_name'              => 'required|string|max:255',
+            'date_of_birth'          => 'required|date',
+            'gender'                 => 'required|in:male,female,other',
+            'phone'                  => 'nullable|string|regex:/^\+?[0-9]{10,15}$/|unique:patients,phone,' . $patient->id,
+            'email'                  => 'nullable|email|unique:patients,email,' . $patient->id,
+            'middle_name'            => 'nullable|string|max:255',
+            'marital_status'         => 'nullable|string',
+            'address'                => 'nullable|string',
+            'city'                   => 'nullable|string',
+            'state'                  => 'nullable|string',
+            'zip_code'               => 'nullable|string',
+            'alternative_phone'      => 'nullable|string',
+            'preferred_contact_method' => 'nullable|string',
+            'emergency_contact_name' => 'nullable|string',
+            'emergency_contact_relationship' => 'nullable|string',
+            'emergency_contact_phone' => 'nullable|string',
+            'emergency_contact_email' => 'nullable|email',
         ]);
 
         $patient->update($request->only([
-            'name','email','phone','medical_record_number',
-            'date_of_birth','gender','address',
-            'emergency_contact_name','emergency_contact_phone','is_active'
+            'first_name',
+            'middle_name',
+            'last_name',
+            'date_of_birth',
+            'gender',
+            'marital_status',
+            'address',
+            'city',
+            'state',
+            'zip_code',
+            'phone',
+            'alternative_phone',
+            'email',
+            'preferred_contact_method',
+            'emergency_contact_name',
+            'emergency_contact_relationship',
+            'emergency_contact_phone',
+            'emergency_contact_email',
         ]));
 
-        return redirect()->route('patients.index')->with('success', 'Patient updated.');
+        return redirect()->route('patients.index')->with('success', 'Patient updated successfully.');
     }
 
     public function destroy(Patient $patient) {
@@ -194,93 +264,48 @@ class PatientController extends Controller
         return back()->with('success', 'Patients deleted.');
     }
 
-    public function exportExcel()
-    {
-        return Excel::download(new PatientsExport, 'patients-' . now()->format('Y-m-d') . '.xlsx');
-    }
-
-    public function exportCsv()
-    {
-        return Excel::download(new PatientsExport, 'patients-' . now()->format('Y-m-d') . '.csv', \Maatwebsite\Excel\Excel::CSV, [
-            'Content-Type' => 'text/csv',
-        ]);
-    }
-
-    public function exportPdf()
-    {
-        $patients = Patient::active()
-            ->with(['lastAppointment' => fn($q) => $q->select('patient_id', 'appointment_datetime')])
-            ->get();
-
-        $now = now();
-
-        $patients = $patients->map(function ($p) use ($now) {
-            $lastVisit = $p->lastAppointment?->appointment_datetime
-                ? \Carbon\Carbon::parse($p->lastAppointment->appointment_datetime)->format('M d, Y')
-                : null;
-
-            $age = $p->date_of_birth
-                ? $p->date_of_birth->diffInYears($now)
-                : null;
-
-            return (object)[
-                'medical_record_number' => $p->medical_record_number,
-                'full_name'             => $p->getFullNameAttribute(),
-                'age'                   => $age ? (int)$age : '-',
-                'gender'                => ucfirst($p->gender ?? 'Other'),
-                'last_visit'            => $lastVisit ?? 'Never',
-                'status'                => $p->is_active ? 'Active' : 'Inactive',
-            ];
-        });
-
-        $pdf = Pdf::loadView('patients.exports.pdf', compact('patients'))
-                  ->setPaper('a4', 'landscape');
-
-        return $pdf->download('patients-list-' . now()->format('Y-m-d') . '.pdf');
-    }
-
     public function filters(Request $request)
-{
-    $column = (int) $request->get('column');
+    {
+        $column = (int) $request->get('column');
 
-    return match ($column) {
-        1 => $this->uniqueValues('medical_record_number'),
+        return match ($column) {
+            1 => $this->uniqueValues('medical_record_number'),
 
-        2 => $this->uniqueValues(
-            raw: "TRIM(CONCAT(COALESCE(first_name,''), ' ', COALESCE(last_name,'')))",
-            alias: 'full_name'
-        ),
+            2 => $this->uniqueValues(
+                raw: "TRIM(CONCAT(COALESCE(first_name,''), ' ', COALESCE(middle_name,''), ' ', COALESCE(last_name,'')))",
+                alias: 'full_name'
+            ),
 
-        4 => $this->uniqueValues('gender'),
+            4 => $this->uniqueValues('gender'),
 
-        6 => $this->uniqueValues(
-            raw: "CASE WHEN is_active THEN 'Active' ELSE 'Inactive' END",
-            alias: 'status_label'
-        ),
+            6 => $this->uniqueValues(
+                raw: "CASE WHEN is_active THEN 'Active' ELSE 'Inactive' END",
+                alias: 'status_label'
+            ),
 
-        default => response()->json([]),
-    };
-}
-
-private function uniqueValues(string $field = null, ?string $raw = null, string $alias = null)
-{
-    $query = Patient::query();
-
-    if ($raw) {
-        // Use selectRaw for expressions — this is the key!
-        $query->selectRaw("$raw AS `$alias`");
-        $orderBy = $alias;
-    } else {
-        $query->select($field);
-        $orderBy = $field;
+            default => response()->json([]),
+        };
     }
 
-    return $query
-        ->distinct()
-        ->orderBy($orderBy)
-        ->pluck($orderBy)
-        ->filter()
-        ->values()
-        ->toArray();
-}
+    private function uniqueValues(string $field = null, ?string $raw = null, string $alias = null)
+    {
+        $query = Patient::query();
+
+        if ($raw) {
+            $query->selectRaw("$raw AS `$alias`");
+            $orderBy = $alias;
+        } else {
+            $query->select($field);
+            $orderBy = $field;
+        }
+
+        return $query
+            ->active()
+            ->distinct()
+            ->orderBy($orderBy)
+            ->pluck($orderBy)
+            ->filter()
+            ->values()
+            ->toArray();
+    }
 }

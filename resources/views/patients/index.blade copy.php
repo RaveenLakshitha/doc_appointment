@@ -3,7 +3,7 @@
 @section('title', __('file.patients'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     extend: 'collection',
                     className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2',
-                    text: 'Export',
+                    text: "{{ __('file.Export') }}",
                     buttons: [
                         { extend: 'copy', text: 'Copy' },
                         { extend: 'excel', text: 'Excel', filename: 'Patients_{{ date("Y-m-d") }}' },

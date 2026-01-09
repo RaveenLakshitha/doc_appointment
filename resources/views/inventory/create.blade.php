@@ -3,7 +3,7 @@
 @section('title', 'Add Inventory Item')
 
 @section('content')
-<div class="w-full px-4 sm:px-6 lg:px-8 py-8">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="mb-8">
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
             <a href="{{ route('inventoryitems.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Inventory Items</a>

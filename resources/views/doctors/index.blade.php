@@ -3,7 +3,7 @@
 @section('title', __('file.doctors'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 py-4 sm:py-6">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
             complete: hideLoading,
             error: hideLoading
         },
-        order: [[1, 'asc']],
+       // order: [[1, 'asc']],
         columnDefs: [
             { targets: 0, orderable: false, className: 'dtr-control', responsivePriority: 1 },
             { targets: 1, responsivePriority: 2 },
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { 
                 data: 'id',
                 render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`,
-                className: 'text-right',
+                className: 'text-center',
                 orderable: false
             },
             { data: 'full_name', render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '-'}</div>` },
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
             topStart: {
                 buttons: [
                     { extend: 'pageLength', className: 'btn btn-sm btn-light' },
-                    { extend: 'collection', text: '<span class="hidden sm:inline">Export</span><span class="sm:hidden">⬇</span>', className: 'btn btn-sm btn-dark',
+                    { extend: 'collection', text: "{{ __('file.Export') }}", className: 'btn btn-sm btn-dark',
                      buttons: [
                         { extend: 'copy', exportOptions: { columns: 'thead th:not(.no-export)' } },
                         { extend: 'excel', exportOptions: { columns: 'thead th:not(.no-export)' } },
@@ -308,7 +308,8 @@ document.addEventListener('DOMContentLoaded', function () {
             search: "",
             searchPlaceholder: "{{ __('file.search_doctors') }}",
             lengthMenu: "{{ __('file.show_entries') }}",
-            info: "{{ __('file.showing_entries') }}",
+            info: "{{ __('file.showing_entries_doctors') }}",
+            infoFiltered: "{{ __('file.filtered from _MAX_ total entries') }}",  
             infoEmpty: "{{ __('file.no_doctors_found') }}",
             emptyTable: "{{ __('file.no_doctors_found') }}",
             processing: false,

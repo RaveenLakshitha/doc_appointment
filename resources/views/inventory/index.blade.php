@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { 
                 data: 'id',
                 render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`,
-                className: 'text-right',
+                className: 'text-center',
                 orderable: false
             },
             { data: 'name', render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '-'}</div>` },
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     { extend: 'pageLength', className: 'btn btn-sm btn-light' },
                     { 
                         extend: 'collection', 
-                        text: '<span class="hidden sm:inline">Export</span><span class="sm:hidden">Download</span>', 
+                        text: "{{ __('file.Export') }}",
                         className: 'btn btn-sm btn-dark', 
                         buttons: ['copy', 'excel', 'csv', 'pdf', 'print'] 
                     }

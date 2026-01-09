@@ -87,6 +87,7 @@ class Patient extends Model
         'medical_record_number',
         'is_active',
         'is_deleted',
+        'primary_care_provider_id',
     ];
 
     protected $casts = [
@@ -129,6 +130,11 @@ class Patient extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
     // === Accessors ===
     public function getFullNameAttribute(): string
     {
@@ -146,6 +152,16 @@ class Patient extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true)->where('is_deleted', false);
+    }
+
+    public function primaryCareProvider(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'primary_care_provider_id');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(BillingInvoice::class);
     }
     
 }

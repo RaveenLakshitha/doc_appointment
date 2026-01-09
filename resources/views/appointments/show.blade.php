@@ -4,8 +4,7 @@
 @section('title', 'Appointment #'.$appointment->id.' - '.$appointment->patient->full_name)
 
 @section('content')
-<div class="w-full px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Breadcrumb -->
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="mb-8">
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
             <a href="{{ route('appointments.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
@@ -19,7 +18,6 @@
             </span>
         </div>
 
-        <!-- Header -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div class="flex items-center gap-6">
                 <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
@@ -74,10 +72,8 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
 
-            <!-- Appointment Details -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
@@ -92,16 +88,16 @@
                         <div>
                             <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Date & Time</label>
                             <p class="mt-1 text-lg font-medium text-gray-900 dark:text-white">
-                                {{ $appointment->appointment_datetime->format('l, F j, Y') }}
+                                {{ $appointment->scheduled_start->format('l, F j, Y') }}
                                 <span class="block text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    {{ $appointment->appointment_datetime->format('g:i A') }}
+                                    {{ $appointment->scheduled_start->format('g:i A') }}
                                 </span>
                             </p>
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Duration</label>
                             <p class="mt-1 text-lg font-medium text-gray-900 dark:text-white">
-                                {{ $appointment->duration_minutes }} minutes
+                                {{ \Carbon\Carbon::parse($appointment->scheduled_start)->diffInMinutes($appointment->scheduled_end) }} minutes
                             </p>
                         </div>
                         <div>
@@ -120,9 +116,7 @@
                 </div>
             </div>
 
-            <!-- Patient & Doctor -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Patient Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                         <h3 class="text-lg font-semibold flex items-center">
@@ -148,7 +142,6 @@
                     </div>
                 </div>
 
-                <!-- Doctor Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-6 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                         <h3 class="text-lg font-semibold flex items-center">
@@ -165,11 +158,11 @@
                             </div>
                             <div>
                                 <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                                    Dr. {{ $appointment->doctor->full_name }}
+                                    Dr. {{ $appointment->doctor?->getFullNameAttribute() ?? 'Not Assigned' }}
                                 </p>
-                                @if($appointment->doctor->primary_specialty)
+                                @if($appointment->doctor?->primary_specialization_id ?? false)
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ ucwords(str_replace('_', ' ', $appointment->doctor->primary_specialty)) }}
+                                        {{ ucwords(str_replace('_', ' ', $appointment->doctor->primary_specialization->name ?? '')) }}
                                     </p>
                                 @endif
                             </div>
@@ -178,8 +171,7 @@
                 </div>
             </div>
 
-            <!-- Notes -->
-            @if($appointment->notes)
+            @if($appointment->patient_notes || $appointment->doctor_notes || $appointment->admin_notes)
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
@@ -189,21 +181,37 @@
                         Notes
                     </h2>
                 </div>
-                <div class="p-6">
-                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $appointment->notes }}</p>
+                <div class="p-6 space-y-4">
+                    @if($appointment->patient_notes)
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase">Patient Notes</p>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $appointment->patient_notes }}</p>
+                        </div>
+                    @endif
+                    @if($appointment->doctor_notes)
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase">Doctor Notes</p>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $appointment->doctor_notes }}</p>
+                        </div>
+                    @endif
+                    @if($appointment->admin_notes)
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase">Admin Notes</p>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $appointment->admin_notes }}</p>
+                        </div>
+                    @endif
                 </div>
             </div>
             @endif
         </div>
 
-        <!-- Sidebar Actions -->
         <div class="space-y-6">
             <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h2>
                 </div>
                 <div class="p-6 space-y-3">
-                    <a href="{{ route('appointments.create', ['patient_id' => $appointment->patient_id_id]) }}"
+                    <a href="{{ route('appointments.create', ['patient_id' => $appointment->patient_id]) }}"
                        class="w-full flex items-center justify-center px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>

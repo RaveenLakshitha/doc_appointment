@@ -4,7 +4,7 @@
 @section('title', $service->name)
 
 @section('content')
-<div class="w-full px-4 sm:px-6 lg:px-8 py-8">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <!-- Breadcrumb -->
     <div class="mb-8">
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">

@@ -1,234 +1,495 @@
 {{-- resources/views/patients/edit.blade.php --}}
 @extends('layouts.app')
-@section('title', 'Edit Patient')
+@section('title', __('file.edit_title'))
 
 @section('content')
-<div class="w-full px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="mb-8">
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
-            <a href="{{ route('patients.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Patients</a>
+            <a href="{{ route('patients.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{{ __('file.patients') }}</a>
             <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
-            <span class="text-gray-900 dark:text-white">Edit Patient</span>
+            <span class="text-gray-900 dark:text-white">{{ __('file.edit_patient') }}</span>
         </div>
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">Edit Patient</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update patient information</p>
+        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">{{ __('file.edit_patient') }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('file.edit_description') }}</p>
     </div>
 
-    <form method="POST" action="{{ route('patients.update', $patient) }}" class="space-y-8">
-        @csrf @method('PATCH')
+    <form method="POST" action="{{ route('patients.update', $patient) }}" class="space-y-8" enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
 
-        <!-- Personal Information Section -->
-        <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-64">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Personal Information</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Basic patient details</p>
+        <div class="bg-white dark:bg-transparent rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <nav class="flex overflow-x-auto scrollbar-hide" aria-label="Tabs">
+                    <button type="button" onclick="switchTab('personal')" id="tab-personal"
+                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-400 bg-gray-50 dark:bg-gray-700/50">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            <span class="hidden sm:inline">{{ __('file.personal_information') }}</span>
+                            <span class="sm:hidden">{{ __('file.personal') }}</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('medical')" id="tab-medical"
+                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span class="hidden sm:inline">{{ __('file.medical_information') }}</span>
+                            <span class="sm:hidden">{{ __('file.medical') }}</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('insurance')" id="tab-insurance"
+                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            <span class="hidden sm:inline">{{ __('file.insurance_billing') }}</span>
+                            <span class="sm:hidden">{{ __('file.insurance') }}</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('consent')" id="tab-consent"
+                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="hidden sm:inline">{{ __('file.consent_documents') }}</span>
+                            <span class="sm:hidden">{{ __('file.consent') }}</span>
+                        </div>
+                    </button>
+                </nav>
             </div>
-            
-            <div class="px-6 py-6 space-y-6">
-                <!-- Name -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Name <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" 
-                           name="name" 
-                           value="{{ old('name', $patient->name) }}" 
-                           required
-                           class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                           placeholder="Enter full name">
-                    @error('name') 
-                        <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+
+            <div class="p-6">
+                <div id="content-personal" class="tab-content">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.first_name') }} <span class="text-red-500">*</span></label>
+                                <input type="text" name="first_name" value="{{ old('first_name', $patient->first_name) }}" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.first_name_ph') }}">
+                                @error('first_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.middle_name') }}</label>
+                                <input type="text" name="middle_name" value="{{ old('middle_name', $patient->middle_name) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.middle_name_ph') }}">
+                                @error('middle_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.last_name') }} <span class="text-red-500">*</span></label>
+                                <input type="text" name="last_name" value="{{ old('last_name', $patient->last_name) }}" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.last_name_ph') }}">
+                                @error('last_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.date_of_birth') }} <span class="text-red-500">*</span></label>
+                                <input type="date" name="date_of_birth" value="{{ old('date_of_birth', $patient->date_of_birth?->format('Y-m-d')) }}" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white [color-scheme:light] dark:[color-scheme:dark] transition-shadow">
+                                @error('date_of_birth') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.gender') }} <span class="text-red-500">*</span></label>
+                                <select name="gender" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    <option value="">{{ __('file.select_gender') }}</option>
+                                    <option value="male" {{ old('gender', $patient->gender) == 'male' ? 'selected' : '' }}>{{ __('file.male') }}</option>
+                                    <option value="female" {{ old('gender', $patient->gender) == 'female' ? 'selected' : '' }}>{{ __('file.female') }}</option>
+                                    <option value="other" {{ old('gender', $patient->gender) == 'other' ? 'selected' : '' }}>{{ __('file.other') }}</option>
+                                </select>
+                                @error('gender') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.marital_status') }}</label>
+                            <select name="marital_status" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                <option value="">{{ __('file.select_status') }}</option>
+                                <option value="single" {{ old('marital_status', $patient->marital_status) == 'single' ? 'selected' : '' }}>{{ __('file.single') }}</option>
+                                <option value="married" {{ old('marital_status', $patient->marital_status) == 'married' ? 'selected' : '' }}>{{ __('file.married') }}</option>
+                                <option value="divorced" {{ old('marital_status', $patient->marital_status) == 'divorced' ? 'selected' : '' }}>{{ __('file.divorced') }}</option>
+                                <option value="widowed" {{ old('marital_status', $patient->marital_status) == 'widowed' ? 'selected' : '' }}>{{ __('file.widowed') }}</option>
+                            </select>
+                            @error('marital_status') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.address') }}</label>
+                            <textarea name="address" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.address_ph') }}">{{ old('address', $patient->address) }}</textarea>
+                            @error('address') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.city') }}</label>
+                                <input type="text" name="city" value="{{ old('city', $patient->city) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.city') }}">
+                                @error('city') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.state') }}</label>
+                                <input type="text" name="state" value="{{ old('state', $patient->state) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.state') }}">
+                                @error('state') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.zip_code') }}</label>
+                                <input type="text" name="zip_code" value="{{ old('zip_code', $patient->zip_code) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.zip_code') }}">
+                                @error('zip_code') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.phone') }}</label>
+                                <input type="text" name="phone" value="{{ old('phone', $patient->phone) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="+1234567890">
+                                @error('phone') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.alternative_phone') }}</label>
+                                <input type="text" name="alternative_phone" value="{{ old('alternative_phone', $patient->alternative_phone) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="+1234567890">
+                                @error('alternative_phone') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.email') }}</label>
+                            <input type="email" name="email" value="{{ old('email', $patient->email) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="email@example.com">
+                            @error('email') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.preferred_contact_method') }}</label>
+                            <select name="preferred_contact_method" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                <option value="phone" {{ old('preferred_contact_method', $patient->preferred_contact_method) == 'phone' ? 'selected' : '' }}>{{ __('file.phone') }}</option>
+                                <option value="email" {{ old('preferred_contact_method', $patient->preferred_contact_method) == 'email' ? 'selected' : '' }}>{{ __('file.email') }}</option>
+                                <option value="sms" {{ old('preferred_contact_method', $patient->preferred_contact_method) == 'sms' ? 'selected' : '' }}>{{ __('file.sms') }}</option>
+                            </select>
+                            @error('preferred_contact_method') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.emergency_contact') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.emergency_name') }}</label>
+                                    <input type="text" name="emergency_contact_name" value="{{ old('emergency_contact_name', $patient->emergency_contact_name) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.full_name_ph') }}">
+                                    @error('emergency_contact_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.emergency_relationship') }}</label>
+                                    <input type="text" name="emergency_contact_relationship" value="{{ old('emergency_contact_relationship', $patient->emergency_contact_relationship) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.relationship_ph') }}">
+                                    @error('emergency_contact_relationship') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.phone') }}</label>
+                                    <input type="text" name="emergency_contact_phone" value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="+1234567890">
+                                    @error('emergency_contact_phone') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.email') }}</label>
+                                    <input type="email" name="emergency_contact_email" value="{{ old('emergency_contact_email', $patient->emergency_contact_email) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="contact@example.com">
+                                    @error('emergency_contact_email') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Email & Phone -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email <span class="text-red-500">*</span>
-                        </label>
-                        <input type="email" 
-                               name="email" 
-                               value="{{ old('email', $patient->email) }}" 
-                               required
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                               placeholder="email@example.com">
-                        @error('email') 
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div id="content-medical" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.blood_type') }}</label>
+                                <select name="blood_type" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    <option value="">{{ __('file.select') }}</option>
+                                    <option value="A+" {{ old('blood_type', $patient->blood_type) == 'A+' ? 'selected' : '' }}>A+</option>
+                                    <option value="A-" {{ old('blood_type', $patient->blood_type) == 'A-' ? 'selected' : '' }}>A-</option>
+                                    <option value="B+" {{ old('blood_type', $patient->blood_type) == 'B+' ? 'selected' : '' }}>B+</option>
+                                    <option value="B-" {{ old('blood_type', $patient->blood_type) == 'B-' ? 'selected' : '' }}>B-</option>
+                                    <option value="AB+" {{ old('blood_type', $patient->blood_type) == 'AB+' ? 'selected' : '' }}>AB+</option>
+                                    <option value="AB-" {{ old('blood_type', $patient->blood_type) == 'AB-' ? 'selected' : '' }}>AB-</option>
+                                    <option value="O+" {{ old('blood_type', $patient->blood_type) == 'O+' ? 'selected' : '' }}>O+</option>
+                                    <option value="O-" {{ old('blood_type', $patient->blood_type) == 'O-' ? 'selected' : '' }}>O-</option>
+                                </select>
+                                @error('blood_type') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.height_cm') }}</label>
+                                <input type="number" name="height_cm" value="{{ old('height_cm', $patient->height_cm) }}" min="50" max="250" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="170">
+                                @error('height_cm') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.weight_kg') }}</label>
+                                <input type="number" name="weight_kg" value="{{ old('weight_kg', $patient->weight_kg) }}" min="20" max="300" step="0.1" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="70.5">
+                                @error('weight_kg') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" 
-                               name="phone" 
-                               value="{{ old('phone', $patient->phone) }}" 
-                               required
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                               placeholder="+1234567890">
-                        @error('phone') 
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.allergies') }}</label>
+                            <textarea name="allergies" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.allergies_ph') }}">
+{{ old('allergies', $patient->allergies ? implode(', ', $patient->allergies) : '') }}
+                            </textarea>
+                            @error('allergies') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.current_medications') }}</label>
+                            <textarea name="current_medications" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.medications_ph') }}">
+{{ old('current_medications', $patient->current_medications ? implode(', ', $patient->current_medications) : '') }}
+                            </textarea>
+                            @error('current_medications') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.chronic_conditions') }}</label>
+                            <textarea name="chronic_conditions" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.conditions_ph') }}">
+{{ old('chronic_conditions', $patient->chronic_conditions ? implode(', ', $patient->chronic_conditions) : '') }}
+                            </textarea>
+                            @error('chronic_conditions') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.past_surgeries') }}</label>
+                            <textarea name="past_surgeries" rows="4" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.surgeries_ph') }}">
+{{ old('past_surgeries', $patient->past_surgeries ? implode("\n", $patient->past_surgeries) : '') }}
+                            </textarea>
+                            @error('past_surgeries') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.previous_hospitalizations') }}</label>
+                            <textarea name="previous_hospitalizations" rows="4" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.hospitalizations_ph') }}">
+{{ old('previous_hospitalizations', $patient->previous_hospitalizations ? implode("\n", $patient->previous_hospitalizations) : '') }}
+                            </textarea>
+                            @error('previous_hospitalizations') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.lifestyle') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.smoking_status') }}</label>
+                                    <select name="smoking_status" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                        <option value="never" {{ old('smoking_status', $patient->smoking_status) == 'never' ? 'selected' : '' }}>{{ __('file.never') }}</option>
+                                        <option value="former" {{ old('smoking_status', $patient->smoking_status) == 'former' ? 'selected' : '' }}>{{ __('file.former') }}</option>
+                                        <option value="current" {{ old('smoking_status', $patient->smoking_status) == 'current' ? 'selected' : '' }}>{{ __('file.current') }}</option>
+                                    </select>
+                                    @error('smoking_status') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.alcohol_consumption') }}</label>
+                                    <select name="alcohol_consumption" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                        <option value="none" {{ old('alcohol_consumption', $patient->alcohol_consumption) == 'none' ? 'selected' : '' }}>{{ __('file.none') }}</option>
+                                        <option value="occasional" {{ old('alcohol_consumption', $patient->alcohol_consumption) == 'occasional' ? 'selected' : '' }}>{{ __('file.occasional') }}</option>
+                                        <option value="moderate" {{ old('alcohol_consumption', $patient->alcohol_consumption) == 'moderate' ? 'selected' : '' }}>{{ __('file.moderate') }}</option>
+                                        <option value="heavy" {{ old('alcohol_consumption', $patient->alcohol_consumption) == 'heavy' ? 'selected' : '' }}>{{ __('file.heavy') }}</option>
+                                    </select>
+                                    @error('alcohol_consumption') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.exercise_frequency') }}</label>
+                                    <select name="exercise_frequency" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                        <option value="never" {{ old('exercise_frequency', $patient->exercise_frequency) == 'never' ? 'selected' : '' }}>{{ __('file.never') }}</option>
+                                        <option value="rarely" {{ old('exercise_frequency', $patient->exercise_frequency) == 'rarely' ? 'selected' : '' }}>{{ __('file.rarely') }}</option>
+                                        <option value="weekly" {{ old('exercise_frequency', $patient->exercise_frequency) == 'weekly' ? 'selected' : '' }}>{{ __('file.weekly') }}</option>
+                                        <option value="daily" {{ old('exercise_frequency', $patient->exercise_frequency) == 'daily' ? 'selected' : '' }}>{{ __('file.daily') }}</option>
+                                    </select>
+                                    @error('exercise_frequency') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.dietary_habits') }}</label>
+                                    <input type="text" name="dietary_habits" value="{{ old('dietary_habits', $patient->dietary_habits) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.dietary_ph') }}">
+                                    @error('dietary_habits') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- DOB & Gender -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Date of Birth
-                        </label>
-                        <input type="date" 
-                               name="date_of_birth" 
-                               value="{{ old('date_of_birth', $patient->date_of_birth?->format('Y-m-d')) }}"
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow">
-                        @error('date_of_birth') 
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div id="content-insurance" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.primary_insurance') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.provider') }}</label>
+                                    <input type="text" name="primary_insurance_provider" value="{{ old('primary_insurance_provider', $patient->primary_insurance_provider) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.insurance_company') }}">
+                                    @error('primary_insurance_provider') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.policy_number') }}</label>
+                                    <input type="text" name="primary_policy_number" value="{{ old('primary_policy_number', $patient->primary_policy_number) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="POL123456789">
+                                    @error('primary_policy_number') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.group_number') }}</label>
+                                    <input type="text" name="primary_group_number" value="{{ old('primary_group_number', $patient->primary_group_number) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="GRP987">
+                                    @error('primary_group_number') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.policy_holder_name') }}</label>
+                                    <input type="text" name="primary_policy_holder_name" value="{{ old('primary_policy_holder_name', $patient->primary_policy_holder_name) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.full_name_ph') }}">
+                                    @error('primary_policy_holder_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.relationship_to_patient') }}</label>
+                                    <input type="text" name="primary_relationship_to_patient" value="{{ old('primary_relationship_to_patient', $patient->primary_relationship_to_patient) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.relationship_ph') }}">
+                                    @error('primary_relationship_to_patient') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.insurance_phone') }}</label>
+                                    <input type="text" name="primary_insurance_phone" value="{{ old('primary_insurance_phone', $patient->primary_insurance_phone) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="+1-800-555-1234">
+                                    @error('primary_insurance_phone') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Gender
-                        </label>
-                        <select name="gender" 
-                                class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow">
-                            <option value="">Select gender</option>
-                            <option value="male" {{ old('gender', $patient->gender) == 'male' ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ old('gender', $patient->gender) == 'female' ? 'selected' : '' }}>Female</option>
-                            <option value="other" {{ old('gender', $patient->gender) == 'other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                        @error('gender') 
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.secondary_insurance') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.provider') }}</label>
+                                    <input type="text" name="secondary_insurance_provider" value="{{ old('secondary_insurance_provider', $patient->secondary_insurance_provider) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.insurance_company') }}">
+                                    @error('secondary_insurance_provider') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.policy_number') }}</label>
+                                    <input type="text" name="secondary_policy_number" value="{{ old('secondary_policy_number', $patient->secondary_policy_number) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="POL987654321">
+                                    @error('secondary_policy_number') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.billing_preferences') }}</h3>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.preferred_billing_method') }}</label>
+                                <select name="preferred_billing_method" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    <option value="insurance_first" {{ old('preferred_billing_method', $patient->preferred_billing_method) == 'insurance_first' ? 'selected' : '' }}>{{ __('file.insurance_first') }}</option>
+                                    <option value="self_pay" {{ old('preferred_billing_method', $patient->preferred_billing_method) == 'self_pay' ? 'selected' : '' }}>{{ __('file.self_pay') }}</option>
+                                </select>
+                                @error('preferred_billing_method') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.payment_methods') }}</label>
+                                <div class="space-y-2">
+                                    @php
+                                        $existing = $patient->payment_methods ?? [];
+                                        $oldMethods = old('payment_methods', []);
+                                        $selected = array_merge($oldMethods, $existing);
+                                    @endphp
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="payment_methods[]" value="credit_card" {{ in_array('credit_card', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.credit_card') }}</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="payment_methods[]" value="debit_card" {{ in_array('debit_card', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.debit_card') }}</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="payment_methods[]" value="cash" {{ in_array('cash', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.cash') }}</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="payment_methods[]" value="bank_transfer" {{ in_array('bank_transfer', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.bank_transfer') }}</span>
+                                    </label>
+                                </div>
+                                @error('payment_methods') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Address -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Address
-                    </label>
-                    <textarea name="address" 
-                              rows="3"
-                              class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow resize-none"
-                              placeholder="Enter full address">{{ old('address', $patient->address) }}</textarea>
-                    @error('address') 
-                        <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                <div id="content-consent" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.profile_photo') }}</label>
+                            <input type="file" name="profile_photo" accept="image/*" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-gray-800 dark:file:bg-gray-700 dark:hover:file:bg-gray-600">
+                            @if($patient->profile_photo_path)
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('file.current_photo') }}: {{ basename($patient->profile_photo_path) }}</p>
+                            @endif
+                            @error('profile_photo') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.communication_preferences') }}</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="receive_appointment_reminders" value="1" {{ old('receive_appointment_reminders', $patient->receive_appointment_reminders) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_appointment_reminders') }}</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="receive_lab_results" value="1" {{ old('receive_lab_results', $patient->receive_lab_results) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_lab_results') }}</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="receive_prescription_notifications" value="1" {{ old('receive_prescription_notifications', $patient->receive_prescription_notifications) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_prescription_notifications') }}</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="receive_newsletter" value="1" {{ old('receive_newsletter', $patient->receive_newsletter) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_newsletter') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.additional_documents') }}</h3>
+                            <input type="file" name="additional_documents[]" multiple accept=".pdf,.jpg,.jpeg,.png" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-gray-800 dark:file:bg-gray-700 dark:hover:file:bg-gray-600">
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('file.upload_documents_hint') }}</p>
+                            @error('additional_documents') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Medical Information Section -->
-        <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-48">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Medical Information</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Medical record and status</p>
-            </div>
-            
-            <div class="px-6 py-6 space-y-6">
-                <!-- Medical Record Number -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Medical Record Number <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" 
-                           name="medical_record_number" 
-                           value="{{ old('medical_record_number', $patient->medical_record_number) }}" 
-                           required
-                           class="w-full px-4 py-2.5 text-sm font-mono border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                           placeholder="MRN-XXXX-XXXX">
-                    @error('medical_record_number') 
-                        <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Active Status -->
-                <div class="flex items-start">
-                    <div class="flex items-center h-5">
-                        <input type="checkbox" 
-                               name="is_active" 
-                               value="1" 
-                               {{ old('is_active', $patient->is_active) ? 'checked' : '' }} 
-                               class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-gray-900 focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 dark:bg-gray-700">
-                    </div>
-                    <div class="ml-3">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Active Patient
-                        </label>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            Mark this patient as active in the system
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Emergency Contact Section -->
-        <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-48">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Emergency Contact</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Person to contact in case of emergency</p>
-            </div>
-            
-            <div class="px-6 py-6 space-y-6">
-                <!-- Emergency Contact Name & Phone -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Contact Name
-                        </label>
-                        <input type="text" 
-                               name="emergency_contact_name" 
-                               value="{{ old('emergency_contact_name', $patient->emergency_contact_name) }}"
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                               placeholder="Enter contact name">
-                        @error('emergency_contact_name') 
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Contact Phone
-                        </label>
-                        <input type="text" 
-                               name="emergency_contact_phone" 
-                               value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone) }}"
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                               placeholder="+1234567890">
-                        @error('emergency_contact_phone') 
-                            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
-            <button type="submit" 
-                    class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors duration-200 shadow-sm">
+            <button type="submit" class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-white dark:text-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                 </svg>
-                Update Patient
+                {{ __('file.update_patient') }}
             </button>
-            
-            <a href="{{ route('patients.index') }}" 
-               class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+            <a href="{{ route('patients.index') }}" class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 dark:bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
-                Cancel
+                {{ __('file.cancel') }}
             </a>
         </div>
     </form>
 </div>
+
+<script>
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    document.querySelectorAll('.tab-button').forEach(b => {
+        b.classList.remove('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
+        b.classList.add('text-gray-500','dark:text-gray-400','hover:text-gray-700','dark:hover:text-gray-300','hover:bg-gray-50','dark:hover:bg-gray-700/30');
+    });
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    const btn = document.getElementById('tab-' + tabName);
+    btn.classList.add('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
+    btn.classList.remove('text-gray-500','dark:text-gray-400');
+}
+</script>
+
+<style>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 @endsection

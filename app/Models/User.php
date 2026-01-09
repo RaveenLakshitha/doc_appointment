@@ -36,4 +36,14 @@ class User extends Authenticatable
             'is_deleted'        => 'boolean',
         ];
     }
+
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class, 'user_id');
+    }
+
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
 }

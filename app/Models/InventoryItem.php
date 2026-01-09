@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryItem extends Model
 {
@@ -43,6 +45,18 @@ class InventoryItem extends Model
         'supplier_price',
         'lead_time_days',
         'minimum_order_quantity',
+
+        // === Medicine-specific fields ===
+        'generic_name',
+        'medicine_type',           // Tablet, Capsule, Syrup, etc.
+        'dosage',
+        'side_effects',
+        'precautions_warnings',
+        'tax_rate',
+        'storage_conditions',      // JSON array
+        'is_active',
+        'medicine_image',          // path to uploaded medicine image
+        'package_image',           // path to uploaded package image
     ];
 
     protected $casts = [
@@ -50,6 +64,9 @@ class InventoryItem extends Model
         'controlled_substance'   => 'boolean',
         'hazardous_material'     => 'boolean',
         'sterile'                => 'boolean',
+        'expiry_tracking'        => 'boolean',
+        'is_active'              => 'boolean',
+
         'unit_quantity'          => 'integer',
         'current_stock'          => 'integer',
         'minimum_stock_level'    => 'integer',
@@ -58,22 +75,24 @@ class InventoryItem extends Model
         'reorder_quantity'       => 'integer',
         'lead_time_days'         => 'integer',
         'minimum_order_quantity'=> 'integer',
+
         'unit_cost'              => 'decimal:2',
         'unit_price'             => 'decimal:2',
         'supplier_price'         => 'decimal:2',
+        'tax_rate'               => 'decimal:2',
+
+        'storage_conditions'     => 'array', // JSON -> array
     ];
 
     /** -----------------------------------------------------------------
      *  Relationships
      * ----------------------------------------------------------------- */
 
-    /** Primary supplier (the one stored in primary_supplier_id) */
     public function primarySupplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'primary_supplier_id');
     }
 
-    /** All suppliers – primary **and** alternatives */
     public function suppliers(): BelongsToMany
     {
         return $this->belongsToMany(Supplier::class, 'inventory_item_supplier')
@@ -82,12 +101,11 @@ class InventoryItem extends Model
                 'supplier_price',
                 'lead_time_days',
                 'minimum_order_quantity',
-                'is_primary',               // <-- flag column
+                'is_primary',
             ])
             ->withTimestamps();
     }
 
-    /** Helper: only the **alternative** suppliers (not primary) */
     public function secondaryItems(): BelongsToMany
     {
         return $this->suppliers()->wherePivot('is_primary', false);
@@ -103,6 +121,12 @@ class InventoryItem extends Model
         return $this->belongsTo(Category::class);
     }
 
+    // Medicine-specific relationship
+    public function batches(): HasMany
+    {
+        return $this->hasMany(MedicineBatch::class);
+    }
+
     /** -----------------------------------------------------------------
      *  Scopes
      * ----------------------------------------------------------------- */
@@ -116,8 +140,15 @@ class InventoryItem extends Model
         return $query->where('current_stock', 0);
     }
 
+    // Optional: Scope to get only medicines
+    public function scopeMedicines($query)
+    {
+        return $query->whereNotNull('generic_name')
+                     ->orWhere('expiry_tracking', true);
+    }
+
     /** -----------------------------------------------------------------
-     *  Accessors
+     *  Accessors / Mutators
      * ----------------------------------------------------------------- */
     public function getTotalValueAttribute(): float
     {
@@ -131,8 +162,41 @@ class InventoryItem extends Model
             : 0;
     }
 
-    public function getImageUrlAttribute()
+    // Medicine image URL
+    public function getMedicineImageUrlAttribute(): ?string
     {
-        return $this->image ? Storage::url($this->image) : null;
+        return $this->medicine_image ? Storage::disk('public')->url($this->medicine_image) : null;
+    }
+
+    // Package image URL
+    public function getPackageImageUrlAttribute(): ?string
+    {
+        return $this->package_image ? Storage::disk('public')->url($this->package_image) : null;
+    }
+
+    // Backward compatibility for old image field (if any item still uses it)
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->medicine_image
+            ? Storage::disk('public')->url($this->medicine_image)
+            : ($this->image ? Storage::url($this->image) : null);
+    }
+
+    // Human-readable storage conditions
+    public function getStorageConditionsLabelAttribute(): string
+    {
+        if (!$this->storage_conditions) {
+            return '-';
+        }
+
+        return collect($this->storage_conditions)->implode(', ');
+    }
+
+    // Status label for Active/Inactive
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->is_active
+            ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Active</span>'
+            : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Inactive</span>';
     }
 }

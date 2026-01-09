@@ -51,6 +51,22 @@ class SpecializationController extends Controller
             ->with('success', __('file.specialization_created'));
     }
 
+    public function update(Request $request, Specialization $specialization)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:specializations,name,' . $specialization->id,
+            'description' => 'nullable|string|max:2000',
+            'department_id' => 'required|exists:departments,id',
+        ]);
+
+        $specialization->update($request->only('name', 'description', 'department_id'));
+
+        return response()->json([
+            'success' => true,
+            'message' => __('file.specialization_updated')
+        ]);
+    }
+
     public function destroy(Specialization $specialization)
     {
         if ($specialization->doctors()->exists()) {

@@ -3,8 +3,7 @@
 @section('title', __('file.patients'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 py-4 sm:py-6">
-
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
@@ -16,98 +15,15 @@
         </div>
 
         <div class="flex flex-row-reverse sm:flex-row gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            <div class="relative">
-                <button type="button" id="filter-button"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition border border-gray-300 dark:border-gray-600 shadow-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                    </svg>
-                    <span id="filter-count" class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
-                </button>
-
-            <div id="filter-popover" class="hidden absolute z-50 mt-2 left-1 -translate-x-1/2 
-                w-[98vw] max-w-sm sm:max-w-md md:max-w-lg 
-                max-h-[88vh] overflow-y-auto
-                bg-white dark:bg-gray-800 
-                rounded-xl shadow-2xl 
-                border border-gray-200 dark:border-gray-700
-                origin-top">
-                <div class="p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('file.Filters') }}</h3>
-                            <button type="button" id="close-popover" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- Section 1: Basic Info -->
-                        <div class="mb-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.gender') }}</label>
-                                    <select id="filter-gender" class="w-full px-1 py-2.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
-                                        <option value="">{{ __('file.all_genders') }}</option>
-                                        <option value="male">{{ __('file.male') }}</option>
-                                        <option value="female">{{ __('file.female') }}</option>
-                                        <option value="other">{{ __('file.other') }}</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.status') }}</label>
-                                    <select id="filter-status" class="w-full px-1 py-2.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
-                                        <option value="">{{ __('file.all_statuses') }}</option>
-                                        <option value="1">{{ __('file.active') }}</option>
-                                        <option value="0">{{ __('file.inactive') }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section 2: Age Range -->
-                        <div class="mb-3">
-                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2 uppercase tracking-wider">{{ __('file.age_range') }}</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.age_from') }}</label>
-                                    <input type="number" id="filter-age-from" min="0" max="120" placeholder="0" class="w-full px-4 py-2.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.age_to') }}</label>
-                                    <input type="number" id="filter-age-to" min="0" max="120" placeholder="120" class="w-full px-4 py-2.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section 3: Last Visit Date -->
-                        <div class="mb-3">
-                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2 uppercase tracking-wider">{{ __('file.last_visit_date') }}</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.last_visit_from') }}</label>
-                                    <input type="date" id="filter-from" class="w-full px-1 py-2.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.last_visit_to') }}</label>
-                                    <input type="date" id="filter-to" class="w-full px-1 py-2.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <button type="button" id="clear-filters"
-                                    class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                                {{ __('file.clear') }}
-                            </button>
-                            <button type="button" id="apply-filters"
-                                    class="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-sm">
-                                {{ __('file.apply') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <button type="button" id="filter-button"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition border border-gray-300 dark:border-gray-600 shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                {{ __('file.Filters') }}
+                <span id="filter-count" class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
+            </button>
 
             <a href="{{ route('patients.create') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition">
@@ -133,12 +49,6 @@
     </div>
 
     <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div id="table-loading" class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center hidden">
-            <div class="flex flex-col items-center gap-3">
-                <div class="flex space-x-2"></div>
-            </div>
-        </div>
-        
         <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
                 <tr>
@@ -157,30 +67,111 @@
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
         </table>
     </div>
+
+    <div id="filter-drawer" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-black/50" id="drawer-backdrop"></div>
+        <div class="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-800 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out" id="drawer-panel">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('file.Filters') }}</h3>
+                <button type="button" id="close-drawer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto h-full pb-32">
+                <div class="space-y-6">
+                    <div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.gender') }}</label>
+                                <select id="filter-gender" class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">{{ __('file.all_genders') }}</option>
+                                    <option value="male">{{ __('file.male') }}</option>
+                                    <option value="female">{{ __('file.female') }}</option>
+                                    <option value="other">{{ __('file.other') }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.status') }}</label>
+                                <select id="filter-status" class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">{{ __('file.all_statuses') }}</option>
+                                    <option value="1">{{ __('file.active') }}</option>
+                                    <option value="0">{{ __('file.inactive') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">{{ __('file.age_range') }}</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.age_from') }}</label>
+                                <input type="number" id="filter-age-from" min="0" max="120" placeholder="0" class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.age_to') }}</label>
+                                <input type="number" id="filter-age-to" min="0" max="120" placeholder="120" class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">{{ __('file.last_visit_date') }}</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.last_visit_from') }}</label>
+                                <input type="date" id="filter-from" class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('file.last_visit_to') }}</label>
+                                <input type="date" id="filter-to" class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fixed bottom-0 left-0 right-0 p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 max-w-md ml-auto">
+                    <div class="flex gap-3">
+                        <button type="button" id="clear-filters"
+                            class="flex-1 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                            {{ __('file.clear') }}
+                        </button>
+                        <button type="button" id="apply-filters"
+                            class="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-sm">
+                            {{ __('file.apply') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const filterButton = document.getElementById('filter-button');
-    const filterPopover = document.getElementById('filter-popover');
-    const closePopover = document.getElementById('close-popover');
+    const filterDrawer = document.getElementById('filter-drawer');
+    const drawerBackdrop = document.getElementById('drawer-backdrop');
+    const drawerPanel = document.getElementById('drawer-panel');
+    const closeDrawer = document.getElementById('close-drawer');
     const filterCount = document.getElementById('filter-count');
 
-    filterButton.addEventListener('click', function(e) {
-        e.stopPropagation();
-        filterPopover.classList.toggle('hidden');
+    filterButton.addEventListener('click', function() {
+        filterDrawer.classList.remove('hidden');
+        setTimeout(() => drawerPanel.classList.remove('translate-x-full'), 10);
     });
 
-    closePopover.addEventListener('click', function() {
-        filterPopover.classList.add('hidden');
-    });
+    function closeDrawerHandler() {
+        drawerPanel.classList.add('translate-x-full');
+        setTimeout(() => filterDrawer.classList.add('hidden'), 300);
+    }
 
-    document.addEventListener('click', function(e) {
-        if (!filterPopover.contains(e.target) && !filterButton.contains(e.target)) {
-            filterPopover.classList.add('hidden');
-        }
-    });
+    closeDrawer.addEventListener('click', closeDrawerHandler);
+    drawerBackdrop.addEventListener('click', closeDrawerHandler);
 
     function updateFilterCount() {
         const filters = [
@@ -191,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $('#filter-from').val(),
             $('#filter-to').val()
         ];
-        const activeCount = filters.filter(f => f !== '').length;
+        const activeCount = filters.filter(f => f !== '' && f !== null).length;
         if (activeCount > 0) {
             filterCount.textContent = activeCount;
             filterCount.classList.remove('hidden');
@@ -199,9 +190,6 @@ document.addEventListener('DOMContentLoaded', function () {
             filterCount.classList.add('hidden');
         }
     }
-
-    function showLoading() { document.getElementById('table-loading').classList.remove('hidden'); }
-    function hideLoading() { document.getElementById('table-loading').classList.add('hidden'); }
 
     const table = $('#docapp-table').DataTable({
         processing: true,
@@ -216,12 +204,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 d.age_to     = $('#filter-age-to').val();
                 d.from       = $('#filter-from').val();
                 d.to         = $('#filter-to').val();
-            },
-            beforeSend: showLoading,
-            complete: hideLoading,
-            error: hideLoading
+            }
         },
-        order: [[2, 'asc']],
+       // order: [[2, 'asc']],
         columnDefs: [
             { orderable: false, targets: [0, 7] },
             { searchable: false, targets: [0, 3, 5, 7] }
@@ -271,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             { extend: 'print', text: "{{ __('file.print') }}" }
                         ]
                     }
-                ],
+                ]
             },
             topEnd: 'search',
             bottomStart: 'info',
@@ -283,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
             search: "",
             searchPlaceholder: "{{ __('file.search_patients') }}",
             lengthMenu: "{{ __('file.show_entries') }}",
-            info: "{{ __('file.showing_entries') }}",
+            info: "{{ __('file.showing_entries_patients') }}",
             emptyTable: "{{ __('file.no_patients_found') }}",
             processing: "{{ __('file.processing') }}"
         }
@@ -291,16 +276,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#apply-filters').on('click', function() {
         table.draw();
-        filterPopover.classList.add('hidden');
+        closeDrawerHandler();
         updateFilterCount();
     });
 
     $('#clear-filters').on('click', function () {
         $('#filter-gender, #filter-status, #filter-age-from, #filter-age-to, #filter-from, #filter-to').val('');
         table.draw();
-        filterPopover.classList.add('hidden');
         updateFilterCount();
     });
+
+    $('#filter-gender, #filter-status, #filter-age-from, #filter-age-to, #filter-from, #filter-to').on('change', updateFilterCount);
 
     $('#filter-gender, #filter-status, #filter-age-from, #filter-age-to, #filter-from, #filter-to').on('keydown', function (e) {
         if (e.key === 'Enter') {

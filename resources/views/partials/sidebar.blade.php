@@ -1,12 +1,9 @@
-<aside id="sidebar"
-       class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-xl transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 transition-all duration-300 ease-in-out flex flex-col overflow-hidden border-r border-gray-200 dark:border-gray-700"
-       x-data="{ sidebarOpen: $store.sidebar.open }"
-       :class="{ '-translate-x-full lg:translate-x-0': !sidebarOpen, 'translate-x-0': sidebarOpen }"
-       @click.away="if (window.innerWidth < 1024) $store.sidebar.open = false">
-
-    <div class="absolute inset-y-0 right-0 w-0.5 bg-gradient-to-b from-green-400 via-green-500 to-green-600 dark:from-green-500 dark:via-green-600 dark:to-green-700"></div>
-
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-transparent dark:from-gray-800 dark:to-transparent">
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 shadow-lg border-r dark:border-gray-700 transition-all duration-300 z-50 flex flex-col lg:translate-x-0 -translate-x-full" 
+style="width: 16rem; max-height: 100vh;">
+    
+    <!-- Logo Section with Collapse Button -->
+    <div class="h-16 flex items-center justify-between px-4 border-b dark:border-gray-700 flex-shrink-0">
         <a href="{{ route('dashboard') }}" class="flex items-center space-x-3">
             @if($clinic_logo)
                 <img src="{{ $clinic_logo }}" alt="Clinic Logo" class="sidebar-text h-9 w-9 rounded-lg object-cover ring-2 ring-green-500/20">
@@ -21,22 +18,23 @@
                 {{ $clinic_name }}
             </span>
         </a>
-
-        <div class="flex items-center space-x-2">
-            <button id="toggle-sidebar" class="hidden lg:block text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 transition-colors" @click="$store.sidebar.toggle()">
-                <svg class="w-5 h-5 transition-transform duration-200" :class="{ 'rotate-180': !$store.sidebar.open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                </svg>
-            </button>
-            <button id="close-sidebar" class="lg:hidden text-gray-500 hover:text-red-:600 dark:text-gray-400 dark:hover:text-red-400 transition-colors" @click="$store.sidebar.open = false">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
+        <button id="toggle-sidebar" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0" aria-label="Toggle sidebar">
+            <!-- Icon when sidebar is EXPANDED (pointing left - will collapse) -->
+            <svg id="icon-expanded" class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-opacity duration-200 opacity-100" 
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+            </svg>
+            
+            <!-- Icon when sidebar is COLLAPSED (pointing right - will expand) -->
+            <svg id="icon-collapsed" class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-opacity duration-200 opacity-0 absolute" 
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+        </button>
     </div>
 
-    <nav class="flex-1 mt-6 space-y-1 px-3 overflow-y-auto overflow-x-hidden">
+    <!-- Navigation Menu -->
+    <nav class="p-4 space-y-2 flex-1 overflow-y-auto overflow-x-hidden">
         @auth
             <a href="{{ route('dashboard') }}"
             class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden"
@@ -79,11 +77,18 @@
                            onmouseout="this.style.backgroundColor='{{ request()->routeIs('doctors.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('doctors.index') ? $primary_color : 'inherit' }}'">
                             {{ __('file.doctors_list') }}
                         </a>
-                        <a href="#" 
+                        <a href="{{ route('doctor-schedules.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('doctor-schedules.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('doctor-schedules.*') ? $primary_color.'10' : 'transparent' }}"
+                           style="color: {{ request()->routeIs('doctor-schedules.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('doctor-schedules.index') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('doctor-schedules.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('doctor-schedules.*') ? $primary_color : 'inherit' }}'">
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('doctor-schedules.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('doctor-schedules.index') ? $primary_color : 'inherit' }}'">
+                            {{ __('file.All_Schedules') }}
+                        </a>
+                        <a href="{{ route('doctor-schedules.calendar') }}"" 
+                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                           style="color: {{ request()->routeIs('doctor-schedules.calendar') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('doctor-schedules.calendar') ? $primary_color.'10' : 'transparent' }}"
+                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('doctor-schedules.calendar') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('doctor-schedules.calendar') ? $primary_color : 'inherit' }}'">
                             {{ __('file.doctor_schedule') }}
                         </a>
                         <a href="{{ route('specializations.index') }}"
@@ -112,48 +117,51 @@
                         <span class="ml-3 sidebar-text">{{ __('file.patients') }}</span>
                 </a>
 
-                <div x-data="{ open: {{ request()->routeIs('appointments.*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                           class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
-                            style="background-color: transparent; color: inherit; box-shadow: none"
-                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                            onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
-                        <div class="flex items-center">
-                            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <span class="ml-3 sidebar-text">{{ __('file.appointments') }}</span>
-                        </div>
-                        <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                    <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
-                        <a href="{{ route('appointments.index') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('appointments.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('appointments.index') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('appointments.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('appointments.index') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.all_appointments') }}
-                        </a>
-                        <a href="{{ route('appointments.calendar') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('appointments.calendar') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('appointments.calendar') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('appointments.calendar') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('appointments.calendar') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.appointment_calendar') }}
-                        </a>
-                        <a href="{{ route('appointments.index') }}?status=pending"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->is('appointments') && request('status') === 'pending' ? $primary_color : 'inherit' }}; background-color: {{ request()->is('appointments') && request('status') === 'pending' ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->is('appointments') && request('status') === 'pending' ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->is('appointments') && request('status') === 'pending' ? $primary_color : 'inherit' }}'">
-                            {{ __('file.appointment_requests') }}
-                        </a>
-                    </div>
-                </div>
+                <div x-data="{ open: {{ request()->routeIs('appointments.*') || request()->routeIs('appointment_requests.*') ? 'true' : 'false' }} }">
+    <button @click="open = !open"
+            class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
+            style="background-color: transparent; color: inherit; box-shadow: none"
+            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+            onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
+        <div class="flex items-center">
+            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span class="ml-3 sidebar-text">{{ __('file.appointments') }}</span>
+        </div>
+        <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+    </button>
 
-                <div x-data="{ open: {{ request()->routeIs('admin.prescriptions.*') || request()->routeIs('admin.medicine-templates.*') ? 'true' : 'false' }} }">
+    <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
+        <a href="{{ route('appointments.index') }}"
+           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+           style="color: {{ request()->routeIs('appointments.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('appointments.index') ? $primary_color.'10' : 'transparent' }}"
+           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+           onmouseout="this.style.backgroundColor='{{ request()->routeIs('appointments.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('appointments.index') ? $primary_color : 'inherit' }}'">
+            {{ __('file.all_appointments') }}
+        </a>
+
+        <a href="{{ route('appointments.calendar') }}"
+           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+           style="color: {{ request()->routeIs('appointments.calendar') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('appointments.calendar') ? $primary_color.'10' : 'transparent' }}"
+           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+           onmouseout="this.style.backgroundColor='{{ request()->routeIs('appointments.calendar') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('appointments.calendar') ? $primary_color : 'inherit' }}'">
+            {{ __('file.appointment_calendar') }}
+        </a>
+
+        <a href="{{ route('appointment_requests.index') }}"
+           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+           style="color: {{ request()->routeIs('appointment_requests.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('appointment_requests.*') ? $primary_color.'10' : 'transparent' }}"
+           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+           onmouseout="this.style.backgroundColor='{{ request()->routeIs('appointment_requests.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('appointment_requests.*') ? $primary_color : 'inherit' }}'">
+            {{ __('file.appointment_requests') }}
+        </a>
+    </div>
+</div>
+
+                <div x-data="{ open: {{ request()->routeIs('prescriptions.*') || request()->routeIs('medicine-templates.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open"
                             class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
                             style="background-color: transparent; color: inherit; box-shadow: none"
@@ -170,25 +178,18 @@
                         </svg>
                     </button>
                     <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
-                        <a href="{{ route('admin.prescriptions.index') }}"
+                        <a href="{{ route('prescriptions.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.prescriptions.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.prescriptions.index') ? $primary_color.'10' : 'transparent' }}"
+                           style="color: {{ request()->routeIs('prescriptions.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.prescriptions.index') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.prescriptions.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.prescriptions.index') ? $primary_color : 'inherit' }}'">
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('prescriptions.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.prescriptions.index') ? $primary_color : 'inherit' }}'">
                             {{ __('file.all_prescriptions') }}
                         </a>
-                        <a href="{{ route('admin.prescriptions.create') }}"
+                        <a href="{{ route('medicine-templates.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.prescriptions.create') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.prescriptions.create') ? $primary_color.'10' : 'transparent' }}"
+                           style="color: {{ request()->routeIs('medicine-templates.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('medicine-templates.*') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.prescriptions.create') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.prescriptions.create') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.create_prescription') }}
-                        </a>
-                        <a href="{{ route('medication-templates.index') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.medicine-templates.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.medicine-templates.*') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.medicine-templates.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.medicine-templates.*') ? $primary_color : 'inherit' }}'">
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('medicine-templates.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('medicine-templates.*') ? $primary_color : 'inherit' }}'">
                             {{ __('file.medicine_templates') }}
                         </a>
                     </div>
@@ -228,15 +229,15 @@
                     </div>
                 </div>
 
-                <a href="{{ route('admin.pharmacy.index') }}"
+                <a href="{{ route('medicines.index') }}"
                 class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative"
-                style="background-color: {{ request()->routeIs('admin.pharmacy.*') ? $primary_color : 'transparent' }};
-                        color: {{ request()->routeIs('admin.pharmacy.*') ? '#ffffff' : 'inherit' }};
-                        box-shadow: {{ request()->routeIs('admin.pharmacy.*') ? '0 4px 15px ' . $primary_color . '40' : 'none' }}"
+                style="background-color: {{ request()->routeIs('medicines.*') ? $primary_color : 'transparent' }};
+                        color: {{ request()->routeIs('medicines.*') ? '#ffffff' : 'inherit' }};
+                        box-shadow: {{ request()->routeIs('medicines.*') ? '0 4px 15px ' . $primary_color . '40' : 'none' }}"
                 onmouseover="this.style.backgroundColor='{{ $primary_color }}'; this.style.color='#fff'; this.style.boxShadow='0 4px 15px {{ $primary_color }}40'"
-                onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.pharmacy.*') ? $primary_color : 'transparent' }}'; 
-                            this.style.color='{{ request()->routeIs('admin.pharmacy.*') ? '#ffffff' : 'inherit' }}';
-                            this.style.boxShadow='{{ request()->routeIs('admin.pharmacy.*') ? '0 4px 15px ' . $primary_color . '40' : 'none' }}'"
+                onmouseout="this.style.backgroundColor='{{ request()->routeIs('medicines.*') ? $primary_color : 'transparent' }}'; 
+                            this.style.color='{{ request()->routeIs('medicines.*') ? '#ffffff' : 'inherit' }}';
+                            this.style.boxShadow='{{ request()->routeIs('medicines.*') ? '0 4px 15px ' . $primary_color . '40' : 'none' }}'"
                 data-tooltip="{{ __('file.pharmacy') }}">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
@@ -261,31 +262,31 @@
                         </svg>
                     </button>
                     <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
-                        <a href="{{ route('admin.invoices.index') }}"
+                        <a href="{{ route('invoices.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.invoices.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.invoices.index') ? $primary_color.'10' : 'transparent' }}"
+                           style="color: {{ request()->routeIs('invoices.index') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.invoices.index') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.invoices.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.invoices.index') ? $primary_color : 'inherit' }}'">
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('invoices.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.invoices.index') ? $primary_color : 'inherit' }}'">
                             {{ __('file.invoices_list') }}
                         </a>
-                        <a href="{{ route('admin.invoices.create') }}"
+                        <a href="{{ route('invoices.pos') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.invoices.create') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.invoices.create') ? $primary_color.'10' : 'transparent' }}"
+                           style="color: {{ request()->routeIs('invoices.pos') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.invoices.pos') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.invoices.create') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.invoices.create') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.create_invoice') }}
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('invoices.pos') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.invoices.pos') ? $primary_color : 'inherit' }}'">
+                            {{ __('file.pos') }}
                         </a>
-                        <a href="{{ route('admin.payments.index') }}"
+                        <a href="{{ route('payments.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.payments.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.payments.*') ? $primary_color.'10' : 'transparent' }}"
+                           style="color: {{ request()->routeIs('payments.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.payments.*') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.payments.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.payments.*') ? $primary_color : 'inherit' }}'">
+                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('payments.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.payments.*') ? $primary_color : 'inherit' }}'">
                             {{ __('file.payments_history') }}
                         </a>
                     </div>
                 </div>
 
-                <div x-data="{ open: {{ request()->routeIs('departments.*') || request()->routeIs('admin.services.*') ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ request()->routeIs('departments.*') || request()->routeIs('admin.services.*') || request()->routeIs('rooms.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open"
                             class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
                             style="background-color: transparent; color: inherit; box-shadow: none"
@@ -309,6 +310,15 @@
                            onmouseout="this.style.backgroundColor='{{ request()->routeIs('departments.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('departments.*') ? $primary_color : 'inherit' }}'">
                             {{ __('file.department_list') }}
                         </a>
+                        <a href="{{ route('rooms.index') }}"
+                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                            style="color: {{ request()->routeIs('rooms.*') ? $primary_color : 'inherit' }}; 
+                                    background-color: {{ request()->routeIs('rooms.*') ? $primary_color.'10' : 'transparent' }}"
+                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                            onmouseout="this.style.backgroundColor='{{ request()->routeIs('rooms.*') ? $primary_color.'10' : 'transparent' }}'; 
+                                        this.style.color='{{ request()->routeIs('rooms.*') ? $primary_color : 'inherit' }}'">
+                                {{ __('file.rooms') }}
+                            </a>
                         <a href="{{ route('admin.services.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
                            style="color: {{ request()->routeIs('admin.services.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.services.*') ? $primary_color.'10' : 'transparent' }}"
@@ -367,7 +377,7 @@
                     </div>
                 </div>
 
-                <div x-data="{ open: {{ request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') || request()->routeIs('admin.attendance.*') ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open"
                            class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
                             style="background-color: transparent; color: inherit; box-shadow: none"
@@ -399,143 +409,138 @@
                            onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.roles.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.roles.*') ? $primary_color : 'inherit' }}'">
                             Roles Management
                         </a>
-                        <a href="{{ route('admin.attendance.index') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.attendance.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.attendance.*') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.attendance.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.attendance.*') ? $primary_color : 'inherit' }}'">
-                            Attendance
-                        </a>
                     </div>
                 </div>
 
-                <div x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                            class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
-                            style="background-color: transparent; color: inherit; box-shadow: none"
-                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                            onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
-                        <div class="flex items-center">
-                            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                            <span class="ml-3 sidebar-text">{{ __('file.reports') }}</span>
-                        </div>
-                        <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                    <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
-                        <a href="{{ route('admin.reports.appointments') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.reports.appointments') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.appointments') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.appointments') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.appointments') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.appointment_reports') }}
-                        </a>
-                        <a href="{{ route('admin.reports.financial') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.reports.financial') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.financial') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.financial') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.financial') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.financial_reports') }}
-                        </a>
-                        <a href="{{ route('admin.reports.patient-visits') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.reports.patient-visits') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.patient-visits') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.patient-visits') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.patient-visits') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.patient_visit_reports') }}
-                        </a>
-                        <a href="{{ route('admin.reports.inventory') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('admin.reports.inventory') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.inventory') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.inventory') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.inventory') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.inventory_reports') }}
-                        </a>
-                    </div>
-                </div>
-
-                <div x-data="{ open: {{ request()->routeIs('admin.settings.*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                            class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
-                            style="background-color: transparent; color: inherit; box-shadow: none"
-                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                            onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
-                        <div class="flex items-center">
-                            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            <span class="ml-3 sidebar-text">{{ __('file.settings') }}</span>
-                        </div>
-                        <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                    <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
-                        <a href="{{ route('settings.general') }}"
-                           class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
-                           style="color: {{ request()->routeIs('settings.general') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('settings.general') ? $primary_color.'10' : 'transparent' }}"
-                           onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
-                           onmouseout="this.style.backgroundColor='{{ request()->routeIs('settings.general') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('settings.general') ? $primary_color : 'inherit' }}'">
-                            {{ __('file.general_settings') }}
-                        </a>
-                    </div>
-                </div>
-
-            @else
-                @role('therapist')
-                    <a href="{{ route('therapist.appointments.index') }}"
-                       class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400">
-                        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <span class="ml-3 sidebar-text">{{ __('file.my_appointments') }}</span>
-                    </a>
-                @endrole
-
-                @role('primary-therapist')
-                    <a href="{{ route('patients.index') }}"
-                       class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative {{ request()->routeIs('patients.*') ? 'bg-green-500 text-white shadow-md shadow-green-500/30 dark:shadow-green-600/40' : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400' }}">
+                <div x-data="{ open: {{ request()->routeIs('employees.*') || request()->routeIs('attendances.*') || request()->routeIs('timesheets.*') || request()->routeIs('leave-requests.*')  ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                        class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
+                        style="background-color: transparent; color: inherit; box-shadow: none"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
+                    <div class="flex items-center">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
-                        <span class="ml-3 sidebar-text">{{ __('file.patients') }}</span>
-                    </a>
-                @endrole
+                        <span class="ml-3 sidebar-text">{{ __('file.hr') }}</span>
+                    </div>
+                    <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
 
-                @role('counter')
-                    <a href="{{ route('counter.invoices.index') }}"
-                       class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400">
-                        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="ml-3 sidebar-text">{{ __('file.issue_invoice') }}</span>
+                <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
+                    <a href="{{ route('employees.index') }}"
+                    class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                    style="color: {{ request()->routeIs('employees.index') || request()->routeIs('employees.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('employees.*') ? $primary_color.'10' : 'transparent' }}"
+                    onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                    onmouseout="this.style.backgroundColor='{{ request()->routeIs('employees.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('employees.*') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.employees') }}
                     </a>
-                @endrole
 
-                @role('hr')
-                    <a href="{{ route('hr.dashboard') }}"
-                       class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400">
+                    <a href="{{ route('attendances.index') }}"
+                    class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                    style="color: {{ request()->routeIs('attendances.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('attendances.*') ? $primary_color.'10' : 'transparent' }}"
+                    onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                    onmouseout="this.style.backgroundColor='{{ request()->routeIs('attendances.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('attendances.*') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.attendance') }}
+                    </a>
+
+                    <a href="{{ route('timesheets.index') }}"
+                    class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                    style="color: {{ request()->routeIs('timesheets.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('timesheets.*') ? $primary_color.'10' : 'transparent' }}"
+                    onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                    onmouseout="this.style.backgroundColor='{{ request()->routeIs('timesheets.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('timesheets.*') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.timesheets') }}
+                    </a>
+
+                    <a href="{{ route('leave-requests.index') }}"
+                    class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                    style="color: {{ request()->routeIs('leave-requests.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('leave-requests.*') ? $primary_color.'10' : 'transparent' }}"
+                    onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                    onmouseout="this.style.backgroundColor='{{ request()->routeIs('leave-requests.*') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('leave-requests.*') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.leave_requests') }}
+                    </a>
+                </div>
+            </div>
+
+            <div x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                        class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
+                        style="background-color: transparent; color: inherit; box-shadow: none"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
+                    <div class="flex items-center">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
-                        <span class="ml-3 sidebar-text">{{ __('file.real_time_ops') }}</span>
+                        <span class="ml-3 sidebar-text">{{ __('file.reports') }}</span>
+                    </div>
+                    <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
+                    <a href="{{ route('admin.reports.appointments') }}"
+                        class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                        style="color: {{ request()->routeIs('admin.reports.appointments') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.appointments') ? $primary_color.'10' : 'transparent' }}"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.appointments') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.appointments') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.appointment_reports') }}
                     </a>
-                @endrole
+                    <a href="{{ route('admin.reports.financial') }}"
+                        class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                        style="color: {{ request()->routeIs('admin.reports.financial') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.financial') ? $primary_color.'10' : 'transparent' }}"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.financial') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.financial') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.financial_reports') }}
+                    </a>
+                    <a href="{{ route('admin.reports.patient-visits') }}"
+                        class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                        style="color: {{ request()->routeIs('admin.reports.patient-visits') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.patient-visits') ? $primary_color.'10' : 'transparent' }}"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.patient-visits') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.patient-visits') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.patient_visit_reports') }}
+                    </a>
+                    <a href="{{ route('admin.reports.inventory') }}"
+                        class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                        style="color: {{ request()->routeIs('admin.reports.inventory') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.reports.inventory') ? $primary_color.'10' : 'transparent' }}"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.reports.inventory') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.reports.inventory') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.inventory_reports') }}
+                    </a>
+                </div>
+            </div>
 
-                @role('patient')
-                    <a href="{{ route('patient.book') }}"
-                       class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400">
+            <div x-data="{ open: {{ request()->routeIs('admin.settings.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                        class="w-full group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative text-gray-700 dark:text-gray-300"
+                        style="background-color: transparent; color: inherit; box-shadow: none"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit'">
+                    <div class="flex items-center">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <span class="ml-3 sidebar-text">{{ __('file.book_appointment') }}</span>
+                        <span class="ml-3 sidebar-text">{{ __('file.settings') }}</span>
+                    </div>
+                    <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition x-cloak class="ml-8 space-y-1 mt-1">
+                    <a href="{{ route('settings.general') }}"
+                        class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
+                        style="color: {{ request()->routeIs('settings.general') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('settings.general') ? $primary_color.'10' : 'transparent' }}"
+                        onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"
+                        onmouseout="this.style.backgroundColor='{{ request()->routeIs('settings.general') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('settings.general') ? $primary_color : 'inherit' }}'">
+                        {{ __('file.general_settings') }}
                     </a>
-                @endrole
+                </div>
+            </div>
+
+            @else
             @endrole
 
         @else
@@ -555,38 +560,6 @@
             </a>
         @endauth
     </nav>
+
 </aside>
 
-<div x-data="{ sidebarOpen: $store.sidebar.open }"
-     x-show="sidebarOpen && window.innerWidth < 1024"
-     @click="$store.sidebar.open = false"
-     x-transition:enter="transition-opacity ease-linear duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="transition-opacity ease-linear duration-300"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
-     class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 lg:hidden"
-     x-cloak>
-</div>
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.store('sidebar', {
-        open: window.innerWidth >= 1024,
-        toggle() {
-            this.open = !this.open;
-            if (!this.open) this.collapseAllMenuItems();
-        },
-        collapseAllMenuItems() {
-            document.querySelectorAll('[x-data]').forEach(el => {
-                const data = Alpine.$data(el);
-                if (data && typeof data.open === 'boolean') data.open = false;
-            });
-        }
-    });
-});
-</script>
-
-<style>
-[x-cloak] { display: none !important; }
-</style>

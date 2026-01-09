@@ -86,9 +86,14 @@
 
         <!-- Login Button -->
         <div>
-            <x-primary-button class="w-full justify-center py-3 px-4 text-base font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:ring-4 focus:ring-indigo-300 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                {{ __('Sign in') }}
-            </x-primary-button>
+            <x-primary-button class="w-full justify-center py-3 px-4 text-base font-semibold rounded-xl 
+                bg-gradient-to-r from-emerald-600 to-teal-500
+                hover:from-emerald-700 hover:to-teal-600
+                focus:ring-emerald-300
+                hover:shadow-[0_10px_30px_rgba(99,102,241,0.35)]
+                transition-all duration-200 shadow-lg transform hover:-translate-y-0.5">
+                    {{ __('Sign in') }}
+                </x-primary-button>
         </div>
     </form>
 </x-guest-layout>

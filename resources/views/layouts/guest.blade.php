@@ -24,21 +24,22 @@
 
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
-        @keyframes gradient {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes gradient-zoom {
+            0% { background-size: 300% 300%; }
+            50% { background-size: 500% 500%; }
+            100% { background-size: 300% 300%; }
         }
+
 
         .animated-gradient {
             background: linear-gradient(-45deg, 
-                var(--primary-dark), 
-                var(--primary), 
-                var(--primary-light), 
-                {{ adjustBrightness($primary_color ?? '#1e40af', 60) }}
+                #4b7d93, 
+                #6b9ccd, 
+                #4fa2a1, 
+                {{ adjustBrightness('#2E3447'?? '#1e40af', 60) }}
             );
             background-size: 400% 400%;
-            animation: gradient 12s ease infinite;
+            animation: gradient-zoom 4s ease-in-out infinite;
         }
 
         .btn-primary {
@@ -71,7 +72,7 @@
         <div class="min-h-screen flex flex-col justify-end sm:justify-center items-center animated-gradient px-4 sm:px-6 py-8">
 
         <div class="mb-10 text-center">
-            <div class="inline-block bg-white/95 backdrop-blur-lg rounded-3xl p-5 ring-4 ring-white/20 mb-6">
+            <div class="inline-block bg-transparent backdrop-blur-lg rounded-2xl p-2 ring-4 ring-white/20 mb-6">
                 @if($clinic_logo ?? false)
                     <img src="{{ $clinic_logo }}"
                          alt="{{ $clinic_name ?? 'Clinic' }} Logo"

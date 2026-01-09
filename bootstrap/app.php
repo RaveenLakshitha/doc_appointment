@@ -23,4 +23,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, Illuminate\Http\Request $request) {
+            $statusCode = $e->getStatusCode();
+
+            // Admin-specific error pages
+            if ($request->is('admin*') && view()->exists("errors.admin.{$statusCode}")) {
+                return response()->view("errors.admin.{$statusCode}", ['exception' => $e], $statusCode);
+            }
+
+            // General custom error pages (fallback)
+            if (view()->exists("errors.{$statusCode}")) {
+                return response()->view("errors.{$statusCode}", ['exception' => $e], $statusCode);
+            }
+        });
     })->create();

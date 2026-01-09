@@ -5,110 +5,142 @@ namespace Database\Seeders;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Doctor;
+use App\Models\DoctorSchedule;
+use App\Models\DoctorScheduleDay;
+use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Faker\Factory as Faker;
 
 class AppointmentSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = Faker::create('si_LK');
+        // Set Carbon to current date: January 02, 2026
+        Carbon::setTestNow(Carbon::parse('2026-01-02'));
 
-        $patients = Patient::active()->inRandomOrder()->take(30)->get();
-        $doctors  = Doctor::active()->get();
+        $patients = Patient::where('is_active', true)->get();
+        $doctors  = Doctor::where('is_active', true)->get();
 
-        if ($patients->isEmpty() || $doctors->isEmpty()) {
-            $this->command->info('No active patients or doctors found. Run PatientSeeder and DoctorSeeder first!');
-            return;
-        }
-
-        $statuses = ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show', 'rescheduled'];
-        $types    = ['consultation', 'follow_up', 'procedure', 'checkup', 'emergency'];
-
-        foreach ($patients as $patient) {
-            $appointmentsCreated = 0;
-            $attempts = 0;
-
-            while ($appointmentsCreated < mt_rand(1, 4) && $attempts < 20) {
-                $doctor = $doctors->random();
-                $date   = Carbon::today()->addDays(mt_rand(-30, 60));
-                $hour   = mt_rand(8, 17);
-                $minute = in_array($hour, [12, 13]) ? 0 : [0, 30][mt_rand(0, 1)]; // Avoid lunch conflicts
-                $start  = $date->copy()->setTime($hour, $minute);
-
-                $duration = [30, 45, 60, 90][array_rand([30, 45, 60, 90])];
-                $end = $start->copy()->addMinutes($duration);
-
-                $conflict = Appointment::where('doctor_id', $doctor->id)
-                    ->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('appointment_datetime', [$start, $end])
-                          ->orWhereBetween(\DB::raw('DATE_ADD(appointment_datetime, INTERVAL duration_minutes MINUTE)'), [$start, $end])
-                          ->orWhereRaw('? BETWEEN appointment_datetime AND DATE_ADD(appointment_datetime, INTERVAL duration_minutes MINUTE)', [$start]);
-                    })
-                    ->exists();
-
-                if ($conflict) {
-                    $attempts++;
-                    continue;
-                }
-
-                Appointment::create([
-                    'patient_id'           => $patient->id,
-                    'doctor_id'            => $doctor->id,
-                    'appointment_datetime' => $start,
-                    'duration_minutes'     => $duration,
-                    'status'               => $statuses[array_rand($statuses)],
-                    'appointment_type'     => $types[array_rand($types)],
-                    'reason_for_visit'     => $faker->realText(80),
-                    'doctor_notes'         => mt_rand(0, 3) == 0 ? $faker->paragraph(2) : null,
-                    'patient_notes'        => mt_rand(0, 4) == 0 ? $faker->paragraph() : null,
-                    'admin_notes'          => mt_rand(0, 10) == 0 ? 'Insurance verified / VIP patient' : null,
-                ]);
-
-                $appointmentsCreated++;
-            }
-        }
-
-        // Guaranteed appointments for today & tomorrow (perfect for testing calendar)
-        $this->createGuaranteedAppointments($doctors, $patients);
-    }
-
-    private function createGuaranteedAppointments($doctors, $patients)
-    {
-        $today    = Carbon::today();
-        $tomorrow = Carbon::tomorrow();
-
-        $slots = [
-            ['hour' => 9,  'minute' => 0],
-            ['hour' => 10, 'minute' => 30],
-            ['hour' => 14, 'minute' => 0],
-            ['hour' => 15, 'minute' => 30],
+        $statuses = [
+            Appointment::STATUS_PENDING   => 30,
+            Appointment::STATUS_APPROVED  => 50,
+            Appointment::STATUS_CANCELLED => 12,
+            Appointment::STATUS_REJECTED  => 8,
         ];
 
-        foreach ([$today, $tomorrow] as $day) {
-            foreach ($doctors->take(5) as $doctor) {
-                $slot = $slots[array_rand($slots)];
-                $time = $day->copy()->setHour($slot['hour'])->setMinute($slot['minute']);
+        $types = [
+            Appointment::TYPE_SPECIFIC,
+            Appointment::TYPE_ANY,
+            Appointment::TYPE_PRIMARY_PROVIDER,
+        ];
 
-                if (Appointment::where('doctor_id', $doctor->id)
-                    ->where('appointment_datetime', $time)
-                    ->exists()) {
-                    continue;
+        foreach ($patients as $patient) {
+            $appointmentCount = fake()->numberBetween(1, 6);
+
+            for ($i = 0; $i < $appointmentCount; $i++) {
+                $appointmentType = fake()->randomElement($types);
+
+                $doctor = null;
+                $room   = null;
+                $scheduledStart = null;
+                $scheduledEnd   = null;
+
+                if (in_array($appointmentType, [Appointment::TYPE_SPECIFIC, Appointment::TYPE_PRIMARY_PROVIDER])) {
+                    $doctor = $doctors->random();
                 }
 
+                // Generate random date between 3 months ago and 3 months from now (around Jan 2026)
+                $appointmentDate = fake()->dateTimeBetween('-3 months', '+3 months');
+                $dayName = strtolower($appointmentDate->format('l')); // e.g., 'monday'
+
+                if ($doctor) {
+                    // Find a valid active schedule for this doctor on this day
+                    $schedule = DoctorSchedule::where('doctor_id', $doctor->id)
+                        ->where('is_active', true)
+                        ->whereHas('days', fn($q) => $q->where('day_of_week', $dayName))
+                        ->inRandomOrder()
+                        ->first();
+
+                    if ($schedule) {
+                        $room = $schedule->room;
+
+                        // Parse start/end times correctly
+                        $startHour = $schedule->start_time->hour;
+                        $startMinute = $schedule->start_time->minute;
+                        $endHour = $schedule->end_time->hour;
+                        $endMinute = $schedule->end_time->minute;
+
+                        // Generate possible 30-minute slots
+                        $possibleSlots = [];
+                        $current = Carbon::createFromTime($startHour, $startMinute, 0);
+
+                        $endTime = Carbon::createFromTime($endHour, $endMinute, 0);
+                        if ($endTime->lt($current)) {
+                            $endTime->addDay(); // Handle overnight (rare)
+                        }
+
+                        while ($current->copy()->addMinutes(30)->lte($endTime)) {
+                            $possibleSlots[] = $current->copy();
+                            $current->addMinutes(30);
+                        }
+
+                        if (!empty($possibleSlots)) {
+                            $slotStart = fake()->randomElement($possibleSlots);
+                            $scheduledStart = Carbon::parse($appointmentDate->format('Y-m-d') . ' ' . $slotStart->format('H:i:s'));
+                            $scheduledEnd   = $scheduledStart->copy()->addMinutes(30);
+                        }
+                    }
+                }
+
+                // Fallback for TYPE_ANY or if no schedule found
+                if (!$scheduledStart) {
+                    $fallbackHour = fake()->numberBetween(9, 16);
+                    $fallbackMinute = fake()->randomElement([0, 30]);
+
+                    $scheduledStart = Carbon::parse($appointmentDate->format('Y-m-d'))
+                        ->setTime($fallbackHour, $fallbackMinute);
+
+                    $scheduledEnd = $scheduledStart->copy()->addMinutes(30);
+                    $room = Room::inRandomOrder()->first();
+                }
+
+                // Weighted random status
+                $status = fake()->randomElement(array_keys($statuses));
+
                 Appointment::create([
-                    'patient_id'           => $patients->random()->id,
-                    'doctor_id'            => $doctor->id,
-                    'appointment_datetime' => $time,
-                    'duration_minutes'     => 45,
-                    'status'               => 'confirmed',
-                    'appointment_type'     => 'consultation',
-                    'reason_for_visit'     => 'Follow-up visit - ' . ($day->isToday() ? 'Today' : 'Tomorrow'),
-                    'doctor_notes'         => 'Patient stable, review blood reports',
-                    'patient_notes'        => 'Please be on time',
+                    'patient_id'       => $patient->id,
+                    'doctor_id'        => $doctor?->id,
+                    'room_id'          => $room?->id,
+                    'scheduled_start'  => $scheduledStart,
+                    'scheduled_end'    => $scheduledEnd,
+                    'appointment_type' => $appointmentType,
+                    'status'           => $status,
+                    'reason_for_visit' => fake()->randomElement([
+                        'Routine check-up',
+                        'Follow-up consultation',
+                        'Chest pain evaluation',
+                        'Joint pain assessment',
+                        'Pediatric vaccination',
+                        'Post-surgery review',
+                        'Blood pressure check',
+                        'Diabetes management',
+                        'Headache evaluation',
+                        'Cancer treatment follow-up',
+                    ]),
+                    'patient_notes'    => fake()->optional(0.6)->paragraph(1, 3),
+                    'doctor_notes'     => in_array($status, [Appointment::STATUS_APPROVED, Appointment::STATUS_PENDING])
+                        ? fake()->optional(0.7)->paragraph(1, 2)
+                        : null,
+                    'admin_notes'      => fake()->optional(0.3)->sentence,
+                    'cancelled_at'     => $status === Appointment::STATUS_CANCELLED
+                        ? fake()->dateTimeBetween('-2 months', 'now')
+                        : null,
+                    'cancelled_by'     => $status === Appointment::STATUS_CANCELLED ? null : null,
                 ]);
             }
         }
+
+        // Clear test now
+        Carbon::setTestNow();
     }
 }

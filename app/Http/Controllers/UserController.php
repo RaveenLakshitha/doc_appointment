@@ -16,8 +16,6 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        // This method is no longer used for the table (DataTables handles it)
-        // Keep it only if you have a fallback non-JS view
         return view('admin.users.index');
     }
 
@@ -155,7 +153,7 @@ class UserController extends Controller
 
         $user->syncRoles($request->roles);
 
-        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+        return redirect()->route('admin.users.index')->with('success', __('file.user_updated_successfully'));
     }
 
     public function destroy(User $user)
@@ -192,26 +190,5 @@ class UserController extends Controller
             ->update(['is_deleted' => true, 'is_active' => false]);
 
         return response()->json(['success' => true]);
-    }
-
-    // Optional: Export methods (Excel, CSV, PDF)
-    public function exportExcel()
-    {
-        return Excel::download(new UsersExport, 'users-' . now()->format('Y-m-d') . '.xlsx');
-    }
-
-    public function exportCsv()
-    {
-        return Excel::download(new UsersExport, 'users-' . now()->format('Y-m-d') . '.csv', \Maatwebsite\Excel\Excel::CSV);
-    }
-
-    public function exportPdf()
-    {
-        $users = User::where('is_deleted', false)->with('roles')->get();
-
-        $pdf = Pdf::loadView('admin.users.exports.pdf', compact('users'))
-                  ->setPaper('a4', 'landscape');
-
-        return $pdf->download('users-list-' . now()->format('Y-m-d') . '.pdf');
     }
 }

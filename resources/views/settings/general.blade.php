@@ -4,7 +4,7 @@
 @section('title', 'Clinic Settings')
 
 @section('content')
-<div class="w-full px-4 sm:px-6 lg:px-8 py-8">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="mb-8">
         <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">Clinic Settings</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update your clinic information, branding, and preferences</p>

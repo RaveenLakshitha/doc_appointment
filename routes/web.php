@@ -4,23 +4,28 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Therapist\AppointmentController as TherapistAppointmentController;
 use App\Http\Controllers\PrimaryTherapist\PatientController as PrimaryPatientController;
 use App\Http\Controllers\AppointmentController as AdminAppointmentController;
+use App\Http\Controllers\AppointmentRequestController;
 use App\Http\Controllers\Counter\InvoiceController;
 use App\Http\Controllers\HR\DashboardController;
 use App\Http\Controllers\Patient\BookingController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PatientBillingController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\DoctorScheduleController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\LeaveRequestsController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\MedicationTemplateCategoryController;
-use App\Http\Controllers\MedicationTemplateController;
+use App\Http\Controllers\MedicineTemplateController;
 
 // ---------------------- NEW CONTROLLERS ----------------------
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\SpecializationController;
-use App\Http\Controllers\DoctorScheduleController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\AmbulanceCallController;
 use App\Http\Controllers\AmbulanceController;
-use App\Http\Controllers\PharmacyController;
+use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\BillingInvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DepartmentController;
@@ -31,7 +36,9 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\admin\RoleController;
+use App\Http\Controllers\admin\DropdownController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\TimesheetController;
 use App\Http\Controllers\Report\AppointmentReportController;
 use App\Http\Controllers\Report\FinancialReportController;
 use App\Http\Controllers\Report\PatientVisitReportController;
@@ -82,22 +89,11 @@ Route::middleware(['auth'])->group(function () {
 
                  Route::resource('roles', RoleController::class)->except(['show']);
 
-            // Doctor Schedule (separate resource – can be nested under doctors if you prefer)
-            Route::resource('doctor-schedules', DoctorScheduleController::class);
-            Route::post('doctor-schedules/bulk-delete', [DoctorScheduleController::class, 'bulkDelete'])
-                ->name('doctor-schedules.bulkDelete');
-
             // ---------- SPECIALIZATIONS ----------
             Route::resource('specializations', SpecializationController::class);
+            Route::patch('specializations/{specialization}', [SpecializationController::class, 'update'])->name('specializations.update');
             Route::post('specializations/bulk-delete', [SpecializationController::class, 'bulkDelete'])
                 ->name('specializations.bulkDelete');
-
-            // ---------- PRESCRIPTIONS ----------
-            Route::resource('prescriptions', PrescriptionController::class);
-            Route::get('prescriptions/data', [PrescriptionController::class, 'data'])
-                ->name('prescriptions.data');
-            Route::post('prescriptions/bulk-delete', [PrescriptionController::class, 'bulkDelete'])
-                ->name('prescriptions.bulkDelete');
 
             // ---------- AMBULANCE ----------
             Route::resource('ambulance-calls', AmbulanceCallController::class);
@@ -105,26 +101,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('ambulances/bulk-delete', [AmbulanceController::class, 'bulkDelete'])
                 ->name('ambulances.bulkDelete');
 
-            // ---------- PHARMACY ----------
-            Route::resource('pharmacy', PharmacyController::class)->parameters([
-                'pharmacy' => 'medicine'   // optional – rename URL segment if you like
-            ]);
+            
 
-            // ---------- BILLING ----------
-            Route::resource('invoices', BillingInvoiceController::class);
-            Route::get('invoices/data', [BillingInvoiceController::class, 'data'])
-                ->name('invoices.data');
-            Route::post('invoices/bulk-delete', [BillingInvoiceController::class, 'bulkDelete'])
-                ->name('invoices.bulkDelete');
-
-            Route::resource('payments', PaymentController::class);
-            Route::post('payments/bulk-delete', [PaymentController::class, 'bulkDelete'])
-                ->name('payments.bulkDelete');
-
-            // ---------- DEPARTMENTS ----------
-            Route::resource('departments', DepartmentController::class);
-            Route::post('departments/bulk-delete', [DepartmentController::class, 'bulkDelete'])
-                ->name('departments.bulkDelete');
 
             // ---------- SERVICES OFFERED ----------
             Route::resource('services', ServiceController::class);
@@ -139,12 +117,6 @@ Route::middleware(['auth'])->group(function () {
             Route::post('staff/bulk-delete', [StaffController::class, 'bulkDelete'])
                 ->name('staff.bulkDelete');
 
-
-            // ---------- ATTENDANCE ----------
-            Route::resource('attendance', AttendanceController::class);
-            Route::post('attendance/bulk-delete', [AttendanceController::class, 'bulkDelete'])
-                ->name('attendance.bulkDelete');
-
             // ---------- REPORTS ----------
             Route::prefix('reports')->name('reports.')->group(function () {
                 Route::get('appointments', [AppointmentReportController::class, 'index'])
@@ -158,14 +130,9 @@ Route::middleware(['auth'])->group(function () {
             });
 
             
-            // ---------- EXISTING ADMIN FEATURES (unchanged) ----------
-            Route::get('/therapist/appointments', [TherapistAppointmentController::class, 'index'])
-                ->name('therapist.appointments.index');
 
             Route::get('/primary/patients', [PrimaryPatientController::class, 'index'])
                 ->name('primary.patients.index');
-
-            Route::resource('appointments', AdminAppointmentController::class);
 
             Route::get('/counter/invoices', [InvoiceController::class, 'index'])
                 ->name('counter.invoices.index');
@@ -175,17 +142,6 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/patient/book', [BookingController::class, 'index'])
                 ->name('patient.book');
-        });
-
-    // ========================
-    // THERAPIST
-    // ========================
-    Route::middleware('role:therapist')
-        ->prefix('therapist')
-        ->name('therapist.')
-        ->group(function () {
-            Route::get('/appointments', [TherapistAppointmentController::class, 'index'])
-                ->name('appointments.index');
         });
 
     // ========================
@@ -302,6 +258,33 @@ Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
     Route::resource('services', ServiceController::class);
 });
 
+
+            // ---------- PHARMACY ----------
+Route::get('medicines-datatable', [MedicineController::class, 'datatable'])
+                ->name('medicines.datatable');
+
+Route::delete('medicines/bulk-delete', [MedicineController::class, 'bulkDelete'])
+    ->name('medicines.bulkDelete');
+    
+Route::resource('medicines', MedicineController::class);
+
+Route::get('/pos', [BillingInvoiceController::class, 'pos'])->name('invoices.pos');
+Route::post('/pos/sale', [BillingInvoiceController::class, 'posStore'])->name('invoices.pos.store');
+Route::get('/invoices', [BillingInvoiceController::class, 'index'])->name('invoices.index');
+Route::get('/invoices/datatable', [BillingInvoiceController::class, 'datatable'])->name('invoices.datatable');
+Route::get('/invoices/filters', [BillingInvoiceController::class, 'filters'])->name('invoices.filters');
+Route::get('/invoices/{invoice}', [BillingInvoiceController::class, 'show'])->name('invoices.show');
+Route::get('/invoices/{invoice}/print', [BillingInvoiceController::class, 'print'])->name('invoices.print');
+
+Route::get('/patients/{patient}/billing/datatable', [PatientBillingController::class, 'data'])
+     ->name('patients.billing.datatable');
+
+     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+Route::get('/payments/datatable', [PaymentController::class, 'datatable'])->name('payments.datatable');
+
+// For recording payment on an invoice (already used in invoice show page)
+Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('invoices.payments.store');
+
     // ---------- INVENTORY ----------
 Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
     Route::resource('unit-of-measures', UnitOfMeasureController::class);
@@ -316,21 +299,25 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('suppliers.bulkDelete');
 });
 
-Route::prefix('medication-templates')
-    ->as('medication-templates.')
+Route::prefix('medicine-templates')
+    ->as('medicine-templates.')
     ->group(function () {
 
-    Route::get('/datatable', [MedicationTemplateController::class, 'datatable'])
+    Route::get('/datatable', [MedicineTemplateController::class, 'datatable'])
         ->name('datatable');
 
-    Route::get('/filters', [MedicationTemplateController::class, 'filters'])
+    // routes/web.php
+    Route::get('/medicine-templates/{id}/medications', [MedicineTemplateController::class, 'getMedications'])->name('medications');
+
+    Route::get('/filters', [MedicineTemplateController::class, 'filters'])
         ->name('filters');
 
-    Route::delete('/bulk-delete', [MedicationTemplateController::class, 'bulkDelete'])
+    Route::delete('/bulk-delete', [MedicineTemplateController::class, 'bulkDelete'])
         ->name('bulkDelete');
 
-    Route::resource('', MedicationTemplateController::class)
-        ->parameters(['' => 'medicationTemplate']);
+    // Correct parameter name: medicine_template (not medicationTemplate)
+    Route::resource('', MedicineTemplateController::class)
+        ->parameters(['' => 'medicine_template']);
 
     Route::prefix('categories')
         ->as('categories.')
@@ -346,58 +333,43 @@ Route::prefix('medication-templates')
         });
 });
 
-Route::get('/doctors/datatable', [DoctorController::class, 'datatable'])
-    ->name('doctors.datatable')
-    ->middleware(['auth', 'role:admin|primary-therapist']);
 
-Route::get('/doctors/filters', [DoctorController::class, 'filters'])
-    ->name('doctors.filters')
-    ->middleware(['auth', 'role:admin|primary-therapist']);
 
-Route::post('/doctors/bulk-delete', [DoctorController::class, 'bulkDelete'])
-    ->name('doctors.bulkDelete')
-    ->middleware(['auth', 'role:admin']);
+            // ---------- PRESCRIPTIONS ----------
 
-// Then the resource route (must be last)
-Route::middleware(['auth', 'role:admin|primary-therapist'])
-    ->resource('doctors', DoctorController::class);
+            Route::get('prescriptions-datatable', [PrescriptionController::class, 'datatable'])
+                ->name('prescriptions.datatable');
+
+            Route::delete('prescriptions/bulk-delete', [PrescriptionController::class, 'bulkDelete'])
+                ->name('prescriptions.bulkDelete');
+                
+            Route::resource('prescriptions', PrescriptionController::class);
+
+        Route::get('/doctors/datatable', [DoctorController::class, 'datatable'])
+            ->name('doctors.datatable')
+            ->middleware(['auth', 'role:admin|primary-therapist']);
+
+        Route::get('/doctors/filters', [DoctorController::class, 'filters'])
+            ->name('doctors.filters')
+            ->middleware(['auth', 'role:admin|primary-therapist']);
+
+        Route::post('/doctors/bulk-delete', [DoctorController::class, 'bulkDelete'])
+            ->name('doctors.bulkDelete')
+            ->middleware(['auth', 'role:admin']);
+
+        // Then the resource route (must be last)
+        Route::middleware(['auth', 'role:admin|primary-therapist'])
+            ->resource('doctors', DoctorController::class);
 
 Route::post('/therapists/bulk-delete', [TherapistController::class, 'bulkDelete'])
     ->name('therapists.bulkDelete')
     ->middleware(['auth', 'role:admin']);
 
-// Appointments – admin | primary-therapist
-Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
-
-    // Custom routes FIRST
-    Route::get('/appointments/calendar', [AppointmentController::class, 'calendar'])
-         ->name('appointments.calendar');
-
-    Route::get('/appointments/calendar-events', [AppointmentController::class, 'calendarEvents'])
-         ->name('appointments.calendar.events');
-
-    // Then the resource (which has the greedy {appointment} route)
-    Route::resource('appointments', AppointmentController::class)
-         ->parameters(['appointments' => 'appointment']);
-
-    // Bulk delete (admin only)
-    Route::post('/appointments/bulk-delete', [AppointmentController::class, 'bulkDelete'])
-         ->name('appointments.bulkDelete')
-         ->middleware('role:admin');
-});
 
     Route::middleware('auth:sanctum')->group(function () {
     Route::get('/api/patients/search', [PatientSearchController::class, 'search']);
     Route::get('/api/appointments/slots', [AppointmentSlotController::class, 'index']);
     });
-
-
-    Route::middleware(['auth', 'role:admin|primary-therapist'])
-    ->resource('departments', DepartmentController::class);
-
-    Route::post('/departments/bulk-delete', [DepartmentController::class, 'bulkDelete'])
-        ->name('departments.bulkDelete')
-        ->middleware(['auth', 'role:admin']);
 
     Route::middleware(['auth', 'role:admin|primary-therapist'])
     ->resource('specializations', SpecializationController::class)->except(['show']);
@@ -408,6 +380,18 @@ Route::post('/specializations/bulk-delete', [SpecializationController::class, 'b
 
     Route::get('/specializations/datatable', [SpecializationController::class, 'datatable'])
     ->name('specializations.datatable');
+
+    
+            // ---------- DEPARTMENTS ----------
+            Route::resource('departments', DepartmentController::class)->except(['show']);
+
+    // DataTables AJAX endpoint
+    Route::get('/departments/datatable', [DepartmentController::class, 'datatable'])
+        ->name('departments.datatable');
+
+    // Bulk delete
+    Route::post('/departments/bulk-delete', [DepartmentController::class, 'bulkDelete'])
+        ->name('departments.bulkDelete');
 // routes/web.php
 
 Route::middleware(['auth', 'role:admin'])->name('settings.')->group(function () {
@@ -425,5 +409,99 @@ Route::middleware(['auth', 'role:admin'])->name('settings.')->group(function () 
 });
 
 
+Route::get('rooms-datatable', [RoomController::class, 'datatable'])->name('rooms.datatable');
+Route::get('rooms-filters', [RoomController::class, 'filters'])->name('rooms.filters');
+Route::post('rooms/bulk-delete', [RoomController::class, 'bulkDelete'])->name('rooms.bulkDelete');
+Route::resource('rooms', RoomController::class);
+
+Route::get('doctor-schedules/calendar', [DoctorScheduleController::class, 'calendar'])
+     ->name('doctor-schedules.calendar');
+
+Route::get('doctor-schedules/calendar-events', [DoctorScheduleController::class, 'calendarEvents'])
+     ->name('doctor-schedules.calendar-events');
+Route::get('doctor-schedules-datatable', [DoctorScheduleController::class, 'datatable'])->name('doctor-schedules.datatable');
+Route::get('doctor-schedules-filters', [DoctorScheduleController::class, 'filters'])->name('doctor-schedules.filters');
+Route::post('doctor-schedules/bulk-delete', [DoctorScheduleController::class, 'bulkDelete'])->name('doctor-schedules.bulkDelete');
+Route::resource('doctor-schedules', DoctorScheduleController::class);
+
+
+Route::get('employees-datatable', [EmployeeController::class, 'datatable'])->name('employees.datatable');
+Route::get('employees-filters', [EmployeeController::class, 'filters'])->name('employees.filters');
+Route::post('employees/bulk-delete', [EmployeeController::class, 'bulkDelete'])->name('employees.bulkDelete');
+Route::resource('employees', EmployeeController::class);
+
+Route::get('attendances-datatable', [AttendanceController::class, 'datatable'])->name('attendances.datatable');
+Route::get('attendances-filters', [AttendanceController::class, 'filters'])->name('attendances.filters');
+Route::post('attendances/bulk-delete', [AttendanceController::class, 'bulkDelete'])->name('attendances.bulkDelete');
+Route::resource('attendances', AttendanceController::class);
+
+Route::get('timesheets-datatable', [TimesheetController::class, 'datatable'])->name('timesheets.datatable');
+Route::get('timesheets-filters', [TimesheetController::class, 'filters'])->name('timesheets.filters');
+Route::post('timesheets/bulk-delete', [TimesheetController::class, 'bulkDelete'])->name('timesheets.bulkDelete');
+Route::resource('timesheets', TimesheetController::class);
+
+Route::get('leave-requests-datatable', [LeaveRequestsController::class, 'datatable'])->name('leave-requests.datatable');
+Route::get('leave-requests-filters', [LeaveRequestsController::class, 'filters'])->name('leave-requests.filters');
+Route::post('leave-requests/bulk-delete', [LeaveRequestsController::class, 'bulkDelete'])->name('leave-requests.bulkDelete');
+Route::resource('leave-requests', LeaveRequestsController::class);
+
 Route::post('/language', [LanguageController::class, 'switch'])
     ->name('language.switch');
+
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('dropdowns', [DropdownController::class, 'index'])->name('admin.dropdowns.index');
+    Route::post('dropdowns', [DropdownController::class, 'store'])->name('admin.dropdowns.store');
+    Route::put('dropdowns/{option}', [DropdownController::class, 'update'])->name('admin.dropdowns.update');
+    Route::delete('dropdowns/{option}', [DropdownController::class, 'destroy'])->name('admin.dropdowns.destroy');
+});
+
+Route::middleware(['auth', 'role:admin|staff|doctor'])->group(function () {
+
+    // DataTables & Filters
+    Route::get('/appointments/datatable', [AppointmentController::class, 'datatable'])
+        ->name('appointments.datatable');
+
+    Route::get('/appointments/filters', [AppointmentController::class, 'filters'])
+        ->name('appointments.filters');
+
+    Route::get('/appointments/calendar', [AppointmentController::class, 'calendar'])
+        ->name('appointments.calendar');
+
+    Route::get('/appointments/calendar-events', [AppointmentController::class, 'calendarEvents'])
+        ->name('appointments.calendar.events');
+
+    Route::get('/appointments/doctors/by-specialization/{specialization_id}', [AppointmentController::class, 'getDoctorsBySpecialization'])->name('appointments.doctors.by_specialization');
+
+     Route::get('/available-slots/{doctor}', [AppointmentController::class, 'availableSlots'])
+        ->name('appointments.availableSlots');
+        
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
+        ->name('appointments.cancel');
+
+    Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])
+        ->name('appointments.complete');
+
+    Route::resource('appointments', AppointmentController::class);
+});
+    
+ Route::get('/appointment-requests/datatable', [AppointmentRequestController::class, 'datatable'])
+            ->name('appointment_requests.datatable')
+            ->middleware(['auth', 'role:admin|primary-therapist']);
+
+    Route::get('/appointment-requests/filters', [AppointmentRequestController::class, 'filters'])
+        ->name('appointment_requests.filters')
+        ->middleware(['auth', 'role:admin|primary-therapist']);
+
+    // Route::get('doctors-by-specialization/{specialization_id}', [AppointmentRequestController::class, 'getDoctorsBySpecialization'])
+    // ->name('doctors.by_specialization');
+    Route::post('/appointment-requests/bulk-delete', [AppointmentRequestController::class, 'bulkDelete'])
+        ->name('appointment_requests.bulkDelete')
+        ->middleware(['auth', 'role:admin']);
+    Route::get('/doctors/{doctor}/available-times', [AppointmentRequestController::class, 'availableTimes'])
+    ->name('doctors.available_times');
+    Route::patch('appointment-requests/{appointmentRequest}/approve', [AppointmentRequestController::class, 'approve'])->name('appointment_requests.approve');
+    Route::patch('appointment-requests/{appointmentRequest}/reject', [AppointmentRequestController::class, 'reject'])->name('appointment_requests.reject');
+    Route::patch('appointment-requests/{appointmentRequest}/cancel', [AppointmentRequestController::class, 'cancel'])->name('appointment_requests.cancel');
+    Route::middleware(['auth', 'role:admin|primary-therapist'])
+    ->resource('appointment_requests', AppointmentRequestController::class);
+
