@@ -7,23 +7,17 @@ use App\Models\DoctorScheduleDay;
 use App\Models\Doctor;
 use App\Models\Room;
 use App\Models\Setting;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class DoctorScheduleController extends Controller
 {
-    /**
-     * Display the index (datatable) view
-     */
     public function index()
     {
         return view('doctor-schedules.index');
     }
 
-    /**
-     * Show the form for creating a new schedule
-     */
     public function create()
     {
         $doctors = Doctor::active()->orderBy('last_name')->orderBy('first_name')->get();
@@ -32,9 +26,6 @@ class DoctorScheduleController extends Controller
         return view('doctor-schedules.create', compact('doctors', 'rooms'));
     }
 
-    /**
-     * Store a newly created schedule
-     */
     public function store(Request $request)
     {
         $settings = Setting::getAll();
@@ -51,10 +42,6 @@ class DoctorScheduleController extends Controller
             'is_active'    => 'sometimes|boolean',
         ], [
             'end_time.required' => 'The end time is required.',
-        ], [
-            'start_time' => function ($attribute, $value, $fail) use ($request, $settings) {
-                $this->validateScheduleTime($request, $settings, $fail);
-            },
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -80,9 +67,6 @@ class DoctorScheduleController extends Controller
                          ->with('success', __('file.schedule_created_successfully'));
     }
 
-    /**
-     * Show the form for editing the specified schedule
-     */
     public function edit(DoctorSchedule $doctorSchedule)
     {
         $doctorSchedule->load('days');
@@ -93,9 +77,6 @@ class DoctorScheduleController extends Controller
         return view('doctor-schedules.edit', compact('doctorSchedule', 'doctors', 'rooms'));
     }
 
-    /**
-     * Update the specified schedule
-     */
     public function update(Request $request, DoctorSchedule $doctorSchedule)
     {
         $validated = $request->validate([
@@ -121,7 +102,6 @@ class DoctorScheduleController extends Controller
                 'is_active'   => $validated['is_active'] ?? false,
             ]);
 
-            // Sync days
             $doctorSchedule->days()->delete();
             foreach ($validated['days_of_week'] as $day) {
                 DoctorScheduleDay::create([
@@ -135,9 +115,6 @@ class DoctorScheduleController extends Controller
                          ->with('success', __('file.schedule_updated_successfully'));
     }
 
-    /**
-     * Remove the specified schedule
-     */
     public function destroy(DoctorSchedule $doctorSchedule)
     {
         $doctorSchedule->days()->delete();
@@ -146,7 +123,6 @@ class DoctorScheduleController extends Controller
         return redirect()->route('doctor-schedules.index')
                          ->with('success', __('file.schedule_deleted_successfully'));
     }
-
 
     public function datatable(Request $request)
     {
@@ -179,18 +155,16 @@ class DoctorScheduleController extends Controller
 
             $time = $schedule->start_time->format('g:i A') . ' - ' . $schedule->end_time->format('g:i A');
 
-            $statusBadge = $schedule->is_active
-                ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Active</span>'
-                : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Inactive</span>';
+            $roomDisplay = $schedule->room
+                ? $schedule->room->room_number . ' (' . ($schedule->room->department?->name ?? '—') . ')'
+                : '(Room deleted)';
 
             return [
-                'id'          => $schedule->id,
-                'doctor'      => $schedule->doctor->getFullNameAttribute(),
-                'room'        => $schedule->room->room_number . ' (' . $schedule->room->department->name . ')',
-                'days'        => $days ?: '-',
-                'time'        => $time,
-                'valid_range' => optional($schedule->valid_from)->format('M d, Y') . ' → ' . optional($schedule->valid_until)->format('M d, Y'),
-                'status_html' => $statusBadge,
+                'id'     => $schedule->id,
+                'doctor' => $schedule->doctor->getFullNameAttribute(),
+                'room'   => $roomDisplay,
+                'days'   => $days ?: '-',
+                'time'   => $time,
                 'edit_url'    => route('doctor-schedules.edit', $schedule),
                 'delete_url'  => route('doctor-schedules.destroy', $schedule),
             ];
@@ -269,7 +243,9 @@ class DoctorScheduleController extends Controller
             $dayNames  = collect($days)->map(fn($d) => ucfirst($d))->join(', ');
 
             $doctorName = $schedule->doctor->getFullNameAttribute();
-            $roomInfo   = $schedule->room->room_number . ' (' . $schedule->room->department->name . ')';
+            $roomInfo   = $schedule->room
+                ? $schedule->room->room_number . ' (' . ($schedule->room->department?->name ?? '—') . ')'
+                : '(Room deleted)';
 
             $dowMap = [
                 'sunday'    => 0,
@@ -308,5 +284,26 @@ class DoctorScheduleController extends Controller
         }
 
         return response()->json($events);
+    }
+
+    public function currentQueue(Doctor $doctor)
+    {
+        $today = today();
+
+        $current = Appointment::where('doctor_id', $doctor->id)
+            ->whereDate('scheduled_start', $today)
+            ->where('status', Appointment::STATUS_APPROVED)
+            ->orderBy('queue_number')
+            ->first();
+
+        $next = Appointment::where('doctor_id', $doctor->id)
+            ->whereDate('scheduled_start', $today)
+            ->where('status', Appointment::STATUS_APPROVED)
+            ->where('queue_number', '>', $current?->queue_number ?? 0)
+            ->orderBy('queue_number')
+            ->take(5)
+            ->get();
+
+        return view('doctor.current-queue', compact('doctor', 'current', 'next'));
     }
 }

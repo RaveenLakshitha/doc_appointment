@@ -135,11 +135,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2',
                         text: "{{ __('file.Export') }}",
                         buttons: [
-                            { extend: 'copy', text: "{{ __('file.copy') }}" },
-                            { extend: 'excel', text: 'Excel', filename: 'Services_{{ date("Y-m-d") }}' },
-                            { extend: 'csv', text: 'CSV', filename: 'Services_{{ date("Y-m-d") }}' },
-                            { extend: 'pdf', text: 'PDF', filename: 'Services_{{ date("Y-m-d") }}', title: 'Services List' },
-                            { extend: 'print', text: "{{ __('file.print') }}" }
+                            { extend: 'copy', text: "{{ __('file.copy') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
+                            { extend: 'excel', text: 'Excel', filename: 'Services_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
+                            { extend: 'csv', text: 'CSV', filename: 'Services_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
+                            { extend: 'pdf', text: 'PDF', filename: 'Services_{{ date("Y-m-d") }}', title: 'Services List' ,exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
+                            { extend: 'print', text: "{{ __('file.print') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
                         ]
                     }
                 ]

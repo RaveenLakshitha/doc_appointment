@@ -16,7 +16,7 @@ class ServiceController extends Controller
     {
         $services = Service::with('department')
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('services.index', compact('services'));
@@ -26,7 +26,8 @@ class ServiceController extends Controller
      * DataTable AJAX endpoint
      */
     public function datatable(Request $request)
-    {
+{
+    try {
         $draw = $request->input('draw');
         $start = $request->input('start', 0);
         $length = $request->input('length', 10);
@@ -88,13 +89,33 @@ class ServiceController extends Controller
             ];
         });
 
+        \Log::info('Services datatable success', [
+            'draw' => $draw,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'row_count' => count($data),
+        ]);
+
         return response()->json([
             'draw'            => (int) $draw,
             'recordsTotal'    => $totalRecords,
             'recordsFiltered' => $filteredRecords,
             'data'            => $data->toArray(),
         ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Services datatable failed', [
+            'message' => $e->getMessage(),
+            'trace'   => $e->getTraceAsString(),
+            'request' => $request->all(),
+        ]);
+
+        return response()->json([
+            'error' => 'Server error while loading services',
+            'message' => $e->getMessage(), // only for development – remove in production
+        ], 500);
     }
+}
 
     /**
      * Show the form for creating a new service.

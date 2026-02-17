@@ -21,6 +21,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
+                    {{ __('file.Filters') }}
                     <span id="filter-count" class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -41,7 +42,6 @@
     <div id="filter-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 opacity-0"></div>
 
     <div id="filter-drawer" class="fixed z-50 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl translate-y-full md:top-0 md:right-0 md:bottom-auto md:left-auto md:h-full md:w-96 md:max-h-none md:rounded-none md:rounded-l-lg md:translate-y-0 md:translate-x-full">
-
         <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('file.filters') }}</h3>
             <button type="button" id="close-drawer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5">
@@ -107,8 +107,6 @@
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.room') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.days') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.time') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.valid_range') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.status') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.actions') }}</th>
                     </tr>
                 </thead>
@@ -189,20 +187,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 d.room = filterRoom.value;
             }
         },
-        order: [[1, 'asc']],
+        order: [[1, 'asc']], // Doctor column (index 1) as default sort
         columnDefs: [
             { targets: 0, orderable: false, className: 'dtr-control', responsivePriority: 1 },
-            { targets: 1, responsivePriority: 2 },
-            { targets: -1, orderable: false, searchable: false, responsivePriority: 1 }
+            { targets: 1, responsivePriority: 2 },           // Doctor
+            { targets: -1, orderable: false, searchable: false, responsivePriority: 1 } // Actions
         ],
         columns: [
-            { data: 'id', render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`, className: 'text-center', orderable: false },
-            { data: 'doctor', render: data => `<div class="font-medium text-gray-900 dark:text-white">${data}</div>` },
+            { 
+                data: 'id', 
+                render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`, 
+                className: 'text-center', 
+                orderable: false 
+            },
+            { 
+                data: 'doctor', 
+                render: data => `<div class="font-medium text-gray-900 dark:text-white">${data}</div>` 
+            },
             { data: 'room', render: data => data },
             { data: 'days', render: data => data || '-' },
             { data: 'time', render: data => data },
-            { data: 'valid_range', render: data => data || '-' },
-            { data: 'status_html', className: 'text-center', render: data => data },
             {
                 data: null,
                 orderable: false,
@@ -223,7 +227,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         ],
         layout: {
-            topStart: { buttons: [{ extend: 'pageLength' }, { extend: 'collection', text: '{{ __('file.export') }}', buttons: ['copy', 'excel', 'csv', 'pdf'] }] },
+            topStart: {
+                buttons: [
+                    { extend: 'pageLength', className: 'inline-flex items-center gap-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium transition shadow-sm' },
+                    { extend: 'collection', text: "{{ __('file.Export') }}", className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium', buttons: [
+                        { extend: 'copy', text: "{{ __('file.copy') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                        { extend: 'excel', text: 'Excel', filename: 'Rooms_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                        { extend: 'csv', text: 'CSV', filename: 'Rooms_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                        { extend: 'pdf', text: 'PDF', filename: 'Rooms_{{ date("Y-m-d") }}', title: 'Doctor Schedules List',exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                        { extend: 'print', text: "{{ __('file.print') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4] } }
+                    ]}
+                ]
+            },
             topEnd: 'search',
             bottomStart: 'info',
             bottomEnd: 'paging'

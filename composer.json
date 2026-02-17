@@ -9,8 +9,11 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "laravel/framework": "^12.0",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
+        "netflie/whatsapp-cloud-api": "^2.2",
+        "phpseclib/phpseclib": "3.0",
         "spatie/laravel-permission": "^6.23",
         "yajra/laravel-datatables": "^12.0",
         "yajra/laravel-datatables-oracle": "12.0"
@@ -23,6 +26,8 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
+        "pestphp/pest": "^3.8",
+        "pestphp/pest-plugin-laravel": "^3.2",
         "phpunit/phpunit": "^11.5.3"
     },
     "autoload": {

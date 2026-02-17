@@ -7,14 +7,18 @@ use App\Models\MedicineTemplate;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class PrescriptionController extends Controller
 {
     public function index(Request $request)
     {
-        // Pass a dummy or null patient if needed, or just load with relations
+        if (!Auth::user()->can('prescriptions.index')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         return view('prescriptions.index');
     }
 
@@ -27,7 +31,7 @@ class PrescriptionController extends Controller
         $type = $request->input('type');
         $from = $request->input('from');
         $to = $request->input('to');
-        $patientId = $request->input('patient_id'); // Optional filter by patient if needed
+        $patientId = $request->input('patient_id');
 
         $query = Prescription::query()
             ->with(['patient', 'doctor'])
@@ -43,7 +47,9 @@ class PrescriptionController extends Controller
             ->when($from, fn($q) => $q->whereDate('prescription_date', '>=', $from))
             ->when($to, fn($q) => $q->whereDate('prescription_date', '<=', $to));
 
-        $totalRecords = Prescription::count();
+        // Note: soft-deletes are automatically excluded here → perfect for index view
+
+        $totalRecords = Prescription::count();           // non-deleted only
         $filteredRecords = (clone $query)->count();
 
         $orderColumnIndex = $request->input('order.0.column');
@@ -57,6 +63,9 @@ class PrescriptionController extends Controller
             ->get();
 
         $data = $prescriptions->map(function ($prescription) {
+            $edit_url   = Auth::user()->can('prescriptions.edit') ? route('prescriptions.edit', $prescription) : null;
+            $delete_url = Auth::user()->can('prescriptions.delete') ? route('prescriptions.destroy', $prescription) : null;
+
             return [
                 'id'                 => $prescription->id,
                 'prescription_date'  => $prescription->prescription_date->format('M d, Y'),
@@ -66,8 +75,9 @@ class PrescriptionController extends Controller
                 'medications_count'  => $prescription->medications_count,
                 'doctor_name'        => $prescription->doctor?->getFullNameAttribute() ?? '-',
                 'show_url'           => route('prescriptions.show', $prescription),
-                'edit_url'           => route('prescriptions.edit', $prescription),
-                'delete_url'         => route('prescriptions.destroy', $prescription),
+                'edit_url'           => $edit_url,
+                'delete_url'         => $delete_url,
+                // Optional: if you add restore later → 'restore_url' => route('prescriptions.restore', $prescription)
             ];
         });
 
@@ -81,166 +91,187 @@ class PrescriptionController extends Controller
 
     public function create()
     {
+        if (!Auth::user()->can('prescriptions.create')) {
+            return redirect()->route('prescriptions.index')
+                ->with('error', __('file.prescriptions_create_denied'));
+        }
+
         $templates = MedicineTemplate::orderBy('name')->get();
-        $patients = Patient::active()->orderBy('first_name')->get();
+        $patients  = Patient::active()->orderBy('first_name')->get();
+
         return view('prescriptions.create', compact('templates', 'patients'));
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'patient_id'           => 'required|exists:patients,id',
-        'prescription_date'    => 'required|date',
-        'type'                 => 'required|string|max:255',
-        'diagnosis'            => 'nullable|string',
-        'notes'                => 'nullable|string',
-        'medicine_template_id' => 'nullable|exists:medicine_templates,id',
-    ]);
-
-    $user = auth()->user();
-
-    // === DEBUG LOGS START ===
-    Log::info('Prescription store attempt', [
-        'user_id'   => $user?->id,
-        'user_name' => $user?->name,
-        'user_email'=> $user?->email,
-    ]);
-
-    // Check if user has 'doctor' role
-    $hasDoctorRole = $user->hasRole('doctor');
-    Log::info('User role check', [
-        'user_id'       => $user->id,
-        'has_doctor_role'=> $hasDoctorRole,
-        'user_roles'    => $user->roles->pluck('name')->toArray(),
-    ]);
-
-    if (! $hasDoctorRole) {
-        Log::warning('Prescription creation blocked: User missing doctor role', [
-            'user_id' => $user->id,
-        ]);
-
-        return redirect()->back()
-            ->withErrors(['error' => 'Access denied. Only doctors can create prescriptions.'])
-            ->withInput();
-    }
-
-    // Check linked doctor profile
-    $doctor = $user->doctor;
-
-    Log::info('Doctor profile check', [
-        'user_id'     => $user->id,
-        'doctor_found'=> $doctor ? true : false,
-        'doctor_id'   => $doctor?->id,
-        'doctor_name' => $doctor?->getFullNameAttribute(),
-    ]);
-
-    if (! $doctor) {
-        Log::warning('Prescription creation blocked: No doctor profile linked', [
-            'user_id' => $user->id,
-        ]);
-
-        return redirect()->back()
-            ->withErrors(['error' => 'No doctor profile linked to your account.'])
-            ->withInput();
-    }
-    // === DEBUG LOGS END ===
-
-    DB::transaction(function () use ($request, $doctor, $user) {
-        Log::info('Creating prescription', [
-            'patient_id'    => $request->patient_id,
-            'doctor_id'     => $doctor->id,
-            'prescription_date' => $request->prescription_date,
-            'type'          => $request->type,
-        ]);
-
-        $prescription = Prescription::create([
-            'patient_id'        => $request->patient_id,
-            'doctor_id'         => $doctor->id,
-            'prescription_date' => $request->prescription_date,
-            'type'              => $request->type,
-            'diagnosis'         => $request->diagnosis,
-            'notes'             => $request->notes,
-        ]);
-
-        Log::info('Prescription created successfully', [
-            'prescription_id' => $prescription->id,
-        ]);
-
-        if ($request->filled('medicine_template_id')) {
-            $template = MedicineTemplate::with('medications')->findOrFail($request->medicine_template_id);
-
-            foreach ($template->medications as $med) {
-                $prescription->medications()->create($med->only([
-                    'name', 'dosage', 'route', 'frequency', 'instructions'
-                ]));
-            }
-
-            Log::info('Medications copied from template', [
-                'template_id' => $request->medicine_template_id,
-                'medication_count' => $template->medications->count(),
-            ]);
+    {
+        if (!Auth::user()->can('prescriptions.create')) {
+            abort(403);
         }
-    });
 
-    Log::info('Prescription store completed successfully', [
-        'user_id' => $user->id,
-        'doctor_id' => $doctor->id,
-    ]);
+        $validated = $request->validate([
+            'patient_id'           => 'required|exists:patients,id',
+            'prescription_date'    => 'required|date',
+            'type'                 => 'required|string|max:255',
+            'diagnosis'            => 'nullable|string',
+            'notes'                => 'nullable|string',
+            'medicine_template_id' => 'nullable|exists:medicine_templates,id',
+            'medications'          => 'nullable|array',
+            'medications.*.name'   => 'required_with:medications|string|max:255',
+            // ... add more per-medication rules if needed
+        ]);
 
-    return redirect()->route('prescriptions.index')
-        ->with('success', 'Prescription created successfully.');
-}
+        $user = auth()->user();
+
+        if (!$user->hasRole('doctor')) {
+            return back()->with('error', __('file.only_doctors_can_create_prescriptions'))->withInput();
+        }
+
+        $doctor = $user->doctor;
+
+        if (!$doctor) {
+            return back()->with('error', __('file.no_doctor_profile_linked'))->withInput();
+        }
+
+        DB::transaction(function () use ($request, $doctor) {
+            $prescription = Prescription::create([
+                'patient_id'        => $request->patient_id,
+                'doctor_id'         => $doctor->id,
+                'prescription_date' => $request->prescription_date,
+                'type'              => $request->type,
+                'diagnosis'         => $request->diagnosis,
+                'notes'             => $request->notes,
+            ]);
+
+            // Handle manual medications (from form) or template
+            if ($request->filled('medicine_template_id')) {
+                $template = MedicineTemplate::with('medications')->findOrFail($request->medicine_template_id);
+                foreach ($template->medications as $med) {
+                    $prescription->medications()->create($med->only([
+                        'name', 'dosage', 'route', 'frequency', 'instructions'
+                    ]));
+                }
+            } elseif ($request->has('medications')) {
+                foreach ($request->medications as $medData) {
+                    if (!empty($medData['name'])) {
+                        $prescription->medications()->create([
+                            'name'          => $medData['name'],
+                            'dosage'        => $medData['dosage']        ?? null,
+                            'route'         => $medData['route']         ?? null,
+                            'frequency'     => $medData['frequency']     ?? null,
+                            'duration_days' => $medData['duration_days'] ?? null,
+                            'instructions'  => $medData['instructions']  ?? null,
+                        ]);
+                    }
+                }
+            }
+        });
+
+        return redirect()->route('prescriptions.index')
+            ->with('success', __('file.prescription_created_successfully'));
+    }
 
     public function show(Prescription $prescription)
     {
+        if (!Auth::user()->can('prescriptions.index')) {
+            return redirect()->route('prescriptions.index')
+                ->with('error', __('file.prescriptions_show_denied'));
+        }
+
         $prescription->load('medications', 'doctor', 'patient');
+
         return view('prescriptions.show', compact('prescription'));
     }
 
     public function edit(Prescription $prescription)
     {
+        if (!Auth::user()->can('prescriptions.edit')) {
+            return redirect()->route('prescriptions.index')
+                ->with('error', __('file.prescriptions_edit_denied'));
+        }
+
         $templates = MedicineTemplate::orderBy('name')->get();
-        $patients = Patient::active()->orderBy('first_name')->get();
+        $patients  = Patient::active()->orderBy('first_name')->get();
         $prescription->load('medications');
+
         return view('prescriptions.edit', compact('prescription', 'templates', 'patients'));
     }
 
     public function update(Request $request, Prescription $prescription)
     {
-        $request->validate([
+        if (!Auth::user()->can('prescriptions.edit')) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
             'patient_id'        => 'required|exists:patients,id',
             'prescription_date' => 'required|date',
             'type'              => 'required|string|max:255',
             'diagnosis'         => 'nullable|string',
             'notes'             => 'nullable|string',
+            'medications'       => 'nullable|array',
+            'medications.*.name'=> 'required_with:medications|string|max:255',
         ]);
 
-        $prescription->update($request->only([
-            'patient_id', 'prescription_date', 'type', 'diagnosis', 'notes'
-        ]));
+        DB::transaction(function () use ($request, $prescription) {
+            $prescription->update($request->only([
+                'patient_id', 'prescription_date', 'type', 'diagnosis', 'notes'
+            ]));
+
+            // Replace medications (simplest & most common pattern)
+            $prescription->medications()->delete();
+
+            if ($request->has('medications') && is_array($request->medications)) {
+                foreach ($request->medications as $medData) {
+                    if (!empty($medData['name'])) {
+                        $prescription->medications()->create([
+                            'name'          => $medData['name'],
+                            'dosage'        => $medData['dosage']        ?? null,
+                            'route'         => $medData['route']         ?? null,
+                            'frequency'     => $medData['frequency']     ?? null,
+                            'duration_days' => $medData['duration_days'] ?? null,
+                            'instructions'  => $medData['instructions']  ?? null,
+                        ]);
+                    }
+                }
+            }
+        });
 
         return redirect()->route('prescriptions.index')
-            ->with('success', 'Prescription updated successfully.');
+            ->with('success', __('file.prescription_updated_successfully'));
     }
 
     public function destroy(Prescription $prescription)
     {
-        $prescription->delete();
-        return back()->with('success', 'Prescription deleted successfully.');
+        if (!Auth::user()->can('prescriptions.delete')) {
+            return back()->with('error', __('file.prescriptions_delete_denied'));
+        }
+
+        $prescription->delete(); // now soft-deletes
+
+        return back()->with('success', __('file.prescription_deleted_successfully'));
     }
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->input('ids');
-        if (is_string($ids)) $ids = array_filter(explode(',', $ids));
+        if (!Auth::user()->can('prescriptions.delete')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.prescriptions_bulk_delete_denied')
+            ], 403);
+        }
+
+        $ids = $request->input('ids', []);
+        if (is_string($ids)) {
+            $ids = array_filter(explode(',', $ids));
+        }
 
         $request->validate([
             'ids'   => 'required|array',
             'ids.*' => 'exists:prescriptions,id',
         ]);
 
-        Prescription::whereIn('id', $ids)->delete();
+        Prescription::whereIn('id', $ids)->delete(); // soft-deletes all
 
-        return back()->with('success', 'Selected prescriptions deleted.');
+        return back()->with('success', __('file.selected_prescriptions_deleted'));
     }
 }

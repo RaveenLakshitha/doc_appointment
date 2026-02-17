@@ -17,14 +17,13 @@ class Doctor extends Model
         'emergency_contact_name','emergency_contact_phone',
         'license_number','license_expiry_date',
         'qualifications','years_experience','education','certifications',
-        'department_id','position_id','hourly_rate','profile_photo','is_active',
+        'department_id','position_id','profile_photo','is_active',
         'primary_specialization_id'
     ];
 
     protected $casts = [
         'date_of_birth'      => 'date',
         'license_expiry_date'=> 'date',
-        'hourly_rate'        => 'decimal:2',
         'years_experience'   => 'integer',
         'is_active'          => 'boolean',
     ];
@@ -91,5 +90,25 @@ class Doctor extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function treatments()
+    {
+        return $this->belongsToMany(Treatment::class, 'doctor_treatment')
+                    ->withPivot('price')           // doctor-specific price
+                    ->withTimestamps();
+    }
+
+    public function ageGroups()
+    {
+        return $this->belongsToMany(AgeGroup::class, 'age_group_doctor')
+                    ->withTimestamps();
+    }
+
+    public function languages()
+    {
+        return $this->belongsToMany(OptionList::class, 'doctor_option', 'doctor_id', 'option_id')
+                    ->where('type', 'language')
+                    ->withTimestamps();
     }
 }

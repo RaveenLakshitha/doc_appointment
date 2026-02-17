@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\MedicineTemplate;
-use App\Models\TemplateMedication;
+use App\Models\InventoryItem;
+use App\Models\OptionList;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -12,6 +14,11 @@ class MedicineTemplateController extends Controller
 {
     public function index(Request $request)
     {
+        if (!Auth::user()->can('medicine-templates.index')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         $templates = MedicineTemplate::query()
             ->when($request->search, function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
@@ -26,6 +33,10 @@ class MedicineTemplateController extends Controller
 
     public function datatable(Request $request)
     {
+        if (!Auth::user()->can('medicine-templates.index')) {
+            return response()->json(['error' => __('file.module_access_denied')], 403);
+        }
+
         $draw = $request->input('draw');
         $start = $request->input('start', 0);
         $length = $request->input('length', 10);
@@ -36,8 +47,8 @@ class MedicineTemplateController extends Controller
             ->withCount('medications')
             ->when($search !== '', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('category', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             })
             ->when($category !== null && $category !== '', function ($q) use ($category) {
                 $q->where('category', 'like', "%{$category}%");
@@ -49,7 +60,6 @@ class MedicineTemplateController extends Controller
         $orderColumnIndex = $request->input('order.0.column');
         $orderDir = $request->input('order.0.dir', 'asc');
 
-        // Map column index to actual column
         $columns = ['id', 'name', 'category', 'description', 'medications_count'];
         $orderColumn = $columns[$orderColumnIndex] ?? 'name';
 
@@ -81,11 +91,41 @@ class MedicineTemplateController extends Controller
 
     public function create()
     {
-        return view('medicine_templates.create');
+        if (!Auth::user()->can('medicine-templates.create')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
+        $medicines = InventoryItem::query()
+            ->orderBy('generic_name')
+            ->get(['id', 'name', 'generic_name', 'dosage'])
+            ->map(function ($item) {
+                return [
+                    'id'     => $item->id,
+                    'name'   => trim($item->generic_name ?: $item->name),
+                    'dosage' => $item->dosage ?? '',
+                ];
+            })
+            ->values();
+
+        $routes = OptionList::where('type', 'medication_route')
+            ->where('status', true)
+            ->orderBy('order')
+            ->orderBy('name')
+            ->pluck('name', 'name')
+            ->prepend('Select Route', '')
+            ->toArray();
+
+        return view('medicine_templates.create', compact('medicines', 'routes'));
     }
 
     public function store(Request $request)
     {
+        if (!Auth::user()->can('medicine-templates.create')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         $request->validate([
             'name'        => 'required|string|max:255',
             'category'    => 'nullable|string|max:255',
@@ -97,52 +137,74 @@ class MedicineTemplateController extends Controller
 
             if ($request->has('medications') && is_array($request->medications)) {
                 foreach ($request->medications as $med) {
-                    if (!empty($med['name'])) {
+                    if (!empty($med['inventory_item_id']) || !empty($med['name'])) {
                         $template->medications()->create([
-                            'name'        => $med['name'],
-                            'dosage'      => $med['dosage'] ?? null,
-                            'route'       => $med['route'] ?? 'Oral',
-                            'frequency'   => $med['frequency'] ?? null,
-                            'instructions'=> $med['instructions'] ?? null,
+                            'inventory_item_id' => $med['inventory_item_id'] ?? null,
+                            'name'              => $med['name'] ?? null,
+                            'dosage'            => $med['dosage'] ?? null,
+                            'route'             => $med['route'] ?? null,
+                            'frequency'         => $med['frequency'] ?? null,
+                            'instructions'      => $med['instructions'] ?? null,
                         ]);
                     }
                 }
             }
         });
 
-        return redirect()->route('medicine-templates.index')->with('success', 'Medicine template created successfully.');
+        return redirect()->route('medicine-templates.index')
+            ->with('success', __('file.medicine_template_created'));
     }
 
     public function show(MedicineTemplate $medicineTemplate)
     {
-        $medicineTemplate->load('medications');
+        if (!Auth::user()->can('medicine-templates.index')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
+        $medicineTemplate->load('medications.inventoryItem');
         return view('medicine_templates.show', compact('medicineTemplate'));
-    }
-
-    public function getMedications($id)
-    {
-        $template = MedicineTemplate::with('medications')->findOrFail($id);
-
-        return response()->json($template->medications->map(function ($med) {
-            return [
-                'name'          => $med->name,
-                'dosage'        => $med->dosage,
-                'route'         => $med->route,
-                'frequency'     => $med->frequency,
-                'duration_days' => $med->duration_days ?? null,
-                'instructions'  => $med->instructions ?? null,
-            ];
-        }));
     }
 
     public function edit(MedicineTemplate $medicineTemplate)
     {
+        if (!Auth::user()->can('medicine-templates.edit')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         $medicineTemplate->load('medications');
-        return view('medicine_templates.edit', compact('medicineTemplate'));
+
+        $medicines = InventoryItem::query()
+            ->orderBy('generic_name')
+            ->get(['id', 'name', 'generic_name', 'dosage'])
+            ->map(function ($item) {
+                return [
+                    'id'     => $item->id,
+                    'name'   => trim($item->generic_name ?: $item->name),
+                    'dosage' => $item->dosage ?? '',
+                ];
+            })
+            ->values();
+
+        $routes = OptionList::where('type', 'medication_route')
+            ->where('status', true)
+            ->orderBy('order')
+            ->orderBy('name')
+            ->pluck('name', 'name')
+            ->prepend('Select Route', '')
+            ->toArray();
+
+        return view('medicine_templates.edit', compact('medicineTemplate', 'medicines', 'routes'));
     }
 
     public function update(Request $request, MedicineTemplate $medicineTemplate)
     {
+        if (!Auth::user()->can('medicine-templates.edit')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         $request->validate([
             'name'        => 'required|string|max:255',
             'category'    => 'nullable|string|max:255',
@@ -152,47 +214,60 @@ class MedicineTemplateController extends Controller
         DB::transaction(function () use ($request, $medicineTemplate) {
             $medicineTemplate->update($request->only(['name', 'category', 'description']));
 
-            // Delete existing medications and recreate
             $medicineTemplate->medications()->delete();
 
-            if ($request->has('medications') && is_array($request->medications)) {
+            if ($request->filled('medications') && is_array($request->medications)) {
                 foreach ($request->medications as $med) {
-                    if (!empty($med['name'])) {
+                    if (!empty($med['inventory_item_id']) || !empty($med['name'])) {
                         $medicineTemplate->medications()->create([
-                            'name'        => $med['name'],
-                            'dosage'      => $med['dosage'] ?? null,
-                            'route'       => $med['route'] ?? 'Oral',
-                            'frequency'   => $med['frequency'] ?? null,
-                            'instructions'=> $med['instructions'] ?? null,
+                            'inventory_item_id' => $med['inventory_item_id'] ?? null,
+                            'name'              => $med['name'] ?? null,
+                            'dosage'            => $med['dosage'] ?? null,
+                            'route'             => $med['route'] ?? null,
+                            'frequency'         => $med['frequency'] ?? null,
+                            'instructions'      => $med['instructions'] ?? null,
                         ]);
                     }
                 }
             }
         });
 
-        return redirect()->route('medicine-templates.index')->with('success', 'Medicine template updated successfully.');
+        return redirect()->route('medicine-templates.index')
+            ->with('success', __('file.medicine_template_updated'));
     }
 
     public function destroy(MedicineTemplate $medicineTemplate)
     {
+        if (!Auth::user()->can('medicine-templates.delete')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         $medicineTemplate->delete();
-        return back()->with('success', 'Medicine template deleted successfully.');
+
+        return back()->with('success', __('file.medicine_template_deleted'));
     }
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->input('ids');
-        if (is_string($ids)) {
-            $ids = array_filter(explode(',', $ids));
+        if (!Auth::user()->can('medicine-templates.delete')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.module_access_denied')
+            ], 403);
         }
 
         $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'exists:medicine_templates,id',
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'required|integer|exists:medicine_templates,id',
         ]);
 
-        MedicineTemplate::whereIn('id', $ids)->delete();
+        $count = MedicineTemplate::whereIn('id', $request->ids)->delete();
 
-        return back()->with('success', 'Selected templates deleted successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => __('file.selected_templates_deleted'),
+            'deleted' => $count
+        ]);
     }
 }

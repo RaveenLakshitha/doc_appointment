@@ -4,10 +4,12 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\SetAppLocale;
+use App\Services\AppointmentService; // ← add this
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -36,4 +38,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->view("errors.{$statusCode}", ['exception' => $e], $statusCode);
             }
         });
-    })->create();
+    })
+
+    // ────────────────────────────────────────────────
+    // Add this section - recommended for services
+    ->withSingletons([
+        AppointmentService::class => AppointmentService::class,
+        WhatsAppService::class => WhatsAppService::class,
+    ])
+
+    ->create();

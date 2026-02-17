@@ -27,7 +27,7 @@
                 <span id="filter-count" class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
             </button>
 
-            <a href="{{ route('admin.users.create') }}"
+            <a href="{{ route('users.create') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -38,7 +38,7 @@
     </div>
 
     <div id="bulk-delete-form" class="hidden mb-6">
-        <form method="POST" action="{{ route('admin.users.bulkDelete') }}" class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex justify-between items-center">
+        <form method="POST" action="{{ route('users.bulkDelete') }}" class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex justify-between items-center">
             @csrf @method('DELETE')
             <input type="hidden" name="ids" id="bulk-ids">
             <span class="text-sm font-medium text-red-800 dark:text-red-300">
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
         serverSide: true,
         responsive: true,
         ajax: {
-            url: '{{ route('admin.users.datatable') }}',
+            url: '{{ route('users.datatable') }}',
             data: function (d) {
                 d.role   = $('#filter-role').val();
                 d.status = $('#filter-status').val();

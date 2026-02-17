@@ -3,7 +3,7 @@
 @section('title', __('file.attendance'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 py-4 sm:py-6">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
@@ -29,7 +29,7 @@
                 </button>
             </div>
 
-            <a href="{{ route('attendances.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+            <a href="{{ route('attendances.bulk-mark') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -102,7 +102,7 @@
     <!-- Table Container -->
     <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
-            <table id="attendance-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700 display nowrap" style="width:100%">
+            <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700 display nowrap" style="width:100%">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">{{ __('file.date') }}</th>
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
         $.each(data, (id, name) => $('#filter-department').append(`<option value="${id}">${name}</option>`));
     });
 
-    const table = $('#attendance-table').DataTable({
+    const table = $('#docapp-table').DataTable({
         processing: true,
         serverSide: true,
         responsive: true,
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
             bottomStart: 'info',
             bottomEnd: 'paging'
         },
-        pageLength: 15,
+        pageLength: 10,
         language: {
             search: "",
             searchPlaceholder: "{{ __('file.search_attendance') }}",

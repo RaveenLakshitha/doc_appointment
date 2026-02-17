@@ -22,12 +22,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $setting = cache()->remember('app_settings', 3600, fn() => Setting::first());
+        $setting = cache('settings')
+            ?? cache()->remember('settings', now()->addHour(), fn() => Setting::first() ?? (object)[]);
 
         View::share([
             'clinic_name'   => $setting?->clinic_name ?? config('app.name'),
-            'clinic_logo'   => $setting?->logo_path ? Storage::url($setting->logo_path) : null,
+            'clinic_logo'   => $setting?->logo_path
+                ? Storage::url($setting->logo_path)     // ← Recommended: reliable on cPanel / no-symlink setups
+                : null,
             'primary_color' => $setting?->primary_color ?? '#1e40af',
+            'currency_code' => $setting?->currency      ?? 'USD',
         ]);
     }
 }

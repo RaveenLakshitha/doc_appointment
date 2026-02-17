@@ -44,6 +44,7 @@ class InventoryItem extends Model
         'supplier_item_code',
         'supplier_price',
         'lead_time_days',
+         'expiry_date',  
         'minimum_order_quantity',
 
         // === Medicine-specific fields ===
@@ -80,6 +81,7 @@ class InventoryItem extends Model
         'unit_price'             => 'decimal:2',
         'supplier_price'         => 'decimal:2',
         'tax_rate'               => 'decimal:2',
+        'expiry_date' => 'date', 
 
         'storage_conditions'     => 'array', // JSON -> array
     ];
@@ -198,5 +200,10 @@ class InventoryItem extends Model
         return $this->is_active
             ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Active</span>'
             : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Inactive</span>';
+    }
+    
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }

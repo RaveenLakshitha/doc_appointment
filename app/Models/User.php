@@ -46,4 +46,22 @@ class User extends Authenticatable
     {
         return $this->hasOne(Employee::class);
     }
+
+    public function cashRegisters()
+    {
+        return $this->hasMany(CashRegister::class);
+    }
+
+    public function openCashRegister()
+    {
+        return $this->cashRegisters()
+            ->whereNull('closed_at')
+            ->latest('opened_at')
+            ->first();
+    }
+
+    public function hasOpenCashRegister(): bool
+    {
+        return $this->openCashRegister() !== null;
+    }
 }

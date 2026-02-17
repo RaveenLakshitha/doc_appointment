@@ -101,11 +101,6 @@ class Employee extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    public function timesheets(): HasMany
-    {
-        return $this->hasMany(Timesheet::class);
-    }
-
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class);

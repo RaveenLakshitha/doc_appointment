@@ -1,66 +1,161 @@
 <?php
-// app/Http/Controllers/CategoryController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $search = $request->get('search');
-        $sort = $request->get('sort', 'name');
-        $direction = $request->get('direction', 'asc');
+        if (!Auth::user()->can('categories.index')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
 
-        $categories = Category::query()
-            ->when($search, fn($q) => $q
-                ->where('name', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-            )
-            ->when(in_array($sort, ['name', 'description']), fn($q) => $q->orderBy($sort, $direction))
-            ->active()
-            ->with(['parent', 'children' => fn($q) => $q->active()->with('children')])
-            ->paginate(10)
-            ->appends($request->query());
+        return view('categories.index');
+    }
 
-        return view('categories.index', compact('categories', 'search', 'sort', 'direction'));
+    public function datatable(Request $request)
+    {
+        $draw = $request->input('draw');
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        $orderIdx = $request->input('order.0.column');
+        $orderDir = $request->input('order.0.dir', 'asc');
+        $searchValue = trim($request->input('search.value', ''));
+
+        $statusFilter = $request->status;
+
+        $query = Category::query()
+            ->select('categories.*')
+            ->with('parent:id,name,deleted_at')
+            ->when($searchValue !== '', function ($q) use ($searchValue) {
+                $q->where('name', 'like', "%{$searchValue}%")
+                  ->orWhere('description', 'like', "%{$searchValue}%");
+            })
+            ->when($statusFilter, function ($q) use ($statusFilter) {
+                if ($statusFilter === 'active') return $q->where('is_active', true);
+                if ($statusFilter === 'inactive') return $q->where('is_active', false);
+            });
+
+        $totalRecords = Category::count();
+        $filteredRecords = (clone $query)->count();
+
+        $sortColumn = match ((int)$orderIdx) {
+            1 => 'name',
+            2 => 'description',
+            3 => 'parent_id',
+            default => 'name',
+        };
+
+        if ($sortColumn === 'parent_id') {
+            $query->leftJoin('categories as parents', 'categories.parent_id', '=', 'parents.id')
+                  ->orderByRaw("COALESCE(parents.name, 'zzz') {$orderDir}")
+                  ->select('categories.*');
+        } else {
+            $query->orderBy($sortColumn, $orderDir);
+        }
+
+        $categories = $query->offset($start)->limit($length)->get();
+
+        $data = $categories->map(function ($category) {
+            $statusHtml = $category->is_active
+                ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active</span>'
+                : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Inactive</span>';
+
+            $edit_url   = Auth::user()->can('categories.update') ? route('categories.edit', $category) : null;
+            $delete_url = Auth::user()->can('categories.delete') ? route('categories.destroy', $category) : null;
+
+            return [
+                'id'             => $category->id,
+                'name'           => $category->name,
+                'description'    => $category->description ?? '—',
+                'parent_name'    => $category->parent?->deleted_at 
+                    ? ($category->parent?->name . ' (deleted)') 
+                    : ($category->parent?->name ?? '—'),
+                'parent_id'      => $category->parent_id,       
+                'is_active'      => $category->is_active,     
+                'status_html'    => $statusHtml,
+                'show_url'       => route('categories.show', $category),
+                'edit_url'       => $edit_url,
+                'delete_url'     => $delete_url,
+            ];
+        });
+
+        return response()->json([
+            'draw'            => (int)$draw,
+            'recordsTotal'    => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data'            => $data->toArray(),
+        ]);
     }
 
     public function create()
     {
-        $parents = Category::active()->orderBy('name')->get();
+        if (!Auth::user()->can('categories.create')) {
+            return redirect()->route('categories.index')
+                ->with('error', __('file.categories_create_denied'));
+        }
+
+        $parents = Category::whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
+
         return view('categories.create', compact('parents'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        if (!Auth::user()->can('categories.create')) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
             'name'        => 'required|string|max:255|unique:categories,name',
             'description' => 'nullable|string',
             'parent_id'   => 'nullable|exists:categories,id',
             'is_active'   => 'sometimes|boolean',
         ]);
 
-        Category::create(
-            $request->only(['name', 'description', 'parent_id', 'is_active'])
-            + ['is_active' => $request->boolean('is_active', true)]
-        );
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        Category::create($validated);
 
         return redirect()->route('categories.index')
-                         ->with('success', 'Category created.');
+            ->with('success', __('file.category_created_successfully'));
     }
 
     public function show(Category $category)
     {
-        $category->loadMissing(['parent', 'children' => fn($q) => $q->active()->with('children')]);
+        if (!Auth::user()->can('categories.show')) {
+            return redirect()->route('categories.index')
+                ->with('error', __('file.categories_show_denied'));
+        }
+
+        $category->load([
+            'parent',
+            'children' => fn($q) => $q->orderBy('name')
+        ]);
+
         return view('categories.show', compact('category'));
     }
 
     public function details(Category $category)
     {
-        $category->loadMissing(['parent', 'children' => fn($q) => $q->active()->with('children')]);
+        if (!Auth::user()->can('categories.show')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $category->load([
+            'parent:id,name',
+            'children' => fn($q) => $q->select('id','name','is_active','parent_id')
+                ->with(['children:id,name,is_active,parent_id'])
+        ]);
+
         return response()->json([
             'category'      => $category,
             'subcategories' => $category->children->toArray(),
@@ -69,8 +164,16 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        $parents = Category::active()
-            ->where('id', '!=', $category->id)
+        if (!Auth::user()->can('categories.update')) {
+            return redirect()->route('categories.index')
+                ->with('error', __('file.categories_edit_denied'));
+        }
+
+        $parents = Category::where('id', '!=', $category->id)
+            ->where(function ($q) use ($category) {
+                $q->whereNull('parent_id')
+                  ->orWhereNotIn('id', $this->getDescendantIds($category));
+            })
             ->orderBy('name')
             ->get();
 
@@ -79,47 +182,89 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255|unique:categories,name,' . $category->id,
+        if (!Auth::user()->can('categories.edit')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.unauthorized')
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'name'        => ['required', 'string', 'max:255', Rule::unique('categories')->ignore($category->id)],
             'description' => 'nullable|string',
-            'parent_id'   => 'nullable|exists:categories,id',
+            'parent_id'   => [
+                'nullable',
+                'exists:categories,id',
+                function ($attribute, $value, $fail) use ($category) {
+                    if ($value && in_array($value, $this->getDescendantIds($category))) {
+                        $fail('Cannot set a descendant category as parent (would create a cycle).');
+                    }
+                },
+            ],
+            'is_active'   => 'sometimes|boolean',
         ]);
 
-        $category->update([
-            'name'        => $request->name,
-            'description' => $request->description,
-            'parent_id'   => $request->parent_id,
-        ]);
+        $category->update($validated);
 
-        return redirect()->route('categories.index')
-                        ->with('success', 'Category updated.');
+        return response()->json([
+            'success' => true,
+            'message' => __('file.category_updated_successfully')
+        ]);
     }
 
-    /**
-     * Permanently delete a single category
-     */
     public function destroy(Category $category)
     {
-        $category->delete();   // Hard-delete (no soft-delete)
+        if (!Auth::user()->can('categories.delete')) {
+            return redirect()->route('categories.index')
+                ->with('error', __('file.categories_delete_denied'));
+        }
 
-        return back()->with('success', 'Category permanently deleted.');
+        $category->delete();
+
+        return redirect()->route('categories.index')
+            ->with('success', __('file.category_deleted_successfully'));
     }
 
-    /**
-     * Permanently delete multiple categories
-     */
     public function bulkDelete(Request $request)
     {
-        $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'exists:categories,id',
+        if (!Auth::user()->can('categories.delete')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.categories_bulk_delete_denied')
+            ], 403);
+        }
+
+        $ids = $request->input('ids', '');
+        $ids = is_string($ids) ? array_filter(explode(',', $ids)) : [];
+
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.no_categories_selected')
+            ]);
+        }
+
+        Category::whereIn('id', $ids)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('file.categories_bulk_deleted_successfully')
         ]);
+    }
 
-        // Optional: Delete related records first if you have foreign keys
-        // DB::table('subcategories')->whereIn('parent_id', $request->ids)->delete();
+    protected function getDescendantIds(Category $category): array
+    {
+        $ids = [];
+        $children = $category->children()->pluck('id')->toArray();
 
-        Category::whereIn('id', $request->ids)->delete(); // Hard-delete
+        foreach ($children as $childId) {
+            $ids[] = $childId;
+            $child = Category::find($childId);
+            if ($child) {
+                $ids = array_merge($ids, $this->getDescendantIds($child));
+            }
+        }
 
-        return back()->with('success', 'Selected categories permanently deleted.');
+        return $ids;
     }
 }

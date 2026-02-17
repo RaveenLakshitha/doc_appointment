@@ -39,12 +39,11 @@ return [
         ],
 
         'public' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'driver'     => 'local',
+            'root'       => public_path('storage'),           // ← files go directly here: public/storage/logos/...
+            'url'        => env('APP_URL').'/storage',        // URL remains https://.../storage/...
             'visibility' => 'public',
-            'throw' => false,
-            'report' => false,
+            'throw'      => false,
         ],
 
         's3' => [

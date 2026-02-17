@@ -56,13 +56,10 @@
 
 <div id="profile-drawer" class="fixed inset-0 z-50 hidden overflow-hidden">
     <div id="profile-overlay" class="absolute inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-sm" onclick="closeProfileDrawer()"></div>
-
-    <div id="profile-panel"
-         class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col h-[90vh] md:h-full rounded-t-3xl md:rounded-none">
+    <div id="profile-panel" class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col h-[90vh] md:h-full rounded-t-3xl md:rounded-none">
         <div class="md:hidden flex justify-center pt-4 pb-2">
             <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
         </div>
-
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="drawer-name"></h3>
@@ -74,7 +71,6 @@
                 </svg>
             </button>
         </div>
-
         <div class="flex-1 overflow-y-auto px-5 py-5 text-sm space-y-6">
             <div>
                 <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('file.department') }}</h4>
@@ -89,7 +85,6 @@
                 <div class="text-gray-900 dark:text-white whitespace-pre-wrap" id="drawer-description"></div>
             </div>
         </div>
-
         <div class="px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
             <button onclick="closeProfileDrawer()" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
                 {{ __('file.close') }}
@@ -100,13 +95,10 @@
 
 <div id="edit-drawer" class="fixed inset-0 z-50 hidden overflow-hidden">
     <div id="edit-overlay" class="absolute inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-sm" onclick="closeEditDrawer()"></div>
-
-    <div id="edit-panel"
-         class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col h-[90vh] md:h-full rounded-t-3xl md:rounded-none">
+    <div id="edit-panel" class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col h-[90vh] md:h-full rounded-t-3xl md:rounded-none">
         <div class="md:hidden flex justify-center pt-4 pb-2">
             <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
         </div>
-
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('file.edit_specialization') }}</h3>
@@ -118,18 +110,14 @@
                 </svg>
             </button>
         </div>
-
         <form id="edit-form" class="flex-1 flex flex-col">
             @csrf
-            <input type="hidden" name="_method" value="PATCH">
             <input type="hidden" name="id" id="edit-id">
-
             <div class="flex-1 overflow-y-auto px-5 py-5 text-sm space-y-6">
                 <div>
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('file.name') }}</h4>
                     <input type="text" name="name" id="edit-name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white" />
                 </div>
-
                 <div>
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('file.department') }}</h4>
                     <select name="department_id" id="edit-department_id" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white">
@@ -139,13 +127,11 @@
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('file.description') }}</h4>
                     <textarea name="description" id="edit-description" rows="6" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
                 </div>
             </div>
-
             <div class="px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
                     {{ __('file.save_changes') }}
@@ -155,7 +141,6 @@
     </div>
 </div>
 
-@push('scripts')
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -276,12 +261,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('drawer-department').textContent = spec.department_name || '—';
         document.getElementById('drawer-doctors').textContent = spec.doctors_count;
         document.getElementById('drawer-description').textContent = spec.description || '—';
-
         bodyScrollPos = window.pageYOffset;
         document.body.style.position = 'fixed';
         document.body.style.top = `-${bodyScrollPos}px`;
         document.body.style.width = '100%';
-
         profileDrawer.classList.remove('hidden');
     };
 
@@ -297,20 +280,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('edit-id').value = spec.id;
         document.getElementById('edit-name').value = spec.name || '';
         document.getElementById('edit-description').value = spec.description || '';
-
         const deptSelect = document.getElementById('edit-department_id');
-        deptSelect.value = '';
-        if (spec.department && spec.department.id) {
-            deptSelect.value = spec.department.id;
-        } else if (spec.department_id) {
-            deptSelect.value = spec.department_id;
-        }
-
+        deptSelect.value = spec.department?.id || '';
         bodyScrollPos = window.pageYOffset;
         document.body.style.position = 'fixed';
         document.body.style.top = `-${bodyScrollPos}px`;
         document.body.style.width = '100%';
-
         editDrawer.classList.remove('hidden');
     };
 
@@ -324,34 +299,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('edit-form').addEventListener('submit', function(e) {
         e.preventDefault();
-
         const formData = new FormData(this);
         const id = formData.get('id');
-
         fetch(`{{ url('specializations') }}/${id}`, {
-            method: 'POST',
+            method: 'PATCH',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw err; });
+        .then(async response => {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Validation failed or server error');
+                }
+                return data;
+            } else {
+                const text = await response.text();
+                throw new Error(`Unexpected response: ${response.status} - ${text.substring(0, 100)}...`);
             }
-            return response.json();
         })
         .then(data => {
             if (data.success) {
                 table.draw(false);
                 closeEditDrawer();
+                alert(data.message || 'Specialization updated successfully!');
             } else {
-                alert(data.message || 'Validation error');
+                alert('Update failed: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Update error:', error);
-            alert(error.message || 'Failed to update specialization');
+            alert('Failed to update specialization: ' + error.message);
         });
     });
 
@@ -363,6 +346,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-@endpush
 @endpush
 @endsection

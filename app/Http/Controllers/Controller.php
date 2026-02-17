@@ -17,7 +17,7 @@ abstract class Controller extends BaseController
     {
          $setting = Setting::first();
          view()->share('clinic_name', $setting?->clinic_name ?? config('app.name'));
-         view()->share('clinic_logo', $setting?->logo_path ? Storage::url($setting->logo_path) : null);
+         view()->share('clinic_logo', $setting?->logo_path ? asset('storage/' . ltrim($setting->logo_path, '/')) : null);
          view()->share('primary_color', $setting?->primary_color ?? '#1e40af');
     }
 }

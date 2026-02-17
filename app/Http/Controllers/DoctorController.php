@@ -7,17 +7,25 @@ use App\Models\User;
 use App\Models\Department;
 use App\Models\Specialization;
 use App\Models\OptionList;
+use App\Models\AgeGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class DoctorController extends Controller
 {
     public function index(Request $request)
     {
-        $doctors = Doctor::with(['user', 'primarySpecialization', 'department', 'positionOption'])
+        if (!Auth::user()->can('doctors.index')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
+        $doctors = Doctor::with(['user', 'primarySpecialization', 'department', 'positionOption', 'ageGroups', 'languages'])
             ->active()
             ->orderByRaw("CONCAT(first_name, ' ', COALESCE(middle_name,''), ' ', last_name)")
             ->paginate(10)
@@ -41,7 +49,7 @@ class DoctorController extends Controller
         $statusFilter     = $request->status;
 
         $query = Doctor::query()
-            ->with(['user', 'primarySpecialization', 'department', 'positionOption'])
+            ->with(['user', 'primarySpecialization', 'department', 'positionOption', 'ageGroups', 'languages'])
             ->select('doctors.*')
             ->when($searchValue !== '', function ($q) use ($searchValue) {
                 $q->whereRaw("CONCAT(COALESCE(first_name,''), ' ', COALESCE(middle_name,''), ' ', COALESCE(last_name,'')) LIKE ?", ["%{$searchValue}%"])
@@ -103,6 +111,9 @@ class DoctorController extends Controller
                 default  => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Other</span>'
             };
 
+            $edit_url   = Auth::user()->can('doctors.edit') ? route('doctors.edit', $d) : '';
+            $delete_url = Auth::user()->can('doctors.delete') ? route('doctors.destroy', $d) : '';
+
             return [
                 'id'             => $d->id,
                 'full_name'      => $d->getFullNameAttribute() ?? '-',
@@ -110,11 +121,13 @@ class DoctorController extends Controller
                 'department'     => $d->department?->name ?? '-',
                 'specialty'      => $d->primarySpecialization?->name ?? '-',
                 'position'       => $d->positionOption?->name ?? '-',
+                'age_groups'     => $d->ageGroups->pluck('name')->join(', ') ?: '-',
+                'languages'      => $d->languages->pluck('name')->join(', ') ?: '-',
                 'status_html'    => $statusHtml,
                 'phone'          => $d->phone ?? '-',
                 'show_url'       => route('doctors.show', $d),
-                'edit_url'       => route('doctors.edit', $d),
-                'delete_url'     => route('doctors.destroy', $d),
+                'edit_url'       => $edit_url,
+                'delete_url'     => $delete_url,
             ];
         });
 
@@ -126,38 +139,45 @@ class DoctorController extends Controller
         ]);
     }
 
-    public function show(Doctor $doctor)
-    {
-        $doctor->load([
-            'user',
-            'primarySpecialization',
-            'department',
-            'positionOption',
-            'appointments' => fn($q) => $q->latest()->take(5),
-            'schedules'    => fn($q) => $q->with('room')->where('is_active', true),
-        ]);
-
-        $doctor->appointments_count = $doctor->appointments()->count();
-
-        return view('doctors.show', compact('doctor'));
-    }
-
     public function create()
     {
+        if (!Auth::user()->can('doctors.create')) {
+            return redirect()->route('doctors.index')
+                ->with('error', __('file.doctors_create_denied'));
+        }
+
         $departments     = Department::where('status', true)->orderBy('name')->get(['id', 'name']);
         $specializations = Specialization::orderBy('name')->get(['id', 'name']);
         $positions       = OptionList::getOptions('doctor_position');
+        $ageGroups       = AgeGroup::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $languages       = OptionList::getOptions('language');
 
         $availableUsers = User::role('doctor')
             ->whereDoesntHave('doctor')
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone']);
 
-        return view('doctors.create', compact('departments', 'specializations', 'positions', 'availableUsers'));
+        $treatments = \App\Models\Treatment::where('active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        return view('doctors.create', compact(
+            'departments',
+            'specializations',
+            'positions',
+            'ageGroups',
+            'languages',
+            'availableUsers',
+            'treatments'
+        ));
     }
 
     public function store(Request $request)
     {
+        if (!Auth::user()->can('doctors.create')) {
+            abort(403);
+        }
+
         try {
             $validated = $request->validate([
                 'user_id'                   => 'nullable|exists:users,id',
@@ -167,26 +187,30 @@ class DoctorController extends Controller
                 'first_name'                => 'required|string|max:255',
                 'middle_name'               => 'nullable|string|max:255',
                 'last_name'                 => 'required|string|max:255',
-                'date_of_birth'             => 'required|date|before:today',
+                'date_of_birth'             => 'nullable|date|before:today',
                 'gender'                    => ['required', Rule::in(['male', 'female', 'other'])],
                 'address'                   => 'nullable|string|max:1000',
                 'city'                      => 'nullable|string|max:100',
                 'state'                     => 'nullable|string|max:100',
                 'zip_code'                  => 'nullable|string|max:20',
-                'phone'                     => 'required|string|max:20',
+                'phone'                     => 'nullable|string|max:20',
                 'email'                     => [
-                    'required',
+                    'nullable',
                     'email',
                     'max:255',
-                    Rule::unique('doctors', 'email')->when(!$request->filled('user_id'), fn($rule) => $rule),
+                    Rule::unique('doctors', 'email')
+                        ->when($request->filled('user_id'), function ($rule) use ($request) {
+                            $existingDoctor = Doctor::where('user_id', $request->user_id)->first();
+                            return $existingDoctor ? $rule->ignore($existingDoctor->id) : $rule;
+                        }),
                 ],
                 'emergency_contact_name'    => 'nullable|string|max:255',
                 'emergency_contact_phone'   => 'nullable|string|max:20',
                 'primary_specialization_id' => 'required|exists:specializations,id',
-                'license_number'            => 'required|string|max:100|unique:doctors,license_number',
-                'license_expiry_date'       => 'required|date|after:today',
+                'license_number'            => 'nullable|string|max:100|unique:doctors,license_number',
+                'license_expiry_date'       => 'nullable|date|after:today',
                 'qualifications'            => 'nullable|string|max:1000',
-                'years_experience'          => 'required|integer|min:0|max:100',
+                'years_experience'          => 'nullable|integer|min:0|max:100',
                 'education'                 => 'nullable|string|max:2000',
                 'certifications'            => 'nullable|string|max:2000',
                 'department_id'             => 'required|exists:departments,id',
@@ -195,8 +219,14 @@ class DoctorController extends Controller
                     'exists:option_lists,id',
                     Rule::in(array_keys(OptionList::getOptions('doctor_position'))),
                 ],
-                'hourly_rate'               => 'required|numeric|min:0',
-                'profile_photo'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+                'profile_photo'             => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+                'age_group_ids'             => 'nullable|array',
+                'age_group_ids.*'           => 'exists:age_groups,id',
+                'language_ids'              => 'nullable|array',
+                'language_ids.*'            => 'exists:option_lists,id',
+                'treatments'                => 'nullable|array',
+                'treatments.*.id'           => 'required|exists:treatments,id',
+                'treatments.*.price'        => 'required|numeric|min:0',
             ]);
 
             return DB::transaction(function () use ($request, $validated) {
@@ -235,34 +265,46 @@ class DoctorController extends Controller
                     $profilePhotoPath = $request->file('profile_photo')->store('doctors/photos', 'public');
                 }
 
-                Doctor::create([
+                $doctor = Doctor::create([
                     'user_id'                   => $user->id,
                     'first_name'                => $validated['first_name'],
                     'middle_name'               => $validated['middle_name'] ?? null,
                     'last_name'                 => $validated['last_name'],
-                    'date_of_birth'             => $validated['date_of_birth'],
+                    'date_of_birth'             => $validated['date_of_birth'] ?? null,
                     'gender'                    => $validated['gender'],
                     'address'                   => $validated['address'] ?? null,
                     'city'                      => $validated['city'] ?? null,
                     'state'                     => $validated['state'] ?? null,
                     'zip_code'                  => $validated['zip_code'] ?? null,
-                    'phone'                     => $validated['phone'],
-                    'email'                     => $validated['email'],
+                    'phone'                     => $validated['phone'] ?? null,
+                    'email'                     => $validated['email'] ?? null,
                     'emergency_contact_name'    => $validated['emergency_contact_name'] ?? null,
                     'emergency_contact_phone'   => $validated['emergency_contact_phone'] ?? null,
-                    'license_number'            => $validated['license_number'],
-                    'license_expiry_date'       => $validated['license_expiry_date'],
+                    'license_number'            => $validated['license_number'] ?? null,
+                    'license_expiry_date'       => $validated['license_expiry_date'] ?? null,
                     'qualifications'            => $validated['qualifications'] ?? null,
-                    'years_experience'          => $validated['years_experience'],
+                    'years_experience'          => $validated['years_experience'] ?? null,
                     'education'                 => $validated['education'] ?? null,
                     'certifications'            => $validated['certifications'] ?? null,
                     'department_id'             => $validated['department_id'],
                     'primary_specialization_id' => $validated['primary_specialization_id'],
                     'position_id'               => $validated['position_id'],
-                    'hourly_rate'               => $validated['hourly_rate'],
                     'profile_photo'             => $profilePhotoPath,
                     'is_active'                 => true,
                 ]);
+
+                $doctor->ageGroups()->sync($request->input('age_group_ids', []));
+                $doctor->languages()->sync($request->input('language_ids', []));
+
+                if ($request->has('treatments') && is_array($request->input('treatments'))) {
+                    $syncData = [];
+                    foreach ($request->input('treatments') as $item) {
+                        if (!empty($item['id']) && is_numeric($item['price'])) {
+                            $syncData[$item['id']] = ['price' => $item['price']];
+                        }
+                    }
+                    $doctor->treatments()->sync($syncData);
+                }
 
                 return redirect()->route('doctors.index')
                     ->with('success', __('file.doctor_created_successfully'));
@@ -280,27 +322,74 @@ class DoctorController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', __('An error occurred while creating the doctor. Please try again.'));
+                ->with('error', __('file.doctor_creation_failed'));
         }
+    }
+
+    public function show(Doctor $doctor)
+    {
+        if (!Auth::user()->can('doctors.show')) {
+            return redirect()->route('doctors.index')
+                ->with('error', __('file.doctors_show_denied'));
+        }
+
+        $doctor->load([
+            'user',
+            'primarySpecialization',
+            'department',
+            'positionOption',
+            'ageGroups',
+            'languages',
+            'treatments',
+            'appointments' => fn($q) => $q->latest()->take(5),
+            'schedules'    => fn($q) => $q->with('room')->where('is_active', true),
+        ]);
+
+        $doctor->appointments_count = $doctor->appointments()->count();
+
+        return view('doctors.show', compact('doctor'));
     }
 
     public function edit(Doctor $doctor)
     {
+        if (!Auth::user()->can('doctors.edit')) {
+            return redirect()->route('doctors.index')
+                ->with('error', __('file.doctors_edit_denied'));
+        }
+
         if (!$doctor->is_active || $doctor->trashed()) {
             abort(404);
         }
 
-        $doctor->load('user'); // Ensures $doctor->user is available in the view
+        $doctor->load(['user', 'ageGroups', 'languages']);
 
         $departments     = Department::where('status', true)->orderBy('name')->get(['id', 'name']);
         $specializations = Specialization::orderBy('name')->get(['id', 'name']);
         $positions       = OptionList::getOptions('doctor_position');
+        $ageGroups       = AgeGroup::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $languages       = OptionList::getOptions('language');
 
-        return view('doctors.edit', compact('doctor', 'departments', 'specializations', 'positions'));
+        $treatments = \App\Models\Treatment::where('active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        return view('doctors.edit', compact(
+            'doctor',
+            'departments',
+            'specializations',
+            'positions',
+            'ageGroups',
+            'languages',
+            'treatments'
+        ));
     }
 
     public function update(Request $request, Doctor $doctor)
     {
+        if (!Auth::user()->can('doctors.edit')) {
+            abort(403, __('file.unauthorized_action'));
+        }
+
         if (!$doctor->is_active || $doctor->trashed()) {
             abort(404);
         }
@@ -309,21 +398,31 @@ class DoctorController extends Controller
             'first_name'                => 'required|string|max:255',
             'middle_name'               => 'nullable|string|max:255',
             'last_name'                 => 'required|string|max:255',
-            'date_of_birth'             => 'required|date|before:today',
+            'date_of_birth'             => 'nullable|date|before:today',
             'gender'                    => ['required', Rule::in(['male', 'female', 'other'])],
             'address'                   => 'nullable|string|max:1000',
             'city'                      => 'nullable|string|max:100',
             'state'                     => 'nullable|string|max:100',
             'zip_code'                  => 'nullable|string|max:20',
-            'phone'                     => 'required|string|max:20',
-            'email'                     => ['required', 'email', 'max:255', Rule::unique('doctors', 'email')->ignore($doctor->id)],
+            'phone'                     => 'nullable|string|max:20',
+            'email'                     => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('doctors', 'email')->ignore($doctor->id),
+            ],
             'emergency_contact_name'    => 'nullable|string|max:255',
             'emergency_contact_phone'   => 'nullable|string|max:20',
             'primary_specialization_id' => 'required|exists:specializations,id',
-            'license_number'            => ['required', 'string', 'max:100', Rule::unique('doctors', 'license_number')->ignore($doctor->id)],
-            'license_expiry_date'       => 'required|date|after:today',
+            'license_number'            => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('doctors', 'license_number')->ignore($doctor->id),
+            ],
+            'license_expiry_date'       => 'nullable|date|after:today',
             'qualifications'            => 'nullable|string|max:1000',
-            'years_experience'          => 'required|integer|min:0|max:100',
+            'years_experience'          => 'nullable|integer|min:0|max:100',
             'education'                 => 'nullable|string|max:2000',
             'certifications'            => 'nullable|string|max:2000',
             'department_id'             => 'required|exists:departments,id',
@@ -332,12 +431,24 @@ class DoctorController extends Controller
                 'exists:option_lists,id',
                 Rule::in(array_keys(OptionList::getOptions('doctor_position'))),
             ],
-            'hourly_rate'               => 'required|numeric|min:0',
-            'profile_photo'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'profile_photo'             => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'remove_profile_photo'      => 'sometimes|boolean',
+            'age_group_ids'             => 'nullable|array',
+            'age_group_ids.*'           => 'exists:age_groups,id',
+            'language_ids'              => 'nullable|array',
+            'language_ids.*'            => 'exists:option_lists,id',
+            'treatments'                => 'nullable|array',
+            'treatments.*.id'           => 'required|exists:treatments,id',
+            'treatments.*.price'        => 'required|numeric|min:0',
         ]);
 
-        // Handle profile photo
         $profilePhotoPath = $doctor->profile_photo;
+
+        if ($request->boolean('remove_profile_photo') && $profilePhotoPath) {
+            Storage::disk('public')->delete($profilePhotoPath);
+            $profilePhotoPath = null;
+        }
+
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
             if ($profilePhotoPath) {
                 Storage::disk('public')->delete($profilePhotoPath);
@@ -345,45 +456,101 @@ class DoctorController extends Controller
             $profilePhotoPath = $request->file('profile_photo')->store('doctors/photos', 'public');
         }
 
-        // Update doctor fields
         $doctor->update([
             'first_name'                => $validated['first_name'],
             'middle_name'               => $validated['middle_name'] ?? null,
             'last_name'                 => $validated['last_name'],
-            'date_of_birth'             => $validated['date_of_birth'],
+            'date_of_birth'             => $validated['date_of_birth'] ?? null,
             'gender'                    => $validated['gender'],
             'address'                   => $validated['address'] ?? null,
             'city'                      => $validated['city'] ?? null,
             'state'                     => $validated['state'] ?? null,
             'zip_code'                  => $validated['zip_code'] ?? null,
-            'phone'                     => $validated['phone'],
-            'email'                     => $validated['email'],
+            'phone'                     => $validated['phone'] ?? null,
+            'email'                     => $validated['email'] ?? null,
             'emergency_contact_name'    => $validated['emergency_contact_name'] ?? null,
             'emergency_contact_phone'   => $validated['emergency_contact_phone'] ?? null,
-            'license_number'            => $validated['license_number'],
-            'license_expiry_date'       => $validated['license_expiry_date'],
+            'primary_specialization_id' => $validated['primary_specialization_id'],
+            'license_number'            => $validated['license_number'] ?? null,
+            'license_expiry_date'       => $validated['license_expiry_date'] ?? null,
             'qualifications'            => $validated['qualifications'] ?? null,
-            'years_experience'          => $validated['years_experience'],
+            'years_experience'          => $validated['years_experience'] ?? null,
             'education'                 => $validated['education'] ?? null,
             'certifications'            => $validated['certifications'] ?? null,
             'department_id'             => $validated['department_id'],
-            'primary_specialization_id' => $validated['primary_specialization_id'],
             'position_id'               => $validated['position_id'],
-            'hourly_rate'               => $validated['hourly_rate'],
             'profile_photo'             => $profilePhotoPath,
         ]);
 
-        // Sync basic info to linked user (if exists) - keeps user record consistent
+        $doctor->ageGroups()->sync($request->input('age_group_ids', []));
+        $doctor->languages()->sync($request->input('language_ids', []));
+
+        if ($request->has('treatments') && is_array($request->input('treatments'))) {
+            $syncData = [];
+            foreach ($request->input('treatments') as $item) {
+                if (!empty($item['id']) && is_numeric($item['price'])) {
+                    $syncData[$item['id']] = ['price' => $item['price']];
+                }
+            }
+            $doctor->treatments()->sync($syncData);
+        }
+
         if ($doctor->user) {
             $doctor->user->update([
-                'name'  => 'Dr. ' . $doctor->getFullNameAttribute(),
-                'email' => $doctor->email,   // Keep user email in sync with doctor's email
+                'name'  => 'Dr. ' . trim($doctor->first_name . ' ' . ($doctor->middle_name ?? '') . ' ' . $doctor->last_name),
+                'email' => $doctor->email,
                 'phone' => $doctor->phone,
             ]);
         }
 
         return redirect()->route('doctors.index')
             ->with('success', __('file.doctor_updated_successfully'));
+    }
+
+    public function destroy(Doctor $doctor)
+    {
+        if (!Auth::user()->can('doctors.delete')) {
+            return redirect()->route('doctors.index')
+                ->with('error', __('file.doctors_delete_denied'));
+        }
+
+        if ($doctor->profile_photo) {
+            Storage::disk('public')->delete($doctor->profile_photo);
+        }
+
+        $doctor->update(['is_active' => false]);
+
+        return back()->with('success', __('file.doctor_deleted_successfully'));
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        if (!Auth::user()->can('doctors.delete')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.doctors_bulk_delete_denied')
+            ], 403);
+        }
+
+        $ids = $request->input('ids');
+        if (is_string($ids)) {
+            $ids = array_filter(explode(',', $ids));
+        }
+
+        if (empty($ids)) {
+            return back()->with('error', __('file.no_items_selected'));
+        }
+
+        $doctors = Doctor::whereIn('id', $ids)->get();
+        foreach ($doctors as $doctor) {
+            if ($doctor->profile_photo) {
+                Storage::disk('public')->delete($doctor->profile_photo);
+            }
+        }
+
+        Doctor::whereIn('id', $ids)->update(['is_active' => false]);
+
+        return back()->with('success', __('file.doctors_bulk_deleted_successfully'));
     }
 
     public function filters(Request $request)
@@ -399,28 +566,5 @@ class DoctorController extends Controller
         }
 
         return response()->json([]);
-    }
-
-    public function bulkDelete(Request $request)
-    {
-        $ids = $request->input('ids');
-        if (is_string($ids)) {
-            $ids = array_filter(explode(',', $ids));
-        }
-
-        if (empty($ids)) {
-            return back()->with('error', 'No doctors selected.');
-        }
-
-        $doctors = Doctor::whereIn('id', $ids)->get();
-        foreach ($doctors as $doctor) {
-            if ($doctor->profile_photo) {
-                Storage::disk('public')->delete($doctor->profile_photo);
-            }
-        }
-
-        Doctor::whereIn('id', $ids)->update(['is_active' => false]);
-
-        return back()->with('success', 'Selected doctors deleted successfully.');
     }
 }

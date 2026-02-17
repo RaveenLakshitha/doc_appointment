@@ -1,42 +1,49 @@
+// resources/js/app.js (or bootstrap.js)
+
 import './bootstrap';
 
-// 1. jQuery — must be first
+// 1. jQuery first
 import $ from 'jquery';
 window.$ = window.jQuery = $;
 
-// 2. DataTables Core + Responsive
+import 'select2';
+import 'select2/dist/css/select2.min.css';
+
+// 2. DataTables core + extensions
 import DataTable from 'datatables.net-dt';
 import 'datatables.net-responsive-dt';
-
-// 3. Buttons + HTML5 + Print
 import 'datatables.net-buttons-dt';
+
+// HTML5 export + Print
 import 'datatables.net-buttons/js/buttons.html5.mjs';
 import 'datatables.net-buttons/js/buttons.print.mjs';
 
-// 4. CSS Imports
+// 3. CSS
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
 import 'datatables.net-buttons-dt/css/buttons.dataTables.css';
 
-// 5. Required Dependencies for Excel & PDF
+// 4. Excel (JSZip)
 import JSZip from 'jszip';
-import * as pdfMake from 'pdfmake/build/pdfmake';  // ← Named import for pdfMake
-import * as pdfFonts from 'pdfmake/build/vfs_fonts.js';  // ← Named import (FIXES undefined)
-
-// 6. Expose to window (REQUIRED!)
-// JSZip for Excel
 window.JSZip = JSZip;
-// pdfMake for PDF (now with vfs)
-window.pdfMake = pdfMake;
-pdfMake.vfs = pdfFonts;  // ← Direct assignment (no .pdfMake.vfs — fixes the error)
 
-// 7. Make DataTable global
+// 5. PDF (pdfMake) — IMPORTANT: default imports + explicit vfs assignment
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+
+// Assign fonts immediately
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+// Expose globally BEFORE DataTables runs
+window.pdfMake = pdfMake;
+
+// 6. Make DataTable global
 window.DataTable = DataTable;
 
-// Optional: nicer button styling
+// Optional: nicer buttons layout
 DataTable.Buttons.defaults.dom.container.className = 'dt-buttons flex gap-2';
 
-// 8. Alpine.js
+// 7. Alpine
 import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 Alpine.start();

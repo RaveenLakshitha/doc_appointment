@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', config('app.name'))</title>
+    <title>{{ $clinic_name }}</title>
+
+    <link rel="icon" 
+      href="{{ $clinic_logo ?? asset('images/default-logo.png') }}" 
+      type="image/png">
+        
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -468,19 +473,97 @@
             <button id="fullscreen-toggle" aria-label="Toggle fullscreen"
                     class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
                 <svg id="enter-fullscreen-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4m-4 0l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"/>
-                </svg>
-                <svg id="exit-fullscreen-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4m-4 0l5 5m11-8v4m0-4h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0-4h-4m4 4l-5-5"/>
-                </svg>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M8 21H5a2 2 0 01-2-2v-3M16 21h3a2 2 0 002-2v-3"/>
+            </svg>
+                            <svg id="exit-fullscreen-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 9H5V5M15 9h4V5M9 15H5v4M15 15h4v4"/>
+            </svg>
             </button>
 
-            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
-                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <div class="relative" x-data="notificationsDropdown" x-init="init" x-cloak>
+    
+    <button 
+        @click="open = !open; if (open) fetchNotifications()"
+        class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary"
+        aria-label="Notifications"
+    >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        
+        <!-- Badge – show only if unread > 0 -->
+        <template x-if="unreadCount > 0">
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full" 
+                  x-text="unreadCount > 99 ? '99+' : unreadCount">
+            </span>
+        </template>
+    </button>
+
+    <!-- Dropdown panel -->
+                <div 
+                    x-show="open"
+                    @click.away="open = false"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-y-1 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-1 scale-95"
+                    class="absolute right-0 mt-3 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-50 max-h-[80vh] overflow-y-auto"
+                >
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                    </div>
+
+                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <template x-if="notifications.length === 0">
+                            <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p class="mt-2 text-sm">No new notifications</p>
+                            </div>
+                        </template>
+
+                        <template x-for="notification in notifications" :key="notification.id">
+                            <div 
+                                class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                                :class="{ 'bg-blue-50 dark:bg-blue-900/20': !notification.read_at }"
+                            >
+                                <div class="flex items-start space-x-4">
+                                    <!-- Icon / Avatar -->
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="notification.data.message || 'New notification'"></p>
+                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400" x-text="notification.data.patient_name || ''"></p>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                                    </div>
+
+                                    <!-- Action -->
+                                    <button 
+                                        @click="markAsRead(notification.id)"
+                                        class="text-xs text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                                        x-show="!notification.read_at"
+                                    >
+                                        Mark read
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+            </div>
 
             <div class="relative" x-data="{ open: false }" x-cloak x-init="open = false">
                 <button id="user-menu-button" @click="open = !open"
@@ -499,7 +582,7 @@
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95"
                      class="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
-                    <a href="{{ route('profile.edit') }}"
+                    <a href="#"
                        class="block px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                         {{ __('Profile') }}
                     </a>
@@ -766,7 +849,79 @@
             @endforeach
         @endif
     });
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('notificationsDropdown', () => ({
+            open: false,
+            notifications: [],
+            unreadCount: 0,
+
+            url: '{{ route("notifications.unread") }}',
+
+            async fetchNotifications() {
+                try {
+                    const response = await fetch(this.url, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) throw new Error('Failed to fetch notifications');
+
+                    const data = await response.json();
+                    this.notifications = data.notifications || [];
+                    this.unreadCount = data.unread_count || 0;
+                } catch (error) {
+                    console.error('Notifications fetch error:', error);
+                }
+            },
+
+            async markAsRead(id) {
+                try {
+                    const readRoutePattern = '{{ route("notifications.read", ":id") }}';
+                    const url = readRoutePattern.replace(':id', id);
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        let message = 'Failed to mark as read';
+                        try {
+                            const json = await response.json();
+                            message = json.message || message;
+                        } catch {}
+                        throw new Error(`${message} (${response.status})`);
+                    }
+
+                    const notifIndex = this.notifications.findIndex(n => n.id === id);
+                    if (notifIndex !== -1) {
+                        this.notifications[notifIndex].read_at = new Date().toISOString();
+                        this.unreadCount = this.notifications.filter(n => !n.read_at).length;
+                    }
+
+                } catch (err) {
+                    console.error('Mark as read failed:', err);
+                    showNotification('Error', 'Could not mark notification as read. Please try again.', 'error');
+                }
+            },
+
+            init() {
+                this.fetchNotifications();
+                setInterval(() => this.fetchNotifications(), 60000);
+            }
+        }));
+    });
 </script>
+
+ <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 </body>
 </html>

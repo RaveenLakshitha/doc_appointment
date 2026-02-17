@@ -17,10 +17,12 @@ class Appointment extends Model
     const STATUS_APPROVED  = 'approved';
     const STATUS_REJECTED  = 'rejected';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_COMPLETED = 'completed';
 
     // Type constants
     const TYPE_SPECIFIC         = 'specific';         // Specific doctor selected
     const TYPE_ANY              = 'any';              // Any available doctor
+    const TYPE_PRIMARY_PROVIDER = 'primary_provider'; // Patient's primary doctor
 
     protected $fillable = [
         'patient_id',
@@ -30,12 +32,16 @@ class Appointment extends Model
         'reason_for_visit',
         'doctor_notes',
         'patient_notes',
+        'session_key',    
+        'queue_number',
         'admin_notes',
         'scheduled_start',     // datetime of the appointment
         'scheduled_end',       // datetime of the appointment
         'room_id',             // optional
         'cancelled_at',
         'cancelled_by',        // user_id who cancelled
+        'specialization_id',
+        'appointment_number',
     ];
 
     protected $casts = [
@@ -104,4 +110,72 @@ class Appointment extends Model
     {
         return $this->scheduled_end && $this->scheduled_end->isPast();
     }
+
+    public function getQueueLabelAttribute(): string
+    {
+        if (!$this->queue_number) {
+            return '—';
+        }
+        return $this->session_key 
+            ? strtoupper(substr($this->session_key, 0, 1)) . $this->queue_number
+            : (string) $this->queue_number;
+    }
+
+    public function specialization()
+    {
+        return $this->belongsTo(Specialization::class, 'specialization_id');
+    }
+
+    public function getQueueDisplayAttribute(): string
+    {
+        if (!$this->queue_number) {
+            return '—';
+        }
+
+        return $this->session_key 
+            ? strtoupper($this->session_key) . ' #' . $this->queue_number
+            : '#' . $this->queue_number;
+    }
+
+    public function isInQueue(): bool
+    {
+        return $this->status === self::STATUS_APPROVED 
+            && $this->queue_number !== null;
+    }
+
+    public function markAsCompleted()
+    {
+        $this->update([
+            'status'         => 'completed', 
+            'completed_at'   => now(),
+            'completed_by'   => auth()->id(),
+        ]);
+    }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(BillingInvoice::class);
+    }
+
+    // Add this relationship
+    public function treatments()
+    {
+        return $this->belongsToMany(Treatment::class, 'appointment_treatment')
+            ->withPivot(['quantity', 'price_at_time', 'notes'])
+            ->withTimestamps();
+    }
+
+    // Helper to get total cost of all treatments
+    public function getTotalTreatmentPriceAttribute(): float
+    {
+        return $this->treatments->sum(
+            fn($treatment) => $treatment->pivot->quantity * $treatment->pivot->price_at_time
+        );
+    }
+    
 }

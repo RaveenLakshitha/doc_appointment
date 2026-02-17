@@ -5,13 +5,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ $clinic_name }}</title>
 
+        
+        <link rel="icon" 
+      href="{{ $clinic_logo ?? asset('images/default-logo.png') }}" 
+      type="image/png">
+        
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -70,23 +76,6 @@
     </head>
     <body class="antialiased">
         <div class="min-h-screen flex flex-col justify-end sm:justify-center items-center animated-gradient px-4 sm:px-6 py-8">
-
-        <div class="mb-10 text-center">
-            <div class="inline-block bg-transparent backdrop-blur-lg rounded-2xl p-2 ring-4 ring-white/20 mb-6">
-                @if($clinic_logo ?? false)
-                    <img src="{{ $clinic_logo }}"
-                         alt="{{ $clinic_name ?? 'Clinic' }} Logo"
-                         class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl">
-                @else
-                    <!-- Fallback: Initials inside gradient circle -->
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] rounded-2xl flex items-center justify-center shadow-xl">
-                        <span class="text-3xl sm:text-4xl font-bold text-white">
-                            {{ Str::substr($clinic_name ?? config('app.name'), 0, 2)->upper() }}
-                        </span>
-                    </div>
-                @endif
-            </div>
-        </div>
 
             <!-- Card Container -->
             <div class="w-full max-w-md mobile-card">

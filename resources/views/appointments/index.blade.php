@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <!-- Filter Drawer -->
+    <!-- Filter Drawer remains unchanged -->
     <div id="filter-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 opacity-0"></div>
 
     <div id="filter-drawer" class="fixed z-50 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out
@@ -92,10 +92,10 @@
             <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700 display nowrap" style="width:100%">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">{{ __('file.No') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">{{ __('file.patient') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">{{ __('file.doctor') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.date_time') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.type') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.status') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">{{ __('file.actions') }}</th>
                     </tr>
@@ -164,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Load doctors for filter
     $.get('{{ route("appointments.filters", ["column" => "doctor"]) }}', function(data) {
         $.each(data, function(id, name) {
             $('#filter-doctor').append(`<option value="${id}">${name}</option>`);
@@ -182,26 +181,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 d.status = filterStatus.value;
             }
         },
-        order: [[2, 'desc']], // Order by date/time descending
+        order: [[3, 'desc']], // Now order by date/time (column index 3)
         columnDefs: [
-            { targets: [0, 1], responsivePriority: 1 },
+            { targets: [0, 1, 2], responsivePriority: 1 },
             { targets: -1, orderable: false, searchable: false, responsivePriority: 2 },
             { targets: 4, searchable: false, className: 'text-center' }
         ],
         columns: [
-            { data: 'patient_name', render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '-'}</div>` },
-            { data: 'doctor_name', render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '(Any Doctor)'}</div>` },
-            { data: 'scheduled_datetime', className: 'whitespace-nowrap' },
-            {
-                data: 'appointment_type',
+            { 
+                data: 'appointment_number', 
+                defaultContent: '—',
                 render: function(data) {
-                    if (!data) return '-';
-                    const types = {
-                        '{{ \App\Models\Appointment::TYPE_SPECIFIC }}': 'Specific Doctor',
-                        '{{ \App\Models\Appointment::TYPE_ANY }}': 'Any Doctor',
-                        '{{ \App\Models\Appointment::TYPE_PRIMARY_PROVIDER }}': 'Primary Provider'
-                    };
-                    return `<span class="capitalize">${types[data] || data}</span>`;
+                    return `<div class="font-medium text-indigo-600 dark:text-indigo-400">${data || '—'}</div>`;
+                }
+            },
+            { 
+                data: 'patient_name', 
+                render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '-'}</div>` 
+            },
+            { 
+                data: 'doctor_name', 
+                render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '(Any Doctor)'}</div>` 
+            },
+            {
+                data: 'scheduled_datetime',
+                className: 'whitespace-nowrap',
+                render: function(data, type, row) {
+                    if (data === 'Not set') {
+                        return `<span class="text-gray-500 dark:text-gray-400 italic">${data}</span>`;
+                    }
+                    return data;
                 }
             },
             { data: 'status_badge', className: 'text-center' },

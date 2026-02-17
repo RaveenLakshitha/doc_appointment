@@ -3,7 +3,7 @@
 @section('title', __('file.dropdown_management'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 py-4 sm:py-6">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
@@ -148,7 +148,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                                 </svg>
                                             </button>
-                                            <form method="POST" action="{{ route('admin.dropdowns.destroy', $option->id) }}" class="inline ml-1">
+                                            <form method="POST" action="{{ route('dropdowns.destroy', $option->id) }}" class="inline ml-1">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" onclick="return confirm('{{ __('file.confirm_delete_option') }}')"
                                                         class="text-red-600 dark:text-red-400 hover:text-red-800">
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Global Add button
     createToggle.addEventListener('click', () => {
-        form.action = '{{ route("admin.dropdowns.store") }}';
+        form.action = '{{ route("dropdowns.store") }}';
         methodInput.value = 'POST';
         document.getElementById('option-id').value = '';
         document.getElementById('option-type').value = '';
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.add-option').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const type = e.target.closest('button').dataset.type;
-            form.action = '{{ route("admin.dropdowns.store") }}';
+            form.action = '{{ route("dropdowns.store") }}';
             methodInput.value = 'POST';
             document.getElementById('option-id').value = '';
             document.getElementById('option-type').value = type;
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.edit-option').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const data = e.target.closest('button').dataset;
-            form.action = '{{ route("admin.dropdowns.update", ":id") }}'.replace(':id', data.id);
+            form.action = '{{ route("dropdowns.update", ":id") }}'.replace(':id', data.id);
             methodInput.value = 'PUT';
             document.getElementById('option-id').value = data.id;
             document.getElementById('option-type').value = data.type;

@@ -15,11 +15,6 @@ class LanguageController extends Controller
         if (in_array($locale, ['en', 'es'])) {
             // Session is available here
             $request->session()->put('locale', $locale);
-
-            Log::info('Language changed', [
-                'user_id' => auth()->id() ?? 'guest',
-                'to'      => $locale,
-            ]);
         }
 
         return redirect()->back();

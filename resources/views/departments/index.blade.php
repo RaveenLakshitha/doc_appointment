@@ -24,7 +24,7 @@
 
     <div id="bulk-delete-form" class="hidden mb-6">
         <form method="POST" action="{{ route('departments.bulkDelete') }}" class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex justify-between items-center">
-            @csrf @method('DELETE')
+            @csrf
             <input type="hidden" name="ids" id="bulk-ids">
             <span class="text-sm font-medium text-red-800 dark:text-red-300">
                 <span id="selected-count">0</span> {{ __('file.department_selected') }}
@@ -266,11 +266,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         text: "{{ __('file.Export') }}",
                         className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium',
                         buttons: [
-                            { extend: 'copy', text: "{{ __('file.copy') }}" },
-                            { extend: 'excel', text: 'Excel', filename: 'Departments_{{ date("Y-m-d") }}' },
-                            { extend: 'csv', text: 'CSV', filename: 'Departments_{{ date("Y-m-d") }}' },
-                            { extend: 'pdf', text: 'PDF', filename: 'Departments_{{ date("Y-m-d") }}', title: 'Department List' },
-                            { extend: 'print', text: "{{ __('file.print') }}" }
+                            { extend: 'copy', text: "{{ __('file.copy') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                            { extend: 'excel', text: 'Excel', filename: 'Departments_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                            { extend: 'csv', text: 'CSV', filename: 'Departments_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                            { extend: 'pdf', text: 'PDF', filename: 'Departments_{{ date("Y-m-d") }}', title: 'Department List' ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
+                            { extend: 'print', text: "{{ __('file.print') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4] } },
                         ]
                     }
                 ]
@@ -311,9 +311,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 url: this.action,
                 method: 'POST',
                 data: $(this).serialize(),
-                success: () => {
-                    table.draw(false);
-                    updateBulkDelete();
+                success: function(response) {
+                    if (response.success) {
+                        table.draw(false);              
+                        $('.row-checkbox').prop('checked', false);
+                        $('#select-all').prop('checked', false);
+                        updateBulkDelete();    
+                    } else {
+                        alert(response.message || 'Error deleting departments');
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'Something went wrong'));
                 }
             });
         }
@@ -382,18 +391,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('edit-form').addEventListener('submit', function(e) {
         e.preventDefault();
+        
         const formData = new FormData(this);
         const id = formData.get('id');
-
-        fetch(`{{ url('departments') }}/${id}`, {
+        
+        const url = `{{ route('departments.update', ['department' => ':id']) }}`.replace(':id', id);
+        
+        fetch(url, {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) return response.json().then(err => { throw err; });
+        .then(async response => {
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Validation failed');
+                } else {
+                    throw new Error(`Server responded with status ${response.status}`);
+                }
+            }
             return response.json();
         })
         .then(data => {
@@ -401,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 table.draw(false);
                 closeEditDrawer();
             } else {
-                alert(data.message || 'Validation error');
+                alert(data.message || 'Update failed');
             }
         })
         .catch(error => {

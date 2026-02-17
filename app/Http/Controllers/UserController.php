@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/UserController.php
 
 namespace App\Http\Controllers;
 
@@ -8,9 +7,6 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\UsersExport;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
@@ -79,8 +75,8 @@ class UserController extends Controller
                 'roles'        => $user->roles->pluck('name')->map(fn($r) => ucfirst($r))->toArray(),
                 'status_html'  => $statusHtml,
                 'created_at'   => $user->created_at->format('M d, Y'),
-                'edit_url'     => route('admin.users.edit', $user),
-                'delete_url'   => route('admin.users.destroy', $user),
+                'edit_url'     => route('users.edit', $user),
+                'delete_url'   => route('users.destroy', $user),
             ];
         });
 
@@ -101,13 +97,12 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'phone'    => 'required|string|regex:/^\+?[0-9]{10,15}$/|unique:users,phone',
-            'password' => 'required|min:8|confirmed',
-            'roles'    => 'required|array',
-            'roles.*'  => 'exists:roles,name',
-            'is_active' => 'sometimes|boolean',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'phone'         => 'required|string|regex:/^\+?[0-9]{10,15}$/|unique:users,phone',
+            'password'      => 'required|min:8|confirmed',
+            'role'          => 'required|string|exists:roles,name',   // ← changed from roles[]
+            'is_active'     => 'sometimes|boolean',
         ]);
 
         $user = User::create([
@@ -119,27 +114,30 @@ class UserController extends Controller
             'is_deleted' => false,
         ]);
 
-        $user->syncRoles($request->roles);
+        // Assign single role
+        $user->syncRoles([$request->role]);   // syncRoles accepts array
 
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
+        return redirect()->route('users.index')
+            ->with('success', 'User created successfully.');
     }
 
     public function edit(User $user)
     {
         $roles = Role::all();
-        $userRoles = $user->roles->pluck('name')->toArray();
-        return view('admin.users.edit', compact('user', 'roles', 'userRoles'));
+        // We expect mostly one role, but keep it flexible
+        $currentRole = $user->roles->first()?->name ?? null;
+
+        return view('admin.users.edit', compact('user', 'roles', 'currentRole'));
     }
 
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email,' . $user->id,
-            'phone'    => 'required|string|regex:/^\+?[0-9]{10,15}$/|unique:users,phone,' . $user->id,
-            'password' => 'nullable|min:8|confirmed',
-            'roles'    => 'required|array',
-            'roles.*'  => 'exists:roles,name',
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email,' . $user->id,
+            'phone'     => 'required|string|regex:/^\+?[0-9]{10,15}$/|unique:users,phone,' . $user->id,
+            'password'  => 'nullable|min:8|confirmed',
+            'role'      => 'required|string|exists:roles,name',   // ← single role
             'is_active' => 'sometimes|boolean',
         ]);
 
@@ -151,9 +149,11 @@ class UserController extends Controller
             'is_active' => $request->boolean('is_active', $user->is_active),
         ]);
 
-        $user->syncRoles($request->roles);
+        // Sync single role
+        $user->syncRoles([$request->role]);
 
-        return redirect()->route('admin.users.index')->with('success', __('file.user_updated_successfully'));
+        return redirect()->route('users.index')
+            ->with('success', __('file.user_updated_successfully'));
     }
 
     public function destroy(User $user)
@@ -180,13 +180,14 @@ class UserController extends Controller
         ]);
 
         // Prevent self-deletion
-        $ids = array_diff($ids, [auth()->id()]);
+        $ids = array_diff($ids, [auth()->id() ?? 0]);
 
         if (empty($ids)) {
-            return response()->json(['error' => 'No users to delete.'], 400);
+            return response()->json(['error' => 'No valid users selected.'], 400);
         }
 
         User::whereIn('id', $ids)
+            ->where('id', '!=', auth()->id())
             ->update(['is_deleted' => true, 'is_active' => false]);
 
         return response()->json(['success' => true]);

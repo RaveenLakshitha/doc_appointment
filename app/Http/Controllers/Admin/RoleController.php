@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\Controller;
@@ -15,64 +16,30 @@ class RoleController extends Controller
         return view('admin.roles.index', compact('roles'));
     }
 
-    public function create()
-    {
-        $permissions = Permission::orderBy('name')
-            ->get()
-            ->groupBy(fn($item) => explode(' ', $item->name)[0]);
-
-        return view('admin.roles.create', compact('permissions'));
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|unique:roles,name',
-            'permissions' => 'array',
-        ]);
-
-        $role = Role::create(['name' => $request->name]);
-        $role->syncPermissions($request->permissions ?? []);
-
-        return redirect()
-            ->route('admin.roles.index')
-            ->with('success', 'Role created successfully.');
-    }
-
     public function edit(Role $role)
     {
-        $permissions = Permission::orderBy('name')
+        $groupedPermissions = Permission::orderBy('name')
             ->get()
-            ->groupBy(fn($item) => explode(' ', $item->name)[0]);
+            ->groupBy(fn($item) => Str::before($item->name, '.') ?: 'general');
 
         $role->load('permissions');
 
-        return view('admin.roles.edit', compact('role', 'permissions'));
+        return view('admin.roles.edit', compact('role', 'groupedPermissions'));
     }
 
     public function update(Request $request, Role $role)
     {
         $request->validate([
-            'name' => 'required|unique:roles,name,' . $role->id,
-            'permissions' => 'array',
+            'name'        => 'required|string|max:255|unique:roles,name,' . $role->id,
+            'permissions' => 'nullable|array',
         ]);
 
         $role->update(['name' => $request->name]);
         $role->syncPermissions($request->permissions ?? []);
 
-        return redirect()
-            ->route('admin.roles.index')
-            ->with('success', 'Role updated successfully.');
+        return redirect()->route('roles.index')
+            ->with('success', __('Role updated successfully.'));
     }
 
-    public function destroy(Role $role)
-    {
-        if ($role->name === 'admin') {
-            return back()->with('error', 'Cannot delete admin role.');
-        }
-
-        $role->delete();
-
-        return back()->with('success', 'Role deleted.');
-    }
+    // No destroy method anymore – deletion is disabled
 }

@@ -1,25 +1,29 @@
 <?php
-// app/Http/Controllers/SettingsController.php
 
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
-    // This is the method most admin templates expect
     public function general(): View
     {
-        $setting = Setting::firstOrFail();
+        $setting = Setting::firstOrCreate([], [
+            'clinic_name'    => config('app.name', 'Clinic Name'),
+            'primary_color'  => '#1e40af',
+            'currency'       => 'USD',
+            'logo_path'      => null,
+        ]);
+
         return view('settings.general', compact('setting'));
-        // or: return view('settings.edit', compact('setting'));
     }
 
-    // Alternative/standard method
     public function edit(): View
     {
         return $this->general();
@@ -27,39 +31,58 @@ class SettingsController extends Controller
 
     public function update(UpdateSettingsRequest $request): RedirectResponse
     {
-        $setting = Setting::firstOrFail();
+        try {
+            $setting = Setting::firstOrCreate([]);
 
-        $data = $request->validated();
+            $validated = $request->validated();
 
-        // Operating Hours
-        $data['operating_hours'] = [
-            'weekdays' => [$request->weekday_open, $request->weekday_close],
-            'weekends' => [
-                $request->weekend_open ?? 'closed',
-                $request->weekend_close ?? 'closed'
-            ],
-        ];
+            if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+                if ($setting->logo_path && Storage::disk('public')->exists($setting->logo_path)) {
+                    Storage::disk('public')->delete($setting->logo_path);
+                }
 
-        // Logo Upload
-        if ($request->hasFile('logo')) {
-            if ($setting->logo_path) {
-                Storage::disk('public')->delete($setting->logo_path);
+                $validated['logo_path'] = $request->file('logo')->store('logos', 'public');
             }
-            $data['logo_path'] = $request->file('logo')->store('logos', 'public');
+
+            $setting->update($validated);
+
+            $this->clearSettingsCache();
+
+            Cache::put('settings', $setting->fresh(), now()->addHour());
+
+            return redirect()
+                ->route('settings.general')
+                ->with('success', 'Settings updated successfully!');
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error while updating settings', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Database error occurred while saving settings.');
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error updating clinic settings', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+                'file'    => $request->file('logo') ? $request->file('logo')->getClientOriginalName() : null,
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to update settings. Please try again.');
         }
+    }
 
-        // Favicon Upload
-        if ($request->hasFile('favicon')) {
-            if ($setting->favicon_path) {
-                Storage::disk('public')->delete($setting->favicon_path);
-            }
-            $data['favicon_path'] = $request->file('favicon')->store('favicons', 'public');
-        }
-
-        $setting->update($data);
-
-        return redirect()
-            ->route('settings.general') // or 'settings.edit'
-            ->with('success', 'Clinic settings updated successfully!');
+    protected function clearSettingsCache(): void
+    {
+        Cache::forget('settings');
+        Cache::forget('app_settings');
+        Cache::forget('clinic_settings');
     }
 }

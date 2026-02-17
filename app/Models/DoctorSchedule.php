@@ -44,4 +44,9 @@ class DoctorSchedule extends Model
     {
         return $this->days->pluck('day_of_week')->toArray();
     }
+
+    public function sessions()
+    {
+        return $this->hasMany(DoctorScheduleSession::class);
+    }
 }

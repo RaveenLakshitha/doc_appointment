@@ -31,7 +31,7 @@ class DropdownController extends Controller
 
         OptionList::create($request->only('type', 'name', 'order', 'status'));
 
-        return redirect()->route('admin.dropdowns.index')
+        return redirect()->route('dropdowns.index')
             ->with('success', __('file.option_created_successfully'));
     }
 
@@ -47,7 +47,7 @@ class DropdownController extends Controller
 
         $option->update($request->only('type', 'name', 'order', 'status'));
 
-        return redirect()->route('admin.dropdowns.index')
+        return redirect()->route('dropdowns.index')
             ->with('success', __('file.option_updated_successfully'));
     }
 
@@ -56,7 +56,7 @@ class DropdownController extends Controller
     {
         $option->delete();
 
-        return redirect()->route('admin.dropdowns.index')
+        return redirect()->route('dropdowns.index')
             ->with('success', __('file.option_deleted_successfully'));
     }
 }

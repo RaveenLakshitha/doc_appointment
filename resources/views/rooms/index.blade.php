@@ -24,7 +24,7 @@
 
     <div id="bulk-delete-form" class="hidden mb-6">
         <form method="POST" action="{{ route('rooms.bulkDelete') }}" class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex justify-between items-center">
-            @csrf @method('DELETE')
+            @csrf
             <input type="hidden" name="ids" id="bulk-ids">
             <span class="text-sm font-medium text-red-800 dark:text-red-300">
                 <span id="selected-count">0</span> {{ __('file.room_selected') }}
@@ -59,7 +59,9 @@
 </div>
 
 <div id="profile-drawer" class="fixed inset-0 z-50 hidden overflow-hidden">
-    <div id="drawer-overlay" class="absolute inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-sm" onclick="closeProfileDrawer()"></div>
+    <div id="drawer-overlay"
+         class="absolute inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-sm"
+         onclick="closeProfileDrawer()"></div>
 
     <div id="drawer-panel"
          class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col h-[90vh] md:h-full rounded-t-3xl md:rounded-none">
@@ -199,7 +201,7 @@
 
                 <div>
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('file.status') }}</h4>
-                    <select name="status" id="edit-status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <select name="is_active" id="edit-status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="1">{{ __('file.active') }}</option>
                         <option value="0">{{ __('file.inactive') }}</option>
                     </select>
@@ -283,6 +285,18 @@
                 <div>
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{{ __('file.facilities') }}</h4>
                     <div class="grid grid-cols-2 gap-3">
+                        @php
+                            $availableFacilities = [
+                                'wifi' => 'WiFi',
+                                'air_conditioning' => 'Air Conditioning',
+                                'television' => 'Television',
+                                'telephone' => 'Telephone',
+                                'wheelchair_accessible' => 'Wheelchair Accessible',
+                                'attached_bathroom' => 'Attached Bathroom',
+                                'oxygen_supply' => 'Oxygen Supply',
+                                'nurse_call_button' => 'Nurse Call Button',
+                            ];
+                        @endphp
                         @foreach($availableFacilities as $key => $label)
                             <label class="flex items-center">
                                 <input type="checkbox" name="facilities[]" value="{{ $key }}" class="create-facility-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
@@ -294,7 +308,7 @@
 
                 <div>
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('file.status') }}</h4>
-                    <select name="status" id="create-status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <select name="is_active" id="create-status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="1">{{ __('file.active') }}</option>
                         <option value="0">{{ __('file.inactive') }}</option>
                     </select>
@@ -330,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ajax: '{{ route('rooms.datatable') }}',
         order: [[1, 'asc']],
         columnDefs: [
-            { orderable: false, targets: [0, 6, 5,  7] },
+            { orderable: false, targets: [0, 7] },
             { searchable: false, targets: [0, 4, 5, 6, 7] }
         ],
         columns: [
@@ -340,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'floor', render: data => data || '—' },
             { data: 'capacity', className: 'text-center font-medium', render: data => data || '—' },
             { data: 'department_name', render: data => data || '—' },
-            { data: 'status', render: data => data 
+            { data: 'is_active', render: data => data 
                 ? `<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">{{ __('file.active') }}</span>`
                 : `<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{{ __('file.inactive') }}</span>`
             },
@@ -356,14 +370,17 @@ document.addEventListener('DOMContentLoaded', function () {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
                     </button>
-                    <form method="POST" action="${row.delete_url}" class="inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" onclick="return confirm('{{ __('file.confirm_delete_room') }}')" class="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
-                    </form>
+                    ${row.delete_url ? `
+                        <form method="POST" action="${row.delete_url}" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" onclick="return confirm('{{ __('file.confirm_delete_room') }}')" class="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </form>
+                    ` : ''}
                 </div>`
             }
         ],
@@ -372,11 +389,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 buttons: [
                     { extend: 'pageLength', className: 'inline-flex items-center gap-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium transition shadow-sm' },
                     { extend: 'collection', text: "{{ __('file.Export') }}", className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium', buttons: [
-                        { extend: 'copy', text: "{{ __('file.copy') }}" },
-                        { extend: 'excel', text: 'Excel', filename: 'Rooms_{{ date("Y-m-d") }}' },
-                        { extend: 'csv', text: 'CSV', filename: 'Rooms_{{ date("Y-m-d") }}' },
-                        { extend: 'pdf', text: 'PDF', filename: 'Rooms_{{ date("Y-m-d") }}', title: 'Room List' },
-                        { extend: 'print', text: "{{ __('file.print') }}" }
+                        { extend: 'copy', text: "{{ __('file.copy') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
+                        { extend: 'excel', text: 'Excel', filename: 'Rooms_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
+                        { extend: 'csv', text: 'CSV', filename: 'Rooms_{{ date("Y-m-d") }}' ,exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
+                        { extend: 'pdf', text: 'PDF', filename: 'Rooms_{{ date("Y-m-d") }}', title: 'Room List',exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
+                        { extend: 'print', text: "{{ __('file.print') }}" ,exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } }
                     ]}
                 ]
             },
@@ -411,17 +428,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#bulk-delete-form form').on('submit', function (e) {
         e.preventDefault();
-        if (confirm('{{ __("file.confirm_delete_selected") }}')) {
-            $.ajax({
-                url: this.action,
-                method: 'POST',
-                data: $(this).serialize(),
-                success: () => {
+        if (!confirm('{{ __("file.confirm_delete_selected") }}')) return;
+
+        $.ajax({
+            url: this.action,
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.success) {
                     table.draw(false);
+                    $('.row-checkbox').prop('checked', false);
+                    $('#select-all').prop('checked', false);
                     updateBulkDelete();
+                } else {
+                    alert(response.message || 'Error deleting rooms');
                 }
-            });
-        }
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.message || 'Something went wrong'));
+            }
+        });
     });
 
     const profileDrawer = document.getElementById('profile-drawer');
@@ -437,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('drawer-capacity').textContent = room.capacity || '—';
         document.getElementById('drawer-facilities').textContent = room.facilities_list || '—';
 
-        const statusHtml = room.status
+        const statusHtml = room.is_active
             ? `<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">{{ __('file.active') }}</span>`
             : `<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{{ __('file.inactive') }}</span>`;
         document.getElementById('drawer-status').innerHTML = statusHtml;
@@ -468,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('edit-room-number').value = room.room_number || '';
         document.getElementById('edit-floor').value = room.floor || '';
         document.getElementById('edit-capacity').value = room.capacity || '';
-        document.getElementById('edit-status').value = room.status ? 1 : 0;
+        document.getElementById('edit-status').value = room.is_active ? 1 : 0;
         document.getElementById('edit-description').value = room.description || '';
 
         document.querySelectorAll('.facility-checkbox').forEach(cb => cb.checked = false);
@@ -522,56 +548,48 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData(this);
         const id = formData.get('id');
 
-        fetch(`{{ route('rooms.index') }}/${id}`, {
+        fetch(`{{ route('rooms.update', ':id') }}`.replace(':id', id), {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) return response.text().then(text => { throw new Error(text); });
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 table.draw(false);
                 closeEditDrawer();
+            } else {
+                alert(data.message || 'Update failed');
             }
         })
-        .catch(error => {
-            console.error('Update error:', error);
-            alert('Failed to update room.');
-        });
+        .catch(() => alert('Failed to update room'));
     });
 
     document.getElementById('create-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(this);
 
-        fetch(`{{ route('rooms.store') }}`, {
+        fetch('{{ route('rooms.store') }}', {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) return response.text().then(text => { throw new Error(text); });
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 table.draw(false);
                 closeCreateDrawer();
+            } else {
+                alert(data.message || 'Create failed');
             }
         })
-        .catch(error => {
-            console.error('Create error:', error);
-            alert('Failed to create room.');
-        });
+        .catch(() => alert('Failed to create room'));
     });
 
     document.addEventListener('keydown', e => {

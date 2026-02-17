@@ -2,22 +2,40 @@
 @section('title', __('file.point_of_sale'))
 
 @section('content')
+
+@php
+    $preloadedItems = $preloadedItems ?? [];
+    $preselectedPatientId = $preselectedPatientId ?? null;
+@endphp
+
+<script>
+    window.preloadedItems = @json($preloadedItems);
+    window.preselectedPatientId = @json($preselectedPatientId);
+</script>
+
 <div class="w-full min-h-screen lg:h-screen flex flex-col lg:flex-row bg-gray-50 dark:bg-gray-900">
-    
-    
-    
+
+
     <div class="flex-1 flex flex-col overflow-hidden">
         
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
+                    <a href="{{ route('home') }}" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors active:scale-95" title="{{ __('file.back') }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </a>
                     <svg class="w-6 h-6 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                     </svg>
-                    <div>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">Register: Main Counter</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400" id="current-time">{{ date('M d, Y h:i A') }}</p>
+                    <div id="register-status-container" class="cursor-pointer" onclick="showRegisterDetails()">
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white" id="register-label">Register: Loading...</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" id="register-subtitle">Loading status...</p>
                     </div>
+
+                    
+                <p class="text-xs text-gray-500 dark:text-gray-400 ml-auto" id="current-time">Loading time...</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="showSalesStats()" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors active:scale-95" title="Sales Statistics">
@@ -48,6 +66,7 @@
                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base">
             </div>
 
+
             <div class="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
                 <button onclick="filterCategory('all')" class="category-btn active px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap bg-gray-900 text-white dark:bg-white dark:text-gray-900 active:scale-95 transition-all">
                     All Items
@@ -61,15 +80,12 @@
                 <button onclick="filterCategory('medication')" class="category-btn px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all">
                     Medications
                 </button>
-                <button onclick="filterCategory('lab')" class="category-btn px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all">
-                    Lab Tests
-                </button>
             </div>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900" style="max-height: calc(100vh - 200px);">
             <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                
+
                 @foreach($services as $service)
                 <button type="button" 
                         class="product-card p-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-900 dark:hover:border-gray-500 hover:shadow-lg active:scale-95 transition-all text-left group"
@@ -85,7 +101,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
                         </div>
-                        
                         <div class="flex-1">
                             <div class="flex items-center gap-1 mb-2">
                                 <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">Service</span>
@@ -96,7 +111,7 @@
                         </div>
                         <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
                             <span class="text-base font-bold text-gray-900 dark:text-white">
-                                ${{ number_format($service->price, 2) }}
+                                {{ $currency_code }}{{ number_format($service->price, 2) }}
                             </span>
                             <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -127,7 +142,6 @@
                                 </svg>
                             @endif
                         </div>
-                        
                         <div class="flex-1">
                             <div class="flex items-center gap-1 mb-2 flex-wrap">
                                 <span class="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded font-medium">Medicine</span>
@@ -149,7 +163,7 @@
                         </div>
                         <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
                             <span class="text-base font-bold text-gray-900 dark:text-white">
-                                ${{ number_format($item->unit_price, 2) }}
+                                {{ $currency_code }}{{ number_format($item->unit_price, 2) }}
                             </span>
                             <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -158,6 +172,14 @@
                     </div>
                 </button>
                 @endforeach
+
+                <!-- Dynamic doctor treatments container -->
+                <div id="treatments-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 col-span-full">
+                    <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400" id="treatments-placeholder">
+                        Select a doctor to show available treatments
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -171,7 +193,24 @@
             <select id="patient-select" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                 <option value="">Select Patient</option>
                 @foreach($patients as $patient)
-                    <option value="{{ $patient->id }}">{{ $patient->first_name }} {{ $patient->last_name }} - {{ $patient->medical_record_number }}</option>
+                    <option value="{{ $patient->id }}" {{ $preselectedPatientId == $patient->id ? 'selected' : '' }}>
+                        {{ $patient->first_name }} {{ $patient->last_name }} - {{ $patient->medical_record_number }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <!-- Doctor selection -->
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Doctor <span class="text-red-500">*</span> (required for treatments)
+            </label>
+            <select id="doctor-select" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                <option value="">Select Doctor</option>
+                @foreach($doctors as $doctor)
+                    <option value="{{ $doctor->id }}" {{ $preselectedDoctorId == $doctor->id ? 'selected' : '' }}>
+                        {{ $doctor->first_name }} {{ $doctor->last_name }}
+                    </option>
                 @endforeach
             </select>
         </div>
@@ -205,7 +244,7 @@
             <div class="grid grid-cols-3 gap-3 text-sm">
                 <div class="space-y-1">
                     <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                    <p id="subtotal-amount" class="font-semibold text-gray-900 dark:text-white">$0.00</p>
+                    <p id="subtotal-amount" class="font-semibold text-gray-900 dark:text-white">{{ $currency_code }}0.00</p>
                 </div>
                 <div class="space-y-1">
                     <div class="flex items-center gap-1">
@@ -215,7 +254,7 @@
                             onchange="updateTotals()">
                         <span class="text-gray-600 dark:text-gray-400">%</span>
                     </div>
-                    <p id="tax-amount" class="font-semibold text-gray-900 dark:text-white">$0.00</p>
+                    <p id="tax-amount" class="font-semibold text-gray-900 dark:text-white">{{ $currency_code }}0.00</p>
                 </div>
                 <div class="space-y-1">
                     <span class="text-gray-600 dark:text-gray-400">Discount</span>
@@ -229,7 +268,7 @@
             <div class="pt-2 border-t border-gray-300 dark:border-gray-600">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">Total Amount</span>
-                    <span id="grand-total" class="text-2xl font-bold text-gray-900 dark:text-white">$0.00</span>
+                    <span id="grand-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $currency_code }}0.00</span>
                 </div>
 
                 <div class="mb-3">
@@ -259,13 +298,14 @@
                 </div>
 
                 <div class="grid grid-cols-3 gap-2">
-                    <button onclick="saveAsDraft()" class="py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all text-xs">
+                    <button onclick="saveAsDraft()" class="py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all ">
                         Save as Draft
                     </button>
-                    <button onclick="holdSale()" class="py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all text-xs">
-                        Hold Sale
+                    <button type="button" onclick="openPartialPaymentModal()"
+                        class="py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
+                        Down / Partial Pay
                     </button>
-                    <button onclick="clearCart()" class="py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 active:scale-95 transition-all text-xs">
+                    <button onclick="clearCart()" class="py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 active:scale-95 transition-all">
                         Cancel Sale
                     </button>
                 </div>
@@ -288,7 +328,7 @@
         <div class="p-4 space-y-4">
             <div class="text-center py-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <p class="text-sm text-gray-600 dark:text-gray-400">Amount Due</p>
-                <p id="modal-grand-total" class="text-4xl font-bold text-gray-900 dark:text-white">$0.00</p>
+                <p id="modal-grand-total" class="text-4xl font-bold text-gray-900 dark:text-white">{{ $currency_code }}0.00</p>
             </div>
 
             <div id="cash-section" class="space-y-4 hidden">
@@ -298,19 +338,19 @@
                 </div>
 
                 <div class="grid grid-cols-4 gap-3">
-                    <button onclick="addCashDenomination(100)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">$100</button>
-                    <button onclick="addCashDenomination(50)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">$50</button>
-                    <button onclick="addCashDenomination(20)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">$20</button>
-                    <button onclick="addCashDenomination(10)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">$10</button>
-                    <button onclick="addCashDenomination(5)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">$5</button>
-                    <button onclick="addCashDenomination(1)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">$1</button>
-                    <button onclick="addCashDenomination(0.25)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium text-xs">$0.25</button>
-                    <button onclick="addCashDenomination(0.10)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium text-xs">$0.10</button>
+                    <button onclick="addCashDenomination(100)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">100</button>
+                    <button onclick="addCashDenomination(50)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">50</button>
+                    <button onclick="addCashDenomination(20)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">20</button>
+                    <button onclick="addCashDenomination(10)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">10</button>
+                    <button onclick="addCashDenomination(5)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">5</button>
+                    <button onclick="addCashDenomination(1)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">1</button>
+                    <button onclick="addCashDenomination(0.25)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium text-xs">0.25</button>
+                    <button onclick="addCashDenomination(0.10)" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium text-xs">0.10</button>
                 </div>
 
                 <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                     <p class="text-sm font-medium text-green-700 dark:text-green-300">Change Due</p>
-                    <p id="cash-change" class="text-3xl font-bold text-green-600 dark:text-green-400">$0.00</p>
+                    <p id="cash-change" class="text-3xl font-bold text-green-600 dark:text-green-400">{{ $currency_code }}0.00</p>
                 </div>
             </div>
 
@@ -341,150 +381,201 @@
     </div>
 </div>
 
-<div id="sales-stats-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Today's Sales Statistics</h3>
-            <button onclick="closeSalesStats()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-95 transition-all">
+<!-- ==================== Register Details Modal ==================== -->
+<div id="register-details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold">Cash Register Session</h3>
+            <button onclick="closeRegisterDetailsModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        <div class="p-4 space-y-3">
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Total Sales</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$2,450.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Cash Sales</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$1,850.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Card Sales</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$600.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Opening Balance</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$200.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Total Transactions</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">12</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Average Transaction</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$204.17</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Items Sold</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">45</span>
-            </div>
-            <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-base font-semibold text-gray-900 dark:text-white">Highest Sale</span>
-                    <span class="text-xl font-bold text-gray-900 dark:text-white">$450.00</span>
-                </div>
+
+        <div class="p-6 space-y-4" id="register-details-content">
+            <!-- This will be replaced dynamically by JS -->
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                Loading register details...
             </div>
         </div>
-        <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
-            <button onclick="closeSalesStats()" class="w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 active:scale-98 transition-all text-sm">
+
+        <div class="p-5 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700 flex gap-3">
+            <button onclick="closeRegisterDetailsModal()" class="flex-1 py-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                 Close
             </button>
-        </div>
-    </div>
-</div>
-
-<div id="register-details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Cash Register Details</h3>
-            <button onclick="closeRegisterDetails()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-95 transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        <div class="p-4 space-y-3">
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Register Name</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">Main Counter</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Opened At</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">08:30 AM</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Opening Balance</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$200.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Cash Sales</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$1,650.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Card Sales</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">$600.00</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Total Transactions</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">12</span>
-            </div>
-            <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-base font-semibold text-gray-900 dark:text-white">Expected Cash</span>
-                    <span class="text-xl font-bold text-gray-900 dark:text-white">$1,850.00</span>
-                </div>
-            </div>
-        </div>
-        <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
-            <button onclick="closeRegister()" class="w-full py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 active:scale-98 transition-all text-sm">
-                Close Register
+            <button onclick="showCloseRegisterForm()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
+                Close & Reconcile Register
             </button>
         </div>
     </div>
 </div>
 
+<!-- Last Transaction Modal -->
 <div id="last-transaction-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
         <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Last Transaction</h3>
-            <button onclick="closeLastTransaction()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-95 transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onclick="closeLastTransaction()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
         <div class="p-4 space-y-3">
-            <div class="flex justify-between items-center py-2">
+            <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-400">Invoice #</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">POS-20260105123045</span>
             </div>
-            <div class="flex justify-between items-center py-2">
+            <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-400">Patient</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">John Doe</span>
             </div>
-            <div class="flex justify-between items-center py-2">
+            <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-400">Time</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">02:15 PM</span>
             </div>
-            <div class="flex justify-between items-center py-2">
+            <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-400">Payment Method</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">Cash</span>
             </div>
             <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-center py-2">
+                <div class="flex justify-between items-center">
                     <span class="text-base font-semibold text-gray-900 dark:text-white">Total Amount</span>
-                    <span class="text-xl font-bold text-gray-900 dark:text-white">$125.50</span>
+                    <span class="text-base font-bold text-gray-900 dark:text-white">$125.50</span>
                 </div>
             </div>
         </div>
         <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg flex gap-2">
-            <button onclick="viewInvoice()" class="flex-1 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 active:scale-98 transition-all text-sm">
+            <button onclick="viewInvoice()" class="flex-1 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors text-sm">
                 View Invoice
             </button>
-            <button onclick="printLastInvoice()" class="flex-1 py-3 bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 active:scale-98 transition-all text-sm">
+            <button onclick="printLastInvoice()" class="flex-1 py-2 bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm">
                 Print
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="partial-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold">Record Payment</h3>
+            <button onclick="closePartialModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="p-5 space-y-5">
+            <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400">Total Due</p>
+                <p id="partial-total" class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $currency_code }}0.00</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1.5">Amount Paying Now</label>
+                <input type="number" step="0.01" min="0" id="partial-amount" 
+                       class="w-full text-2xl text-right font-semibold p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1.5">Payment Method</label>
+                <select id="partial-method" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1.5">Reference / Receipt # (optional)</label>
+                <input type="text" id="partial-reference" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+            </div>
+
+            <div class="pt-2 border-t dark:border-gray-700">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Remaining Balance</span>
+                    <span id="partial-remaining" class="font-bold">{{ $currency_code }}0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-5 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700 flex gap-3">
+            <button onclick="closePartialModal()" class="flex-1 py-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                Cancel
+            </button>
+            <button onclick="submitPartialPayment()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Record Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== Register Open Modal ==================== -->
+<div id="open-register-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold">Open Cash Register</h3>
+            <button onclick="closeOpenRegisterModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form id="open-register-form" class="p-5 space-y-5">
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
+                No cash register is currently open for this user. You must open one before processing sales.
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1.5">Opening Balance (counted cash)</label>
+                <input type="number" name="opening_balance" step="0.01" min="0" required autofocus
+                       class="w-full text-2xl text-right font-bold p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1.5">Notes (optional)</label>
+                <textarea name="notes" rows="3" class="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600"></textarea>
+            </div>
+
+            <!-- Buttons INSIDE the form now -->
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeOpenRegisterModal()" class="flex-1 py-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                    Open Register
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== Register Details Modal ==================== -->
+<div id="register-details-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg">
+        <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold">Cash Register Session</h3>
+            <button onclick="closeRegisterDetailsModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-5 space-y-4" id="register-details-content">
+            <!-- Filled by JavaScript -->
+        </div>
+
+        <div class="p-5 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700 flex gap-3">
+            <button onclick="closeRegisterDetailsModal()" class="flex-1 py-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                Close
+            </button>
+            <button onclick="showCloseRegisterForm()" class="w-full py-3 bg-red-600 ...">
+                Close & Reconcile Register
             </button>
         </div>
     </div>
@@ -506,17 +597,136 @@
 <script>
 let cart = [];
 let selectedPaymentMethod = '';
+let currentRegister = null;
+let currentDoctorId = null;
+
+document.getElementById('doctor-select')?.addEventListener('change', function() {
+    currentDoctorId = this.value;
+    
+    if (!currentDoctorId) {
+        document.getElementById('treatments-placeholder').style.display = 'block';
+        document.querySelectorAll('#treatments-container .product-card').forEach(el => el.remove());
+        return;
+    }
+
+    loadDoctorTreatments(currentDoctorId);
+});
+
+async function loadDoctorTreatments(doctorId) {
+    const container = document.getElementById('treatments-container');
+    const placeholder = document.getElementById('treatments-placeholder');
+    
+    if (!doctorId) {
+        placeholder.innerHTML = 'Select a doctor to show available treatments';
+        placeholder.style.display = 'block';
+        document.querySelectorAll('#treatments-container .product-card').forEach(el => el.remove());
+        return;
+    }
+
+    placeholder.innerHTML = 'Loading treatments...';
+    placeholder.style.display = 'block';
+
+    try {
+        // Use named route with placeholder replacement
+        const routeBase = '{{ route("pos.doctor.treatments", ":doctor") }}';
+        const url = routeBase.replace(':doctor', doctorId);
+
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load treatments');
+        }
+
+        // Clear old cards
+        document.querySelectorAll('#treatments-container .product-card').forEach(el => el.remove());
+
+        if (data.treatments.length === 0) {
+            placeholder.innerHTML = 'No treatments defined for this doctor';
+            return;
+        }
+
+        placeholder.style.display = 'none';
+
+        data.treatments.forEach(t => {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'product-card p-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-900 dark:hover:border-gray-500 hover:shadow-lg active:scale-95 transition-all text-left group';
+            card.dataset.itemType = 'treatment';
+            card.dataset.itemId = t.id;
+            card.dataset.itemName = t.name;
+            card.dataset.itemPrice = t.price;
+            card.dataset.category = 'treatment';
+
+            if (parseFloat(t.price) <= 0) {
+                card.disabled = true;
+                card.classList.add('opacity-60');
+            } else {
+                card.onclick = () => addToCart('treatment', t.id, t.name, t.price);
+            }
+
+            card.innerHTML = `
+                <div class="flex flex-col h-full">
+                    <div class="w-full h-28 bg-gray-100 dark:bg-gray-700 rounded-md mb-3 flex items-center justify-center overflow-hidden">
+                        <svg class="w-14 h-14 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-1 mb-2 flex-wrap">
+                            <span class="text-xs px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded font-medium">Treatment</span>
+                            ${t.code ? `<span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded font-medium">${t.code}</span>` : ''}
+                        </div>
+                        <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1 line-clamp-2">
+                            ${t.name}
+                        </h3>
+                    </div>
+                    <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <span class="text-base font-bold text-gray-900 dark:text-white">
+                            $${t.display}
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error('Error loading treatments:', err);
+        placeholder.innerHTML = 'Error loading treatments. Please try again.';
+    }
+}
+
+// Optional: load on page load if preselected
+document.addEventListener('DOMContentLoaded', () => {
+    const doctorSelect = document.getElementById('doctor-select');
+    if (doctorSelect && doctorSelect.value) {
+        loadDoctorTreatments(doctorSelect.value);
+    }
+});
 
 function addToCart(type, id, name, price) {
     const itemKey = `${type}-${id}`;
     const existingItem = cart.find(item => item.key === itemKey);
-    
     if (existingItem) {
         existingItem.quantity++;
     } else {
-        cart.push({ key: itemKey, type: type, id: id, name: name, price: parseFloat(price), quantity: 1 });
+        cart.push({ key: itemKey, type, id, name, price: parseFloat(price), quantity: 1 });
     }
-    
     renderCart();
     updateTotals();
 }
@@ -549,12 +759,16 @@ function renderCart() {
             </div>`;
         return;
     }
-    
     container.innerHTML = cart.map(item => `
         <div class="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <div class="flex-1 min-w-0">
-                <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate">${item.name}</h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400">$${item.price.toFixed(2)} each</p>
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate flex items-center gap-2">
+                    ${item.name}
+                    ${item.source ? `<span class="text-xs font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                        ${item.source === 'appointment' ? 'Treatment' : 'Rx'}
+                    </span>` : ''}
+                </h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400">${{ $currency_code }}${item.price.toFixed(2)} each</p>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="updateQuantity('${item.key}', -1)" class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
@@ -566,7 +780,7 @@ function renderCart() {
                 </button>
             </div>
             <div class="text-right min-w-[60px]">
-                <p class="text-sm font-bold text-gray-900 dark:text-white">$${(item.price * item.quantity).toFixed(2)}</p>
+                <p class="text-sm font-bold text-gray-900 dark:text-white">${{ $currency_code }}${(item.price * item.quantity).toFixed(2)}</p>
             </div>
             <button onclick="removeFromCart('${item.key}')" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 active:scale-95 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -581,25 +795,95 @@ function updateTotals() {
     const discount = parseFloat(document.getElementById('discount-input').value) || 0;
     const taxAmount = (subtotal * taxRate) / 100;
     const grandTotal = Math.max(0, subtotal + taxAmount - discount);
-    
     document.getElementById('items-count').textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.getElementById('subtotal-amount').textContent = '$' + subtotal.toFixed(2);
-    document.getElementById('tax-amount').textContent = '$' + taxAmount.toFixed(2);
-    document.getElementById('grand-total').textContent = '$' + grandTotal.toFixed(2);
+    document.getElementById('subtotal-amount').textContent = '{{ $currency_code }}' + subtotal.toFixed(2);
+    document.getElementById('tax-amount').textContent = '{{ $currency_code }}' + taxAmount.toFixed(2);
+    document.getElementById('grand-total').textContent = '{{ $currency_code }}' + grandTotal.toFixed(2);
 }
 
+function openPartialPaymentModal() {
+    if (!currentRegister) {
+        alert("No cash register is currently open.\nYou must open a register first.");
+        showOpenRegisterModal();
+        return;
+    }
+    if (cart.length === 0) return alert("Cart is empty");
+    if (!document.getElementById('patient-select').value) return alert("Please select patient");
+    const total = parseFloat(document.getElementById('grand-total').textContent.replace(/[^0-9.]/g, '')) || 0;
+    document.getElementById('partial-total').textContent = '$' + total.toFixed(2);
+    document.getElementById('partial-amount').value = '';
+    updatePartialRemaining();
+    document.getElementById('partial-modal').classList.remove('hidden');
+}
+
+function closePartialModal() {
+    document.getElementById('partial-modal').classList.add('hidden');
+}
+
+function updatePartialRemaining() {
+    const total = parseFloat(document.getElementById('partial-total').textContent.replace(/[^0-9.]/g, '')) || 0;
+    const paidNow = parseFloat(document.getElementById('partial-amount').value) || 0;
+    const remaining = Math.max(0, total - paidNow);
+    document.getElementById('partial-remaining').textContent = '$' + remaining.toFixed(2);
+}
+
+document.getElementById('partial-amount')?.addEventListener('input', updatePartialRemaining);
+
+function submitPartialPayment() {
+    const amount = parseFloat(document.getElementById('partial-amount').value) || 0;
+    if (amount < 0) return alert("Amount cannot be negative");
+    const total = parseFloat(document.getElementById('partial-total').textContent.replace(/[^0-9.]/g, '')) || 0;
+    if (amount > total) return alert("Cannot pay more than total due");
+    const payload = {
+        patient_id: document.getElementById('patient-select').value,
+        doctor_id: document.getElementById('doctor-select')?.value || null,
+        items: cart.map(item => ({ type: item.type, id: item.id, quantity: item.quantity })),
+        tax_rate: parseFloat(document.getElementById('tax-input')?.value) || 0,
+        discount_amount: parseFloat(document.getElementById('discount-input')?.value) || 0,
+        payment_method: document.getElementById('partial-method').value,
+        payment_reference: document.getElementById('partial-reference').value.trim(),
+        notes: '',
+        amount_paid_now: amount,
+        _token: document.querySelector('meta[name="csrf-token"]')?.content
+    };
+    fetch('{{ route("invoices.pos.store") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': payload._token,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.message || 'Payment failed');
+
+        alert(`Success! Invoice #${data.invoice_number} created.`);
+
+         const printUrl = '{{ url("") }}/invoices/' + data.invoice_id + '/print';
+        window.open(printUrl, '_blank');
+
+        clearCart();
+        closePartialModal();
+        loadRegisterStatus();
+    })
+    .catch(err => alert('Error: ' + err.message));
+    }
+
 function openPaymentModal(method) {
+    if (!currentRegister) {
+        alert("No cash register is currently open.\nYou must open a register first.");
+        showOpenRegisterModal();
+        return;
+    }
     selectedPaymentMethod = method;
-    
     const modal = document.getElementById('payment-modal');
     const grandTotal = parseFloat(document.getElementById('grand-total').textContent.replace('$', '')) || 0;
-    
-    document.getElementById('modal-grand-total').textContent = '$' + grandTotal.toFixed(2);
-    
+    document.getElementById('modal-grand-total').textContent = '{{ $currency_code }} ' + grandTotal.toFixed(2);
     document.getElementById('cash-section').classList.add('hidden');
     document.getElementById('card-section').classList.add('hidden');
     document.getElementById('other-section').classList.add('hidden');
-    
     if (method === 'cash') {
         document.getElementById('cash-section').classList.remove('hidden');
         document.getElementById('cash-received').value = grandTotal.toFixed(2);
@@ -609,7 +893,6 @@ function openPaymentModal(method) {
     } else if (method === 'other') {
         document.getElementById('other-section').classList.remove('hidden');
     }
-    
     modal.classList.remove('hidden');
 }
 
@@ -627,8 +910,7 @@ function updateCashChange() {
     const grandTotal = parseFloat(document.getElementById('modal-grand-total').textContent.replace('$', '')) || 0;
     const received = parseFloat(document.getElementById('cash-received').value) || 0;
     const change = Math.max(0, received - grandTotal);
-    document.getElementById('cash-change').textContent = '$' + change.toFixed(2);
-    
+    document.getElementById('cash-change').textContent = '{{ $currency_code }} ' + change.toFixed(2);
     const btn = document.getElementById('complete-payment-btn');
     if (received >= grandTotal) {
         btn.classList.remove('opacity-60');
@@ -648,8 +930,8 @@ function clearCart() {
     updateTotals();
 }
 
-function clearAll() { 
-    clearCart(); 
+function clearAll() {
+    clearCart();
 }
 
 function filterCategory(category) {
@@ -659,37 +941,37 @@ function filterCategory(category) {
     });
     event.target.classList.remove('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
     event.target.classList.add('active', 'bg-gray-900', 'text-white', 'dark:bg-white', 'dark:text-gray-900');
-    
     document.querySelectorAll('.product-card').forEach(product => {
         product.style.display = (category === 'all' || product.dataset.category === category) ? 'block' : 'none';
     });
 }
 
 function processPayment() {
+    if (!currentRegister) {
+        alert("No active cash register session.\nPlease open the register.");
+        showOpenRegisterModal();
+        return;
+    }
     const patientId = document.getElementById('patient-select').value;
     if (!patientId) return alert('Please select a patient first');
     if (cart.length === 0) return alert('Cart is empty');
-    
     const grandTotal = parseFloat(document.getElementById('grand-total').textContent.replace('$', ''));
-    
     if (selectedPaymentMethod === 'cash') {
         const amountReceived = parseFloat(document.getElementById('cash-received').value) || 0;
-        if (amountReceived < grandTotal) {
-            return alert('Insufficient amount received.');
-        }
+        if (amountReceived < grandTotal) return alert('Insufficient amount received.');
     }
-    
     const formData = {
         patient_id: patientId,
         items: cart.map(item => ({ type: item.type, id: item.id, quantity: item.quantity })),
         tax_rate: parseFloat(document.getElementById('tax-input').value) || 0,
         discount_amount: parseFloat(document.getElementById('discount-input').value) || 0,
         payment_method: selectedPaymentMethod,
-        amount_received: selectedPaymentMethod === 'cash' ? parseFloat(document.getElementById('cash-received').value) || 0 : grandTotal,
+        amount_paid_now: selectedPaymentMethod === 'cash' 
+            ? parseFloat(document.getElementById('cash-received').value) || 0 
+            : grandTotal,
         notes: '',
         _token: '{{ csrf_token() }}'
     };
-
     fetch('{{ route("invoices.pos.store") }}', {
         method: 'POST',
         headers: {
@@ -702,23 +984,15 @@ function processPayment() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            const change = selectedPaymentMethod === 'cash' ? (formData.amount_received - grandTotal).toFixed(2) : '0.00';
+            const change = selectedPaymentMethod === 'cash' ? (formData.amount_paid_now - grandTotal).toFixed(2) : '0.00';
             alert(`Sale completed!\nInvoice: ${data.invoice_number}\nTotal: $${data.total}\nPayment: ${selectedPaymentMethod.toUpperCase()}${selectedPaymentMethod === 'cash' ? '\nChange: $' + change : ''}`);
-            
-            const printWindow = window.open(
-                '{{ url("invoices") }}/' + data.invoice_id + '/print',
-                '_blank'
-            );
-            
-            if (printWindow) {
-                printWindow.onload = function() {
-                    printWindow.focus();
-                    printWindow.print();
-                };
-            }
-            
+
+            const printUrl = '{{ url("") }}/invoices/' + data.invoice_id + '/print';
+            window.open(printUrl, '_blank');
+
             closePaymentModal();
             clearCart();
+            loadRegisterStatus();
         } else {
             alert('Error: ' + (data.message || 'Payment failed'));
         }
@@ -731,11 +1005,6 @@ function saveAsDraft() {
     alert('Draft saved successfully');
 }
 
-function holdSale() {
-    if (cart.length === 0) return alert('Cart is empty');
-    alert('Sale held successfully');
-}
-
 function showSalesStats() {
     document.getElementById('sales-stats-modal').classList.remove('hidden');
 }
@@ -744,19 +1013,172 @@ function closeSalesStats() {
     document.getElementById('sales-stats-modal').classList.add('hidden');
 }
 
+function loadRegisterStatus() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '{{ route("cash-registers.current") }}', true);
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+    xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                var label = document.getElementById('register-label');
+                var subtitle = document.getElementById('register-subtitle');
+                if (label && subtitle) {
+                    if (data.open && data.register) {
+                        currentRegister = data.register;
+                        label.textContent = `Register: ${data.register.id} (Open)`;
+                        subtitle.innerHTML = `<span class="text-green-600 dark:text-green-400">Opened at ${data.register.opened_at_formatted} • $${data.register.opening_balance_formatted}</span>`;
+                    } else {
+                        currentRegister = null;
+                        label.textContent = 'Register: Not Open';
+                        subtitle.innerHTML = '<span class="text-red-600 dark:text-red-400">Click to open register</span>';
+                    }
+                }
+            } catch (e) {
+                console.error("JSON parse error:", e);
+            }
+        }
+    };
+    xhr.onerror = function () {
+        console.error("Network error");
+    };
+    xhr.send();
+}
+
+document.getElementById('open-register-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Opening...';
+
+    const formData = new FormData(this);
+
+    fetch('{{ route("cash-registers.open") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Cash register opened successfully!');
+            closeOpenRegisterModal();
+            loadRegisterStatus();  // Refresh status bar
+        } else {
+            alert(data.message || 'Failed to open register');
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    });
+});
+
+function showOpenRegisterModal() {
+    document.getElementById('open-register-modal').classList.remove('hidden');
+}
+
+function closeOpenRegisterModal() {
+    document.getElementById('open-register-modal').classList.add('hidden');
+}
+
 function showRegisterDetails() {
+    if (!currentRegister) {
+        showOpenRegisterModal();
+        return;
+    }
+    const content = document.getElementById('register-details-content');
+    if (!content) return;
+    content.innerHTML = `
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            <div class="py-3 flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Register ID</span>
+                <span class="text-sm font-semibold">#${currentRegister.id}</span>
+            </div>
+            <div class="py-3 flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Opened At</span>
+                <span class="text-sm font-semibold">${currentRegister.opened_at_formatted}</span>
+            </div>
+            <div class="py-3 flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Opening Balance</span>
+                <span class="text-sm font-semibold text-green-600 dark:text-green-400">{{ $currency_code }}${currentRegister.opening_balance_formatted}</span>
+            </div>
+            <div class="py-3 flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Cash Sales</span>
+                <span class="text-sm font-semibold">{{ $currency_code }}${currentRegister.cash_sales_formatted || '0.00'}</span>
+            </div>
+            <div class="py-3 flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Card Sales</span>
+                <span class="text-sm font-semibold">{{ $currency_code }}${currentRegister.card_sales_formatted || '0.00'}</span>
+            </div>
+            <div class="py-3 flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Total Transactions</span>
+                <span class="text-sm font-semibold">${currentRegister.transaction_count || 0}</span>
+            </div>
+            <div class="py-3 flex justify-between items-center font-bold">
+                <span class="text-base text-gray-900 dark:text-white">Expected Cash</span>
+                <span class="text-base text-gray-900 dark:text-white">{{ $currency_code }}${currentRegister.expected_closing_formatted || '0.00'}</span>
+            </div>
+        </div>
+    `;
     document.getElementById('register-details-modal').classList.remove('hidden');
 }
 
-function closeRegisterDetails() {
+function closeRegisterDetailsModal() {
     document.getElementById('register-details-modal').classList.add('hidden');
 }
 
-function closeRegister() {
-    if (confirm('Are you sure you want to close the register? This will end your session.')) {
-        alert('Register closed successfully');
-        closeRegisterDetails();
+function showCloseRegisterForm() {
+    const counted = prompt("Enter counted cash in drawer:", currentRegister.expected_closing_formatted || "0.00");
+    if (counted === null) return;
+    const amount = parseFloat(counted);
+    if (isNaN(amount) || amount < 0) {
+        alert("Please enter a valid amount.");
+        return;
     }
+    if (!confirm(`Close register?\nCounted: $${amount.toFixed(2)}\nExpected: $${currentRegister.expected_closing_formatted || "?"}`)) return;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '{{ route("cash-registers.close", ":id") }}'.replace(':id', currentRegister.id), true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+    xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                if (data.success) {
+                    alert(`Register closed successfully.\nDifference: $${data.difference || 0}`);
+                    currentRegister = null;
+                    loadRegisterStatus();
+                    closeRegisterDetailsModal();
+                    window.location.href = '{{ route("home") }}';
+                } else {
+                    alert(data.message || "Failed to close register");
+                }
+            } catch (e) {
+                alert("Response error");
+            }
+        } else {
+            alert("Server error: " + xhr.status);
+        }
+    };
+    xhr.onerror = function () {
+        alert("Connection error");
+    };
+    xhr.send(JSON.stringify({
+        actual_closing_balance: amount,
+        notes: 'Closed from POS terminal'
+    }));
 }
 
 function showLastTransaction() {
@@ -785,21 +1207,37 @@ document.getElementById('search-products').addEventListener('input', function(e)
 
 function updateTime() {
     const now = new Date();
-    const options = { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: true 
-    };
-    document.getElementById('current-time').textContent = now.toLocaleString('en-US', options);
+    const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) timeElement.textContent = now.toLocaleString('en-US', options);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
     updateTotals();
     updateTime();
     setInterval(updateTime, 60000);
+    if (window.preselectedPatientId) {
+        const patientSelect = document.getElementById('patient-select');
+        if (patientSelect) patientSelect.value = window.preselectedPatientId;
+    }
+    if (window.preloadedItems && window.preloadedItems.length > 0) {
+        window.preloadedItems.forEach(item => {
+            const key = `${item.type}-${item.id}`;
+            if (cart.some(cartItem => cartItem.key === key)) return;
+            cart.push({
+                key,
+                type: item.type,
+                id: item.id,
+                name: item.name + (item.source ? ` (${item.source})` : ''),
+                price: parseFloat(item.price),
+                quantity: parseInt(item.quantity) || 1,
+                source: item.source || null
+            });
+        });
+        renderCart();
+        updateTotals();
+    }
+    loadRegisterStatus();
 });
 </script>
 

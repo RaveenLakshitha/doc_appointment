@@ -19,10 +19,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             
                  // UserSeeder::class,
-                //    RolePermissionSeeder::class,
+                 //  RolePermissionSeeder::class,
                 //    UnitOfMeasureSeeder::class,
                 //     CategorySeeder::class,
-                //    SupplierSeeder::class,
+                   // SupplierSeeder::class,
                 //    InventoryItemSeeder::class,
                 //    PatientSeeder::class,
                  //  AppointmentSeeder::class,
@@ -31,15 +31,20 @@ class DatabaseSeeder extends Seeder
                 //     SpecializationSeeder::class,
                //     DoctorSeeder::class,
                 //   ServicesSeeder::class,
-                      //MedicineTemplateSeeder::class,
+                      MedicineTemplateSeeder::class,
                      // PrescriptionSeeder::class,
                    // RoomSeeder::class,
                     // DoctorScheduleSeeder::class,
-                   // DropdownSeeder::class,
+               //  DropdownSeeder::class,
                     //AppointmentRequestSeeder::class,
                    // AppointmentSeeder::class,
                    //DoctorSeeder::class,
-                    EmployeeSeeder::class,
+                   // EmployeeSeeder::class,
+                   //CategorySeeder::class,
+              //     InventoryItemSeeder::class,
+                 // MedicineSeeder::class,
+               //   MedicineBatchSeeder::class,
+              // LeaveTypeSeeder::class,
                   
                 ]);
 

@@ -4,7 +4,7 @@
 <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold mb-6">Edit User: {{ $user->name }}</h1>
 
-    <form method="POST" action="{{ route('admin.users.update', $user) }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+    <form method="POST" action="{{ route('users.update', $user) }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         @csrf @method('PATCH')
 
         <!-- Name -->
@@ -65,7 +65,7 @@
             <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-blue-600">
                 Update User
             </button>
-            <a href="{{ route('admin.users.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            <a href="{{ route('users.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
                 Cancel
             </a>
         </div>

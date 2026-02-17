@@ -12,135 +12,143 @@ class RolePermissionSeeder extends Seeder
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Granular permissions based on sidebar modules + role-specific dashboards
+        // Define permissions using dot notation (resource.action)
         $permissions = [
-            // Role-specific dashboards (view only)
-            'view admin dashboard',
-            'view doctor dashboard',
-            'view receptionist dashboard',
-            'view nurse dashboard',
-            'view hr dashboard',
-            'view support dashboard',
-            'view primary care provider dashboard',
+            // ── Dashboards (view only, role-specific)
+            'dashboard.admin',
+            'dashboard.doctor',
+            'dashboard.receptionist',
+            'dashboard.nurse',
+            'dashboard.hr',
+            'dashboard.support',
+            'dashboard.primary_care_provider',
 
-            // Doctors & Specializations
-            'view doctors', 'create doctors', 'edit doctors', 'delete doctors',
-            'view doctor schedules', 'edit doctor schedules',
-            'view specializations', 'create specializations', 'edit specializations', 'delete specializations',
+            // ── Doctors & Specializations
+            'doctors.index', 'doctors.create', 'doctors.show', 'doctors.edit', 'doctors.delete',
+            'doctor-schedules.index', 'doctor-schedules.edit',
+            'specializations.index', 'specializations.create', 'specializations.edit', 'specializations.delete',
+            'age-groups.index', 'age-groups.create', 'age-groups.edit', 'age-groups.delete',
 
-            // Patients
-            'view patients', 'create patients', 'edit patients', 'delete patients',
+            // ── Patients
+            'patients.index', 'patients.create', 'patients.show', 'patients.edit', 'patients.delete',
 
-            // Appointments
-            'view appointments', 'create appointments', 'edit appointments', 'delete appointments',
-            'view own appointments', 'view appointment calendar', 'view appointment requests',
+            // ── Appointments
+            'appointments.index', 'appointments.create', 'appointments.show', 'appointments.edit', 'appointments.delete',
+            'appointments.own',           // view own only
+            'appointments.calendar',
+            'appointments.requests',
 
-            // Prescriptions & Medicine Templates
-            'view prescriptions', 'create prescriptions', 'edit prescriptions', 'delete prescriptions',
-            'view medicine templates', 'create medicine templates', 'edit medicine templates', 'delete medicine templates',
+            'queues.view','queues.manage',
 
-            // Ambulance
-            'view ambulance calls', 'create ambulance calls', 'edit ambulance calls', 'delete ambulance calls',
-            'view ambulances', 'create ambulances', 'edit ambulances', 'delete ambulances',
+            // ── Prescriptions & Templates
+            'prescriptions.index', 'prescriptions.create', 'prescriptions.edit', 'prescriptions.delete',
+            'medicine-templates.index', 'medicine-templates.create', 'medicine-templates.edit', 'medicine-templates.delete',
 
-            // Pharmacy / Medicines
-            'view medicines', 'create medicines', 'edit medicines', 'delete medicines',
+            // ── Billing
+            'invoices.index', 'invoices.create', 'invoices.edit', 'invoices.delete', 'invoices.issue',
+            'payments.index', 'payments.create', 'payments.edit', 'payments.delete',
 
-            // Billing (Invoices & Payments)
-            'view invoices', 'create invoices', 'edit invoices', 'delete invoices', 'issue invoices',
-            'view payments', 'create payments', 'edit payments', 'delete payments',
+            // ── Departments, Rooms, Services
+            'departments.index', 'departments.create', 'departments.edit', 'departments.delete',
+            'treatments.index', 'treatments.create', 'treatments.edit', 'treatments.delete',
+            'rooms.index', 'rooms.create', 'rooms.edit', 'rooms.delete',
+            'services.index', 'services.create', 'services.edit', 'services.delete',
 
-            // Departments & Services
-            'view departments', 'create departments', 'edit departments', 'delete departments',
-            'view rooms', 'create rooms', 'edit rooms', 'delete rooms',
-            'view services', 'create services', 'edit services', 'delete services',
+            // ── Inventory & Suppliers (← this is what you asked for)
+            'inventory.index',
+            'inventory-items.index', 'inventory-items.create', 'inventory-items.edit', 'inventory-items.delete',
 
-            // Inventory
-            'view inventory', 'create inventory items', 'edit inventory items', 'delete inventory items',
-            'view suppliers', 'create suppliers', 'edit suppliers', 'delete suppliers',
-            'view categories', 'create categories', 'edit categories', 'delete categories',
-            'view unit of measures', 'create unit of measures', 'edit unit of measures', 'delete unit of measures',
+            'suppliers.index', 'suppliers.create', 'suppliers.show', 'suppliers.edit', 'suppliers.delete',
+            'categories.index', 'categories.create', 'categories.edit', 'categories.delete',
+            'unit-measures.index', 'unit-measures.create', 'unit-measures.edit', 'unit-measures.delete',
 
-            // Users & Roles
-            'view users', 'create users', 'edit users', 'delete users',
-            'view roles', 'create roles', 'edit roles', 'delete roles',
+            // ── Users & Roles
+            'users.index', 'users.create', 'users.edit', 'users.delete',
+            'roles.index', 'roles.create', 'roles.edit', 'roles.delete',
 
-            // HR / Staff
-            'view staff', 'create staff', 'edit staff', 'delete staff',
-            'view attendance', 'manage attendance',
-            'view timesheets', 'view leave requests',
+            // ── HR / Staff
+            'staff.index', 'staff.create', 'staff.edit', 'staff.delete',
+            'attendance.index', 'attendance.create', 'attendance.edit', 'attendance.delete',
 
-            // Reports
-            'view reports', 'view appointment reports', 'view financial reports',
-            'view patient visit reports', 'view inventory reports',
+            'leave-entitlements.index','leave-entitlements.create','leave-entitlements.update','leave-entitlements.delete',
+            'leave-requests.index','leave-requests.create','leave-requests.update','leave-requests.delete',
+            'leave-types.index','leave-types.create','leave-types.update','leave-types.delete',
 
-            // Settings
-            'manage settings',
+            // ── Reports
+            'reports.index',
+            'reports.appointments', 'reports.financial', 'reports.patient-visits', 'reports.inventory',
 
-            // Patient-specific
-            'book appointment',
+            // ── Settings & Misc
+            'settings.manage',
+
+            // ── Patient-facing actions
+            'appointments.book',
         ];
 
+        // Create all permissions if they don't exist
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Admin gets everything (including all dashboards)
-        Role::firstOrCreate(['name' => 'admin'])->syncPermissions(Permission::all());
+        // ── Assign permissions to roles ───────────────────────────────────────
 
-        // Doctor - own dashboard + other permissions
+        // Super Admin - gets everything
+        Role::firstOrCreate(['name' => 'admin'])
+            ->syncPermissions(Permission::all()->pluck('name'));
+
+        // Doctor
         Role::firstOrCreate(['name' => 'doctor'])->syncPermissions([
-            'view doctor dashboard',
-            'view patients', 'create patients', 'edit patients',
-            'view appointments', 'create appointments', 'edit appointments',
-            'view own appointments', 'view appointment calendar',
-            'view prescriptions', 'create prescriptions', 'edit prescriptions',
-            'view medicine templates', 'create medicine templates', 'edit medicine templates',
+            'dashboard.doctor',
+            'patients.index', 'patients.create', 'patients.show', 'patients.edit',
+            'appointments.index', 'appointments.create', 'appointments.show', 'appointments.edit',
+            'appointments.own', 'appointments.calendar',
+            'prescriptions.index', 'prescriptions.create', 'prescriptions.edit',
+            'medicine-templates.index', 'medicine-templates.create', 'medicine-templates.edit',
         ]);
 
         // Receptionist
         Role::firstOrCreate(['name' => 'receptionist'])->syncPermissions([
-            'view receptionist dashboard',
-            'view patients', 'create patients', 'edit patients',
-            'view appointments', 'create appointments', 'edit appointments', 'view appointment calendar',
-            'view invoices', 'create invoices', 'issue invoices',
-            'view payments', 'create payments',
+            'dashboard.receptionist',
+            'patients.index', 'patients.create', 'patients.show', 'patients.edit',
+            'appointments.index', 'appointments.create', 'appointments.edit', 'appointments.calendar',
+            'invoices.index', 'invoices.create', 'invoices.issue',
+            'payments.index', 'payments.create',
         ]);
 
         // Nurse
         Role::firstOrCreate(['name' => 'nurse'])->syncPermissions([
-            'view nurse dashboard',
-            'view patients',
-            'view appointments', 'view own appointments',
+            'dashboard.nurse',
+            'patients.index', 'patients.show',
+            'appointments.index', 'appointments.own',
         ]);
 
         // HR
         Role::firstOrCreate(['name' => 'hr'])->syncPermissions([
-            'view hr dashboard',
-            'view staff', 'create staff', 'edit staff', 'delete staff',
-            'view attendance', 'manage attendance',
-            'view timesheets',
-            'view leave requests',
-            'view users', 'create users', 'edit users',
-            'view roles', 'create roles', 'edit roles',
+            'dashboard.hr',
+            'staff.index', 'staff.create', 'staff.edit', 'staff.delete',
+            'attendance.index', 'attendance.create', 'attendance.edit', 'attendance.delete',
+
+            'leave-requests.index',
+            'users.index', 'users.create', 'users.edit',
+            'roles.index', 'roles.create', 'roles.edit',
         ]);
 
         // Primary Care Provider
         Role::firstOrCreate(['name' => 'primary_care_provider'])->syncPermissions([
-            'view primary care provider dashboard',
-            'view patients', 'create patients', 'edit patients',
-            'view appointments', 'create appointments', 'edit appointments',
-            'view own appointments', 'view appointment calendar',
-            'view prescriptions', 'create prescriptions', 'edit prescriptions',
-            'view medicine templates',
-            'book appointment',
+            'dashboard.primary_care_provider',
+            'patients.index', 'patients.create', 'patients.show', 'patients.edit',
+            'appointments.index', 'appointments.create', 'appointments.edit',
+            'appointments.own', 'appointments.calendar',
+            'prescriptions.index', 'prescriptions.create', 'prescriptions.edit',
+            'medicine-templates.index',
+            'appointments.book',
         ]);
 
-        // Support - room maintenance focused
+        // Support (maintenance focused)
         Role::firstOrCreate(['name' => 'support'])->syncPermissions([
-            'view support dashboard',
-            'view departments',
-            'view rooms', 'edit rooms',  // For updating cleaning/maintenance status
+            'dashboard.support',
+            'departments.index',
+            'rooms.index', 'rooms.edit',   // e.g. update status/cleaning
         ]);
     }
 }

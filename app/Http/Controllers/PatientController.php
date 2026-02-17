@@ -8,11 +8,17 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\PatientsExport;
 use DB;
+use Illuminate\Support\Facades\Auth;
 
 class PatientController extends Controller
 {
     public function index(Request $request)
     {
+        if (!Auth::user()->can('patients.index')) {
+            return redirect()->route('home')
+                ->with('error', __('file.module_access_denied'));
+        }
+
         $patients = Patient::active()
             ->orderBy('first_name')
             ->paginate(10)
@@ -76,7 +82,6 @@ class PatientController extends Controller
         $totalRecords = Patient::active()->count();
         $filteredRecords = (clone $query)->count();
 
-        // Ordering
         if ($orderColumnIndex == 1) {
             $query->orderBy('medical_record_number', $orderDir);
         } elseif ($orderColumnIndex == 2) {
@@ -86,7 +91,6 @@ class PatientController extends Controller
         } elseif ($orderColumnIndex == 4) {
             $query->orderByRaw("FIELD(LOWER(patients.gender), 'male', 'female', 'other', NULL) {$orderDir}");
         } elseif ($orderColumnIndex == 5) {
-            // Order by last appointment date (nulls last)
             $query->orderBy('last_appointment_date', $orderDir);
         } elseif ($orderColumnIndex == 6) {
             $query->orderBy('is_active', $orderDir);
@@ -110,6 +114,9 @@ class PatientController extends Controller
                 default  => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Other</span>'
             };
 
+            $edit_url   = Auth::user()->can('patients.update') ? route('patients.edit', $p) : null;
+            $delete_url = Auth::user()->can('patients.delete') ? route('patients.destroy', $p) : null;
+
             return [
                 'id'                    => $p->id,
                 'medical_record_number' => $p->medical_record_number ?? '',
@@ -121,8 +128,8 @@ class PatientController extends Controller
                     ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Active</span>'
                     : '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Inactive</span>',
                 'show_url'              => route('patients.show', $p),
-                'edit_url'              => route('patients.edit', $p),
-                'delete_url'            => route('patients.destroy', $p),
+                'edit_url'              => $edit_url,
+                'delete_url'            => $delete_url,
             ];
         });
 
@@ -134,10 +141,22 @@ class PatientController extends Controller
         ]);
     }
 
-    public function create() { return view('patients.create'); }
+    public function create()
+    {
+        if (!Auth::user()->can('patients.create')) {
+            return redirect()->route('patients.index')
+                ->with('error', __('file.patients_create_denied'));
+        }
+
+        return view('patients.create');
+    }
 
     public function store(Request $request)
     {
+        if (!Auth::user()->can('patients.create')) {
+            abort(403);
+        }
+
         $request->validate([
             'first_name'             => 'required|string|max:255',
             'last_name'              => 'required|string|max:255',
@@ -188,19 +207,37 @@ class PatientController extends Controller
             'is_deleted'            => false,
         ]);
 
-        return redirect()->route('patients.index')->with('success', 'Patient created successfully.');
+        return redirect()->route('patients.index')
+            ->with('success', __('file.patients_created_successfully'));
     }
 
     public function show(Patient $patient)
     {
+        if (!Auth::user()->can('patients.show')) {
+            return redirect()->route('patients.index')
+                ->with('error', __('file.patients_show_denied'));
+        }
+
         $patient->load(['appointments', 'prescriptions', 'invoices.payments']);
         return view('patients.show', compact('patient'));
     }
-    
-    public function edit(Patient $patient) { return view('patients.edit', compact('patient')); }
+
+    public function edit(Patient $patient)
+    {
+        if (!Auth::user()->can('patients.update')) {
+            return redirect()->route('patients.index')
+                ->with('error', __('file.patients_edit_denied'));
+        }
+
+        return view('patients.edit', compact('patient'));
+    }
 
     public function update(Request $request, Patient $patient)
     {
+        if (!Auth::user()->can('patients.update')) {
+            abort(403);
+        }
+
         $request->validate([
             'first_name'             => 'required|string|max:255',
             'last_name'              => 'required|string|max:255',
@@ -243,15 +280,30 @@ class PatientController extends Controller
             'emergency_contact_email',
         ]));
 
-        return redirect()->route('patients.index')->with('success', 'Patient updated successfully.');
+        return redirect()->route('patients.index')
+            ->with('success', __('file.patients_updated_successfully'));
     }
 
-    public function destroy(Patient $patient) {
+    public function destroy(Patient $patient)
+    {
+        if (!Auth::user()->can('patients.delete')) {
+            return redirect()->route('patients.index')
+                ->with('error', __('file.patients_delete_denied'));
+        }
+
         $patient->update(['is_deleted' => true, 'is_active' => false]);
-        return back()->with('success', 'Patient deleted.');
+        return back()->with('success', __('file.patients_deleted_successfully'));
     }
 
-    public function bulkDelete(Request $request) {
+    public function bulkDelete(Request $request)
+    {
+        if (!Auth::user()->can('patients.delete')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.patients_bulk_delete_denied')
+            ], 403);
+        }
+
         $ids = $request->input('ids');
         if (is_string($ids)) $ids = array_filter(explode(',', $ids));
 
@@ -261,7 +313,7 @@ class PatientController extends Controller
         ]);
 
         Patient::whereIn('id', $ids)->update(['is_deleted' => true, 'is_active' => false]);
-        return back()->with('success', 'Patients deleted.');
+        return back()->with('success', __('file.patients_bulk_deleted_successfully'));
     }
 
     public function filters(Request $request)
@@ -308,4 +360,50 @@ class PatientController extends Controller
             ->values()
             ->toArray();
     }
+
+    public function search(Request $request)
+{
+    $term = trim($request->get('q', '') ?? '');
+
+    $query = Patient::query()
+        ->select([
+            'id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'medical_record_number'
+        ])
+        ->when($term, function ($q) use ($term) {
+            $q->whereRaw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) LIKE ?", ["%$term%"])
+              ->orWhere('medical_record_number', 'LIKE', "%$term%");
+        })
+        ->orderBy('last_name')
+        ->orderBy('first_name');
+
+    $patients = $query->paginate(15);
+
+    $results = $patients->getCollection()->map(function ($patient) {
+        return [
+            'id'   => $patient->id,
+            'text' => $patient->full_name . ' (MRN: ' . ($patient->medical_record_number ?? 'N/A') . ')'
+            // or if you prefer explicit:
+            // 'text' => trim("{$patient->first_name} {$patient->middle_name} {$patient->last_name}") . ' (MRN: ' . ($patient->medical_record_number ?? 'N/A') . ')'
+        ];
+    });
+
+    return response()->json([
+        'results'    => $results,
+        'pagination' => [
+            'more' => $patients->hasMorePages()
+        ]
+    ]);
+}
+
+    public function select2Single(Patient $patient)
+{
+    return response()->json([
+        'id'   => $patient->id,
+        'text' => $patient->full_name . ' (MRN: ' . ($patient->medical_record_number ?? 'N/A') . ')'
+    ]);
+}
 }

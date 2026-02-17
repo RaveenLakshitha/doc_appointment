@@ -2,7 +2,7 @@
 @section('title', __('file.create_department'))
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4 sm:px-6 lg:px-8">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="max-w-7xl">
          <!-- Breadcrumbs -->
         <nav class="flex mb-6" aria-label="Breadcrumb">
@@ -54,21 +54,6 @@
                                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-gray-50"
                                        placeholder="e.g. Cardiology">
                                 @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
-
-                            <!-- Head of Department -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    {{ __('file.head_of_department') }}
-                                </label>
-                                <select name="head_doctor_id"
-                                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white">
-                                    <option value="">{{ __('file.select_doctor') }}</option>
-                                    @foreach($doctors as $doctor)
-                                        <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('head_doctor_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <!-- Status -->

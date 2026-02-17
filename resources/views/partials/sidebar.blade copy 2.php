@@ -394,7 +394,7 @@
                            onmouseout="this.style.backgroundColor='{{ request()->routeIs('admin.users.index') ? $primary_color.'10' : 'transparent' }}'; this.style.color='{{ request()->routeIs('admin.users.index') ? $primary_color : 'inherit' }}'">
                            {{ __('file.user_management') }}
                         </a>
-                        <a href="{{ route('admin.roles.index') }}"
+                        <a href="{{ route('roles.index') }}"
                            class="block px-3 py-1.5 text-sm rounded-md transition-all duration-200"
                            style="color: {{ request()->routeIs('admin.roles.*') ? $primary_color : 'inherit' }}; background-color: {{ request()->routeIs('admin.roles.*') ? $primary_color.'10' : 'transparent' }}"
                            onmouseover="this.style.backgroundColor='{{ $primary_color }}10'; this.style.color='{{ $primary_color }}'"

@@ -62,7 +62,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.patient') }} <span class="text-red-500">*</span></label>
-                                <select name="patient_id" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                <select name="patient_id" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
                                     <option value="">{{ __('file.select_patient') }}</option>
                                     @foreach($patients as $patient)
                                         <option value="{{ $patient->id }}" {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
@@ -84,7 +84,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.prescription_type') }} <span class="text-red-500">*</span></label>
-                                <select name="type" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                <select name="type" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
                                     <option value="">{{ __('file.select_type') }}</option>
                                     <option value="Standard" {{ old('type') == 'Standard' ? 'selected' : '' }}>{{ __('file.standard') }}</option>
                                     <option value="Emergency" {{ old('type') == 'Emergency' ? 'selected' : '' }}>{{ __('file.emergency') }}</option>

@@ -15,6 +15,7 @@ class Payment extends Model
         'reference',
         'notes',
         'user_id',
+        'cash_register_id',
     ];
 
     protected $casts = [
@@ -31,5 +32,15 @@ class Payment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function cashRegister()
+    {
+        return $this->belongsTo(CashRegister::class);
+    }
+
+    public function cashTransaction()
+    {
+        return $this->hasOne(CashRegisterTransaction::class);
     }
 }

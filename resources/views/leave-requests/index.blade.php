@@ -3,7 +3,7 @@
 @section('title', __('file.leave_requests'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 py-4 sm:py-6">
+<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
@@ -29,13 +29,15 @@
                 </button>
             </div>
 
+            @can('leave-requests.create')
             <a href="{{ route('leave-requests.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span class="hidden sm:inline">{{ __('file.new_leave_request') }}</span>
+                <span class="hidden sm:inline">{{ __('file.submit_leave_request') }}</span>
                 <span class="sm:hidden">Add</span>
             </a>
+            @endcan
         </div>
     </div>
 
@@ -64,39 +66,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.department') }}</label>
-                    <select id="filter-department" class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        <option value="">{{ __('file.all_departments') }}</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.leave_type') }}</label>
-                    <select id="filter-leave-type" class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        <option value="">{{ __('file.all_types') }}</option>
-                        <option value="annual">Annual</option>
-                        <option value="sick">Sick</option>
-                        <option value="maternity">Maternity</option>
-                        <option value="paternity">Paternity</option>
-                        <option value="unpaid">Unpaid</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-
-                <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.status') }}</label>
                     <select id="filter-status" class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                         <option value="">{{ __('file.all_statuses') }}</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="pending">{{ __('file.pending') }}</option>
+                        <option value="approved">{{ __('file.approved') }}</option>
+                        <option value="rejected">{{ __('file.rejected') }}</option>
+                        <option value="cancelled">{{ __('file.cancelled') }}</option>
                     </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.date_range') }}</label>
-                    <input type="date" id="filter-date-from" class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition mb-2">
-                    <input type="date" id="filter-date-to" class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
             </div>
         </div>
@@ -114,18 +91,14 @@
     <!-- Table Container -->
     <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
-            <table id="leaverequest-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700 display nowrap" style="width:100%">
+            <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700 display nowrap" style="width:100%">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">{{ __('file.employee') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.department') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.leave_type') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.start_date') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.end_date') }}</th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">{{ __('file.leave_type') }}</th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.dates') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.days') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.status') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.approved_by') }}</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">{{ __('file.reason') }}</th>
                         <th class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">{{ __('file.actions') }}</th>
                     </tr>
                 </thead>
@@ -145,11 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const filterCount = document.getElementById('filter-count');
 
     const filterEmployee = document.getElementById('filter-employee');
-    const filterDepartment = document.getElementById('filter-department');
-    const filterLeaveType = document.getElementById('filter-leave-type');
     const filterStatus = document.getElementById('filter-status');
-    const filterDateFrom = document.getElementById('filter-date-from');
-    const filterDateTo = document.getElementById('filter-date-to');
 
     function openDrawer() {
         filterBackdrop.classList.remove('hidden');
@@ -180,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !filterBackdrop.classList.contains('hidden')) closeDrawerFunc(); });
 
     function updateFilterCount() {
-        const count = [filterEmployee.value, filterDepartment.value, filterLeaveType.value, filterStatus.value, filterDateFrom.value, filterDateTo.value].filter(Boolean).length;
+        const count = [filterEmployee.value, filterStatus.value].filter(Boolean).length;
         if (count > 0) {
             filterCount.textContent = count;
             filterCount.classList.remove('hidden');
@@ -189,40 +158,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    $.get('{{ route("leave-requests.filters") }}', { column: 'employee' }, data => {
-        $.each(data, (id, name) => $('#filter-employee').append(`<option value="${id}">${name}</option>`));
+    // Populate employee dropdown (assuming employees.filters route exists)
+    $.get('{{ route("employees.filters") }}', { column: 'employee' }, function(data) {
+        $.each(data, function(id, name) {
+            $('#filter-employee').append(`<option value="${id}">${name}</option>`);
+        });
     });
 
-    $.get('{{ route("leave-requests.filters") }}', { column: 'department' }, data => {
-        $.each(data, (id, name) => $('#filter-department').append(`<option value="${id}">${name}</option>`));
-    });
-
-    const table = $('#leaverequest-table').DataTable({
+    const table = $('#docapp-table').DataTable({
         processing: true,
         serverSide: true,
         responsive: true,
         ajax: {
             url: '{{ route("leave-requests.datatable") }}',
             data: function(d) {
-                d.employee = filterEmployee.value;
-                d.department = filterDepartment.value;
-                d.leave_type = filterLeaveType.value;
+                d.employee_id = filterEmployee.value;
                 d.status = filterStatus.value;
-                d.date_from = filterDateFrom.value;
-                d.date_to = filterDateTo.value;
             }
         },
-        order: [[3, 'desc']],
+        order: [[0, 'desc']], // default sort by created_at descending
         columns: [
-            { data: 'employee_name' },
-            { data: 'department_name' },
-            { data: 'leave_type' },
-            { data: 'start_date', className: 'text-center' },
-            { data: 'end_date', className: 'text-center' },
-            { data: 'days_requested', className: 'text-center font-medium' },
+            { data: 'employee_name', className: 'text-left' },
+            { data: 'leave_type', className: 'text-left' },
+            { data: 'dates', className: 'text-left' },
+            { data: 'days', className: 'text-center' },
             { data: 'status_html', className: 'text-center' },
-            { data: 'approved_by' },
-            { data: 'reason' },
             {
                 data: null,
                 orderable: false,
@@ -230,40 +190,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 className: 'text-right whitespace-nowrap',
                 render: (data, type, row) => `
                     <div class="flex items-center justify-end gap-1">
+                        ${row.approve_url ? `
+                        <a href="${row.approve_url}" class="p-1.5 sm:p-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors" title="{{ __('file.approve') }}">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </a>` : ''}
+                        ${row.edit_url ? `
                         <a href="${row.edit_url}" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="{{ __('file.edit') }}">
                             <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        </a>
-                        <form method="POST" action="${row.delete_url}" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" onclick="return confirm('{{ __('file.confirm_delete') }}')" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors" title="{{ __('file.delete') }}">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        </form>
+                        </a>` : ''}
+                        <!-- Add reject/cancel links if needed -->
                     </div>
                 `
             }
         ],
         layout: {
-            topStart: { buttons: ['pageLength', { extend: 'collection', text: "{{ __('file.Export') }}", buttons: ['copy', 'excel', 'csv', 'pdf', 'print'] }] },
+            topStart: { buttons: ['pageLength', { extend: 'collection', text: 'Export', buttons: ['copy', 'excel', 'csv', 'pdf', 'print'] }] },
             topEnd: 'search',
+            text: "{{ __('file.Export') }}",
             bottomStart: 'info',
             bottomEnd: 'paging'
         },
-        pageLength: 15,
+        pageLength: 10,
         language: {
             search: "",
             searchPlaceholder: "{{ __('file.search_leave_requests') }}",
-            emptyTable: "{{ __('file.no_leave_requests') }}"
+            emptyTable: "{{ __('file.no_leave_requests_found') }}"
         }
     });
 
     document.getElementById('apply-filters').addEventListener('click', () => { table.draw(); updateFilterCount(); closeDrawerFunc(); });
     document.getElementById('clear-filters').addEventListener('click', () => {
-        filterEmployee.value = ''; filterDepartment.value = ''; filterLeaveType.value = ''; filterStatus.value = ''; filterDateFrom.value = ''; filterDateTo.value = '';
+        filterEmployee.value = '';
+        filterStatus.value = '';
         table.draw(); updateFilterCount();
     });
 
-    [filterEmployee, filterDepartment, filterLeaveType, filterStatus, filterDateFrom, filterDateTo].forEach(el => el.addEventListener('change', updateFilterCount));
+    [filterEmployee, filterStatus].forEach(el => el.addEventListener('change', updateFilterCount));
 
     updateFilterCount();
 });
