@@ -205,22 +205,21 @@
     <!-- Header -->
     <div class="header">
         <div class="clinic-info">
-            <h1>{{ config('app.name', 'Medical Center') }}</h1>
-            <div class="tagline">Quality Healthcare & Pharmacy Services</div>
+            <h1>{{ $clinic_name }}</h1>
+            <div class="tagline">{{ __('file.med_center_pharmacy') }}</div>
             <div class="address">
-                123 Healthcare Avenue<br>
-                Colombo 05, Sri Lanka<br>
-                Phone: +94 11 234 5678<br>
-                Email: info@yourclinic.lk
+                {!! nl2br(e($clinic_address)) !!}<br>
+                {{ __('file.phone') }}: {{ $clinic_phone }}<br>
+                {{ __('file.email') }}: {{ $clinic_email }}
             </div>
         </div>
 
         <div class="invoice-title-box">
-            <div class="invoice-title">INVOICE</div>
+            <div class="invoice-title">{{ __('file.invoice_label') }}</div>
             <div class="meta-line">
-                <strong>Invoice #:</strong> {{ $invoice->invoice_number }}<br>
-                <strong>Date:</strong> {{ $invoice->invoice_date->format('d M Y') }}<br>
-                <strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $invoice->status)) }}
+                <strong>{{ __('file.invoice_no') }}:</strong> {{ $invoice->invoice_number }}<br>
+                <strong>{{ __('file.date') }}:</strong> {{ $invoice->invoice_date->format('d M Y') }}<br>
+                <strong>{{ __('file.status') }}:</strong> {{ __('file.status_' . strtolower($invoice->status)) }}
             </div>
         </div>
     </div>
@@ -228,18 +227,18 @@
     <!-- Patient & Payment Info -->
     <div class="two-columns">
         <div class="info-box">
-            <h3>Bill To</h3>
-            <p><strong>Name:</strong> {{ $invoice->patient->first_name }} {{ $invoice->patient->last_name }}</p>
-            <p><strong>MRN:</strong> {{ $invoice->patient->medical_record_number ?? '—' }}</p>
-            <p><strong>Contact:</strong> {{ $invoice->patient->phone ?? '—' }}</p>
+            <h3>{{ __('file.bill_to') }}</h3>
+            <p><strong>{{ __('file.Name') }}:</strong> {{ $invoice->patient->first_name }} {{ $invoice->patient->last_name }}</p>
+                <div><strong>{{ __('file.medical_record_number') }}:</strong> {{ $invoice->patient->medical_record_number ?? '—' }}</div>
+                <div><strong>{{ __('file.contact_phone') }}:</strong> {{ $invoice->patient->phone ?? '—' }}</div>
         </div>
 
         <div class="info-box">
-            <h3>Invoice Details</h3>
-            <p><strong>Invoice Date:</strong> {{ $invoice->invoice_date->format('d M Y') }}</p>
-            <p><strong>Due Date:</strong> {{ $invoice->due_date?->format('d M Y') ?? '—' }}</p>
+            <h3>{{ __('file.invoice_details') }}</h3>
+            <p><strong>{{ __('file.date') }}:</strong> {{ $invoice->invoice_date->format('d M Y') }}</p>
+            <p><strong>{{ __('file.due_date') }}:</strong> {{ $invoice->due_date?->format('d M Y') ?? '—' }}</p>
             @if($invoice->payments->isNotEmpty())
-            <p><strong>Paid Via:</strong> {{ ucfirst($invoice->payments->last()->method ?? '—') }}</p>
+            <p><strong>{{ __('file.paid_via_label') }}:</strong> {{ ucfirst($invoice->payments->last()->method ?? '—') }}</p>
             @endif
         </div>
     </div>
@@ -248,11 +247,11 @@
     <table class="items">
         <thead>
             <tr>
-                <th class="center" style="width:45px">#</th>
-                <th>Description</th>
-                <th class="center">Qty</th>
-                <th class="right">Unit Price</th>
-                <th class="right">Total</th>
+                <th style="width: 30px">#</th>
+                <th>{{ __('file.item') }}</th>
+                <th class="center">{{ __('file.qty') }}</th>
+                <th class="right">{{ __('file.unit_price') }}</th>
+                <th class="right">{{ __('file.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -262,62 +261,91 @@
                 <td>
                     <span class="item-name">{{ $item->description }}</span>
                     @if(str_contains($item->itemable_type ?? '', 'Service'))
-                        <span class="badge service">Service</span>
+                        <span class="badge service">{{ __('file.service_badge') }}</span>
                     @elseif(str_contains($item->itemable_type ?? '', 'Treatment'))
-                        <span class="badge treatment">Treatment</span>
+                        <span class="badge treatment">{{ __('file.treatment_badge') }}</span>
                     @else
-                        <span class="badge medicine">Medicine</span>
+                        <span class="badge medicine">{{ __('file.medicine_badge') }}</span>
                     @endif
                 </td>
                 <td class="center">{{ $item->quantity }}</td>
-                <td class="right">${{ number_format($item->unit_price, 2) }}</td>
-                <td class="right">${{ number_format($item->total, 2) }}</td>
+                <td class="right">{{ $currency_code }}{{ number_format($item->unit_price, 2) }}</td>
+                <td class="right">{{ $currency_code }}{{ number_format($item->total, 2) }}</td>
             </tr>
         @endforeach
         </tbody>
     </table>
 
+    <!-- Payment History -->
+    @if($invoice->payments->isNotEmpty())
+    <div style="margin-bottom: 20px;">
+        <h3 style="color: #3498db; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+            {{ __('file.payment_history') }}
+        </h3>
+        <table class="items" style="margin-bottom: 10px;">
+            <thead>
+                <tr>
+                    <th style="background: #7f8c8d; width: 120px;">{{ __('file.date') }}</th>
+                    <th style="background: #7f8c8d;">{{ __('file.method') }}</th>
+                    <th style="background: #7f8c8d;">{{ __('file.reference') }}</th>
+                    <th style="background: #7f8c8d; text-align: right;">{{ __('file.amount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($invoice->payments as $payment)
+                <tr>
+                    <td>{{ $payment->payment_date->format('d M Y') }}</td>
+                    <td>{{ ucfirst($payment->method) }}</td>
+                    <td>{{ $payment->reference ?? '—' }}</td>
+                    <td style="text-align: right;">{{ $currency_code }}{{ number_format($payment->amount, 2) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+
     <!-- Totals -->
     <div class="totals">
         <div class="total-line">
-            <div>Subtotal</div>
-            <div>${{ number_format($invoice->subtotal, 2) }}</div>
+            <div>{{ __('file.subtotal') }}</div>
+            <div>{{ $currency_code }}{{ number_format($invoice->subtotal, 2) }}</div>
         </div>
 
         @if($invoice->tax_amount > 0)
         <div class="total-line">
-            <div>Tax</div>
-            <div>${{ number_format($invoice->tax_amount, 2) }}</div>
+            <div>{{ __('file.tax') }}</div>
+            <div>{{ $currency_code }}{{ number_format($invoice->tax_amount, 2) }}</div>
         </div>
         @endif
 
         @if($invoice->discount_amount > 0)
         <div class="total-line discount">
-            <div>Discount</div>
-            <div>-${{ number_format($invoice->discount_amount, 2) }}</div>
+            <div>{{ __('file.discount') }}</div>
+            <div>-{{ $currency_code }}{{ number_format($invoice->discount_amount, 2) }}</div>
         </div>
         @endif
 
         <div class="total-line grand border-top">
-            <div>Total Amount</div>
-            <div>${{ number_format($invoice->total, 2) }}</div>
+            <div>{{ __('file.total_amount_label') }}</div>
+            <div>{{ $currency_code }}{{ number_format($invoice->total, 2) }}</div>
         </div>
 
         @if($invoice->balance_due > 0)
         <div class="total-line" style="margin-top:10px; font-weight:bold; color:#e67e22;">
-            <div>Balance Due</div>
-            <div>${{ number_format($invoice->balance_due, 2) }}</div>
+            <div>{{ __('file.balance_due_label') }}</div>
+            <div>{{ $currency_code }}{{ number_format($invoice->balance_due, 2) }}</div>
         </div>
         @endif
     </div>
 
     <!-- Footer -->
     <div class="footer">
-        <div class="thank-you">Thank you for choosing us!</div>
-        <div>Wishing you a speedy recovery and good health.</div>
+        <div class="thank-you">{{ __('file.thank_you_choosing') }}</div>
+        <div>{{ __('file.wishing_recovery_health') }}</div>
         <div style="margin-top:16px; font-size:11px; color:#95a5a6;">
-            This is a computer-generated document – no signature required.<br>
-            Printed on {{ now()->format('d M Y h:i A') }} | Powered by {{ config('app.name') }}
+            {{ __('file.computer_generated') }}<br>
+            {{ __('file.printed_on') }} {{ now()->format('d M Y h:i A') }} | {{ __('file.powered_by') }} {{ $clinic_name }}
         </div>
     </div>
 
@@ -326,12 +354,12 @@
 <div class="no-print" style="position:fixed; bottom:30px; right:30px; display:flex; gap:15px;">
     <button onclick="window.print(); setTimeout(()=>window.location.href='{{ route('invoices.pos') }}', 1200);" 
             style="padding:14px 28px; background:#27ae60; color:white; border:none; border-radius:8px; font-size:15px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-        Print & Return to POS
+        {{ __('file.print_return_pos') }}
     </button>
     
     <button onclick="window.location.href='{{ route('invoices.pos') }}'" 
             style="padding:14px 28px; background:#7f8c8d; color:white; border:none; border-radius:8px; font-size:15px; cursor:pointer;">
-        Back to POS
+        {{ __('file.back_to_pos') }}
     </button>
 </div>
 

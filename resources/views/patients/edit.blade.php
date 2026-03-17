@@ -43,24 +43,17 @@
                             <span class="sm:hidden">{{ __('file.medical') }}</span>
                         </div>
                     </button>
-                    <button type="button" onclick="switchTab('insurance')" id="tab-insurance"
-                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
+                    
+                    
+                
+                    <button type="button" onclick="switchTab('more')" id="tab-more"
+                        class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
                         <div class="flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span class="hidden sm:inline">{{ __('file.insurance_billing') }}</span>
-                            <span class="sm:hidden">{{ __('file.insurance') }}</span>
-                        </div>
-                    </button>
-                    <button type="button" onclick="switchTab('consent')" id="tab-consent"
-                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
-                        <div class="flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="hidden sm:inline">{{ __('file.consent_documents') }}</span>
-                            <span class="sm:hidden">{{ __('file.consent') }}</span>
+                            <span class="hidden sm:inline">{{ __('file.more_information') }}</span>
+                            <span class="sm:hidden">{{ __('file.more_info') }}</span>
                         </div>
                     </button>
                 </nav>
@@ -154,11 +147,7 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.email') }}</label>
-                            <input type="email" name="email" value="{{ old('email', $patient->email) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="email@example.com">
-                            @error('email') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                        </div>
+                        
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.preferred_contact_method') }}</label>
@@ -190,18 +179,50 @@
                                     <input type="text" name="emergency_contact_phone" value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="+1234567890">
                                     @error('emergency_contact_phone') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.email') }}</label>
-                                    <input type="email" name="emergency_contact_email" value="{{ old('emergency_contact_email', $patient->emergency_contact_email) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="contact@example.com">
-                                    @error('emergency_contact_email') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="content-medical" class="tab-content hidden">
+                
+<div id="content-medical" class="tab-content hidden">
+    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.attended_psychotherapy') }}</label>
+                                <select name="attended_psychotherapy" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                    <option value="0" {{ old('attended_psychotherapy', $patient->attended_psychotherapy ?? 0) == '0' ? 'selected' : '' }}>{{ __('file.no') }}</option>
+                                    <option value="1" {{ old('attended_psychotherapy', $patient->attended_psychotherapy ?? 0) == '1' ? 'selected' : '' }}>{{ __('file.yes') }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.preferred_session_time') }}</label>
+                                <input type="text" name="preferred_session_time" value="{{ old('preferred_session_time', $patient->preferred_session_time ?? '') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.preferred_session_time_ph') }}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.recommended_by') }}</label>
+                                <input type="text" name="recommended_by" value="{{ old('recommended_by', $patient->recommended_by ?? '') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.recommended_by_ph') }}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.recommended_document') }}</label>
+                                <input type="file" name="recommended_document" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                @error('recommended_document') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                
+            @if(isset($patient) && $patient->recommended_document)
+                 <div class="mt-2 flex items-center gap-2">
+                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                     <a href="{{ asset($patient->recommended_document) }}" target="_blank" class="text-sm text-blue-600 hover:underline dark:text-blue-400 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-md">{{ __('file.view_current_document') }}</a>
+                 </div>
+            @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-more" class="tab-content hidden">
                     <div class="space-y-6">
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.blood_type') }}</label>
@@ -314,150 +335,11 @@
                     </div>
                 </div>
 
-                <div id="content-insurance" class="tab-content hidden">
-                    <div class="space-y-6">
-                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.primary_insurance') }}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.provider') }}</label>
-                                    <input type="text" name="primary_insurance_provider" value="{{ old('primary_insurance_provider', $patient->primary_insurance_provider) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.insurance_company') }}">
-                                    @error('primary_insurance_provider') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.policy_number') }}</label>
-                                    <input type="text" name="primary_policy_number" value="{{ old('primary_policy_number', $patient->primary_policy_number) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="POL123456789">
-                                    @error('primary_policy_number') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.group_number') }}</label>
-                                    <input type="text" name="primary_group_number" value="{{ old('primary_group_number', $patient->primary_group_number) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="GRP987">
-                                    @error('primary_group_number') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.policy_holder_name') }}</label>
-                                    <input type="text" name="primary_policy_holder_name" value="{{ old('primary_policy_holder_name', $patient->primary_policy_holder_name) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.full_name_ph') }}">
-                                    @error('primary_policy_holder_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.relationship_to_patient') }}</label>
-                                    <input type="text" name="primary_relationship_to_patient" value="{{ old('primary_relationship_to_patient', $patient->primary_relationship_to_patient) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.relationship_ph') }}">
-                                    @error('primary_relationship_to_patient') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.insurance_phone') }}</label>
-                                    <input type="text" name="primary_insurance_phone" value="{{ old('primary_insurance_phone', $patient->primary_insurance_phone) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="+1-800-555-1234">
-                                    @error('primary_insurance_phone') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.secondary_insurance') }}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.provider') }}</label>
-                                    <input type="text" name="secondary_insurance_provider" value="{{ old('secondary_insurance_provider', $patient->secondary_insurance_provider) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.insurance_company') }}">
-                                    @error('secondary_insurance_provider') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.policy_number') }}</label>
-                                    <input type="text" name="secondary_policy_number" value="{{ old('secondary_policy_number', $patient->secondary_policy_number) }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="POL987654321">
-                                    @error('secondary_policy_number') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.billing_preferences') }}</h3>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.preferred_billing_method') }}</label>
-                                <select name="preferred_billing_method" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                    <option value="insurance_first" {{ old('preferred_billing_method', $patient->preferred_billing_method) == 'insurance_first' ? 'selected' : '' }}>{{ __('file.insurance_first') }}</option>
-                                    <option value="self_pay" {{ old('preferred_billing_method', $patient->preferred_billing_method) == 'self_pay' ? 'selected' : '' }}>{{ __('file.self_pay') }}</option>
-                                </select>
-                                @error('preferred_billing_method') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                            </div>
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.payment_methods') }}</label>
-                                <div class="space-y-2">
-                                    @php
-                                        $existing = $patient->payment_methods ?? [];
-                                        $oldMethods = old('payment_methods', []);
-                                        $selected = array_merge($oldMethods, $existing);
-                                    @endphp
-                                    <label class="flex items-center">
-                                        <input type="checkbox" name="payment_methods[]" value="credit_card" {{ in_array('credit_card', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.credit_card') }}</span>
-                                    </label>
-                                    <label class="flex items-center">
-                                        <input type="checkbox" name="payment_methods[]" value="debit_card" {{ in_array('debit_card', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.debit_card') }}</span>
-                                    </label>
-                                    <label class="flex items-center">
-                                        <input type="checkbox" name="payment_methods[]" value="cash" {{ in_array('cash', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.cash') }}</span>
-                                    </label>
-                                    <label class="flex items-center">
-                                        <input type="checkbox" name="payment_methods[]" value="bank_transfer" {{ in_array('bank_transfer', $selected) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.bank_transfer') }}</span>
-                                    </label>
-                                </div>
-                                @error('payment_methods') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="content-consent" class="tab-content hidden">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.profile_photo') }}</label>
-                            <input type="file" name="profile_photo" accept="image/*" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-gray-800 dark:file:bg-gray-700 dark:hover:file:bg-gray-600">
-                            @if($patient->profile_photo_path)
-                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('file.current_photo') }}: {{ basename($patient->profile_photo_path) }}</p>
-                            @endif
-                            @error('profile_photo') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.communication_preferences') }}</h3>
-                            <div class="space-y-3">
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="receive_appointment_reminders" value="1" {{ old('receive_appointment_reminders', $patient->receive_appointment_reminders) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_appointment_reminders') }}</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="receive_lab_results" value="1" {{ old('receive_lab_results', $patient->receive_lab_results) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_lab_results') }}</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="receive_prescription_notifications" value="1" {{ old('receive_prescription_notifications', $patient->receive_prescription_notifications) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_prescription_notifications') }}</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="receive_newsletter" value="1" {{ old('receive_newsletter', $patient->receive_newsletter) ? 'checked' : '' }} class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.receive_newsletter') }}</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ __('file.additional_documents') }}</h3>
-                            <input type="file" name="additional_documents[]" multiple accept=".pdf,.jpg,.jpeg,.png" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-gray-800 dark:file:bg-gray-700 dark:hover:file:bg-gray-600">
-                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('file.upload_documents_hint') }}</p>
-                            @error('additional_documents') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <div class="flex flex-col sm:flex-row gap-3 pt-2 justify-end">
             <button type="submit" class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-white dark:text-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>

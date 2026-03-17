@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
 class RegisteredUserController extends Controller
@@ -22,8 +23,21 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'phone'    => ['required', 'string', 'regex:/^\+?[0-9]{10,15}$/', 'unique:users,phone'],
+            'email'    => [
+                'required', 
+                'string', 
+                'lowercase', 
+                'email', 
+                'max:255', 
+                Rule::unique('users', 'email')->where('is_deleted', false)
+            ],
+            'phone'    => [
+                'required', 
+                'string', 
+                'min:7', 
+                'max:15', 
+                Rule::unique('users', 'phone')->where('is_deleted', false)
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 

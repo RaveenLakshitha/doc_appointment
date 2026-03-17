@@ -11,7 +11,7 @@ class NotificationController extends Controller
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
         $notification->markAsRead();
-        
+
         return response()->json(['success' => true]);
     }
 
@@ -39,6 +39,19 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request)
     {
         Auth::user()->unreadNotifications->markAsRead();
-        return redirect()->back()->with('success', 'All notifications marked as read.');
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back()->with('success', __('file.notifications_marked_read'));
+    }
+
+    public function destroy($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->delete();
+
+        return response()->json(['success' => true]);
     }
 }

@@ -10,9 +10,16 @@ use Yajra\DataTables\Facades\DataTables;
 
 class UnitOfMeasureController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:unit-of-measures.index', ['only' => ['index', 'datatable']]);
+        $this->middleware('permission:unit-of-measures.create', ['only' => ['store']]);
+        $this->middleware('permission:unit-of-measures.edit', ['only' => ['update']]);
+        $this->middleware('permission:unit-of-measures.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index()
     {
-        if (!Auth::user()->can('unit-measures.index')) {
+        if (!Auth::user()->can('unit-of-measures.index')) {
             return redirect()->route('home')
                 ->with('error', __('file.module_access_denied'));
         }
@@ -25,13 +32,14 @@ class UnitOfMeasureController extends Controller
         $query = UnitOfMeasure::query();
 
         return DataTables::of($query)
-            ->addColumn('delete_url', fn($row) => route('unit-of-measures.destroy', $row))
+            ->addColumn('delete_url', fn($row) => Auth::user()->can('unit-of-measures.delete') ? route('unit-of-measures.destroy', $row) : null)
+            ->addColumn('edit_url', fn($row) => Auth::user()->can('unit-of-measures.edit') ? true : null)
             ->editColumn('name', fn($row) => $row->name ?? '-')
             ->editColumn('abbreviation', fn($row) => $row->abbreviation ?? '—')
             ->editColumn('display_name', fn($row) => $row->display_name)
             ->editColumn('status_html', fn($row) => $row->is_active
-                ? '<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Active</span>'
-                : '<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Inactive</span>')
+                ? '<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">' . __('file.active') . '</span>'
+                : '<span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">' . __('file.inactive') . '</span>')
             ->addColumn('is_active', fn($row) => $row->is_active)
             ->rawColumns(['status_html'])
             ->make(true);
@@ -39,19 +47,30 @@ class UnitOfMeasureController extends Controller
 
     public function store(Request $request)
     {
-        if (!Auth::user()->can('unit-measures.create')) {
+        if (!Auth::user()->can('unit-of-measures.create')) {
             return response()->json(['success' => false, 'message' => __('file.unauthorized')], 403);
         }
 
         $validated = $request->validate([
-            'name'         => 'required|string|max:255|unique:unit_of_measures,name',
+            'name'         => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('unit_of_measures', 'name')->whereNull('deleted_at'),
+            ],
             'abbreviation' => 'nullable|string|max:50',
             'is_active'    => 'sometimes|boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        UnitOfMeasure::create($validated);
+        $unit = UnitOfMeasure::withTrashed()->where('name', $request->name)->first();
+        if ($unit && $unit->trashed()) {
+            $unit->restore();
+            $unit->update($validated);
+        } else {
+            UnitOfMeasure::create($validated);
+        }
 
         return response()->json([
             'success' => true,
@@ -59,14 +78,21 @@ class UnitOfMeasureController extends Controller
         ]);
     }
 
-    public function update(Request $request, UnitOfMeasure $unitOfMeasure)
+    public function update(Request $request, $id)
     {
-        if (!Auth::user()->can('unit-measures.edit')) {
+        if (!Auth::user()->can('unit-of-measures.edit')) {
             return response()->json(['success' => false, 'message' => __('file.unauthorized')], 403);
         }
 
+        $unitOfMeasure = UnitOfMeasure::findOrFail($id);
+
         $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255', Rule::unique('unit_of_measures')->ignore($unitOfMeasure->id)],
+            'name'         => [
+                'required', 
+                'string', 
+                'max:255', 
+                Rule::unique('unit_of_measures')->ignore($unitOfMeasure->id)->whereNull('deleted_at')
+            ],
             'abbreviation' => 'nullable|string|max:50',
             'is_active'    => 'sometimes|boolean',
         ]);
@@ -79,15 +105,16 @@ class UnitOfMeasureController extends Controller
         ]);
     }
 
-    public function destroy(UnitOfMeasure $unitOfMeasure)
+    public function destroy($id)
     {
-        if (!Auth::user()->can('unit-measures.delete')) {
+        if (!Auth::user()->can('unit-of-measures.delete')) {
             return response()->json([
                 'success' => false,
                 'message' => __('file.unauthorized')
             ], 403);
         }
 
+        $unitOfMeasure = UnitOfMeasure::findOrFail($id);
         $unitOfMeasure->delete();
 
         return response()->json([
@@ -98,7 +125,7 @@ class UnitOfMeasureController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        if (!Auth::user()->can('unit-measures.delete')) {
+        if (!Auth::user()->can('unit-of-measures.delete')) {
             return response()->json([
                 'success' => false,
                 'message' => __('file.unauthorized')

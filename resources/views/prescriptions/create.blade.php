@@ -4,25 +4,49 @@
 @section('title', __('file.create_prescription_title'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
+<div class="px-4 sm:px-6 lg:px-4 pb-6 sm:py-12 pt-20">
     <div class="mb-8">
-        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
-            <a href="{{ route('prescriptions.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{{ __('file.prescriptions') }}</a>
-            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-            <span class="text-gray-900 dark:text-white">{{ __('file.create_prescription') }}</span>
+        <div class="flex items-center mb-3">
+            <button onclick="window.history.back()" class="inline-flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                {{ __('file.back') }}
+            </button>
         </div>
         <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">{{ __('file.create_new_prescription') }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('file.create_prescription_description') }}</p>
+        @if(isset($appointment))
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ __('file.appointment') }} #{{ $appointment->id }} &bull; {{ $appointment->patient?->getFullNameAttribute() }}
+            </p>
+        @else
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('file.create_prescription_description') }}</p>
+        @endif
     </div>
 
     <form method="POST" action="{{ route('prescriptions.store') }}" class="space-y-8">
         @csrf
+        <input type="hidden" name="from" value="{{ old('from', request('from')) }}">
+        @if(isset($appointment))
+            <input type="hidden" name="appointment_id" value="{{ $appointment->id }}">
+            <input type="hidden" name="patient_id" value="{{ $appointment->patient_id }}">
+        @endif
 
         <div class="bg-white dark:bg-transparent rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="border-b border-gray-200 dark:border-gray-700">
-                <nav class="flex overflow-x-auto scrollbar-hide" aria-label="Tabs">
+                <!-- Mobile Tab Selector (Visible only on mobile) -->
+                <div class="sm:hidden p-4 bg-white dark:bg-gray-800">
+                    <label for="mobile-tab-select" class="sr-only">Select a tab</label>
+                    <select id="mobile-tab-select" onchange="switchTab(this.value)"
+                        class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-gray-900 dark:focus:ring-gray-500">
+                        <option value="patient">{{ __('file.patient_details') }}</option>
+                        <option value="medications">{{ __('file.medications') }}</option>
+                        <option value="notes">{{ __('file.additional_notes') }}</option>
+                    </select>
+                </div>
+
+                <!-- Desktop/Tablet Tab Navigation (Hidden on mobile) -->
+                <nav class="hidden sm:flex overflow-x-auto no-scrollbar " aria-label="Tabs">
                     <button type="button" onclick="switchTab('patient')" id="tab-patient"
                             class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-400 bg-gray-50 dark:bg-gray-700/50">
                         <div class="flex items-center justify-center gap-2">
@@ -62,15 +86,22 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.patient') }} <span class="text-red-500">*</span></label>
-                                <select name="patient_id" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                                    <option value="">{{ __('file.select_patient') }}</option>
-                                    @foreach($patients as $patient)
-                                        <option value="{{ $patient->id }}" {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
-                                            {{ $patient->getFullNameAttribute() }} (MRN: {{ $patient->medical_record_number ?? 'N/A' }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('patient_id') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                @if(isset($appointment))
+                                    <div class="w-full px-3 py-2.5 text-sm font-medium bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">
+                                        {{ $appointment->patient?->getFullNameAttribute() }}
+                                        (MRN: {{ $appointment->patient?->medical_record_number ?? 'N/A' }})
+                                    </div>
+                                @else
+                                    <select name="patient_id" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                        <option value="">{{ __('file.select_patient') }}</option>
+                                        @foreach($patients as $patient)
+                                            <option value="{{ $patient->id }}" {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
+                                                {{ $patient->getFullNameAttribute() }} (MRN: {{ $patient->medical_record_number ?? 'N/A' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('patient_id') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                @endif
                             </div>
 
                             <div>
@@ -127,7 +158,20 @@
                             <div class="medication-row grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                                 <div class="md:col-span-3">
                                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.medication_name') }}</label>
-                                    <input type="text" name="medications[0][name]" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    <div class="relative">
+                                        <select name="medications[0][inventory_item_id]" class="medication-select w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow mb-2" onchange="updateMedName(this, 0)">
+                                            <option value="">{{ __('file.select_inventory_item_optional') }}</option>
+                                            @foreach($inventoryItems as $item)
+                                                @php
+                                                    $itemName = $item->name . ($item->generic_name ? ' (' . $item->generic_name . ')' : '');
+                                                @endphp
+                                                <option value="{{ $item->id }}" data-name="{{ $itemName }}">
+                                                    {{ $itemName }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <input type="text" name="medications[0][name]" id="med_name_0" required placeholder="{{ __('file.or_enter_custom_name') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    </div>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.dosage') }}</label>
@@ -147,8 +191,12 @@
                                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.frequency') }}</label>
                                     <input type="text" name="medications[0][frequency]" required placeholder="{{ __('file.frequency_ph') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                                 </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.duration_days') }}</label>
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1" title="{{ __('file.per_day') }}">{{ __('file.per_day_abbr') }}</label>
+                                    <input type="number" name="medications[0][per_day]" value="1" step="0.5" min="0.5" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                </div>
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.days') }}</label>
                                     <input type="number" name="medications[0][duration_days]" min="1" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                                 </div>
                                 <div class="md:col-span-1 flex justify-center">
@@ -177,13 +225,24 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
-            <button type="submit" class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-white dark:text-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200 shadow-sm">
+            <button type="submit" class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors duration-200 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 {{ __('file.create_prescription') }}
             </button>
-            <a href="{{ route('prescriptions.index') }}" class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 dark:bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+            @php
+                $from = old('from', request('from'));
+                $cancelUrl = route('prescriptions.index');
+                if ($from === 'doctor-panel') {
+                    $cancelUrl = route('doctor-panel.prescriptions.index');
+                } elseif ($from === 'all-prescriptions') {
+                    $cancelUrl = route('prescriptions.index');
+                } elseif (isset($appointment)) {
+                    $cancelUrl = route('appointments.show', $appointment);
+                }
+            @endphp
+            <a href="{{ $cancelUrl }}" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -195,14 +254,34 @@
 
 <script>
 let medicationIndex = 1;
+const inventoryItems = @json($inventoryItems);
+
+function updateMedName(select, index) {
+    const medNameInput = document.getElementById('med_name_' + index);
+    if (select.value) {
+        const option = select.options[select.selectedIndex];
+        medNameInput.value = option.getAttribute('data-name');
+    }
+}
 
 document.getElementById('add-medication').addEventListener('click', function () {
     const container = document.getElementById('medications-container');
+    let itemOptions = `<option value="">{{ __('file.select_inventory_item_optional') }}</option>`;
+    inventoryItems.forEach(item => {
+        const fullName = item.name + (item.generic_name ? ` (${item.generic_name})` : '');
+        itemOptions += `<option value="${item.id}" data-name="${fullName}">${fullName}</option>`;
+    });
+
     const template = `
         <div class="medication-row grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <div class="md:col-span-3">
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.medication_name') }}</label>
-                <input type="text" name="medications[${medicationIndex}][name]" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                <div class="relative">
+                    <select name="medications[${medicationIndex}][inventory_item_id]" class="medication-select w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow mb-2" onchange="updateMedName(this, ${medicationIndex})">
+                        ${itemOptions}
+                    </select>
+                    <input type="text" name="medications[${medicationIndex}][name]" id="med_name_${medicationIndex}" required placeholder="{{ __('file.or_enter_custom_name') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                </div>
             </div>
             <div class="md:col-span-2">
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.dosage') }}</label>
@@ -222,13 +301,17 @@ document.getElementById('add-medication').addEventListener('click', function () 
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.frequency') }}</label>
                 <input type="text" name="medications[${medicationIndex}][frequency]" required placeholder="{{ __('file.frequency_ph') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
             </div>
-            <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.duration_days') }}</label>
+            <div class="md:col-span-1">
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.per_day_abbr') }}</label>
+                <input type="number" name="medications[${medicationIndex}][per_day]" value="1" step="0.5" min="0.5" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+            </div>
+            <div class="md:col-span-1">
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.days') }}</label>
                 <input type="number" name="medications[${medicationIndex}][duration_days]" min="1" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
             </div>
             <div class="md:col-span-1 flex items-end justify-center">
                 <button type="button" onclick="this.closest('.medication-row').remove()" class="text-red-600 hover:text-red-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6"/>
                     </svg>
                 </button>
@@ -257,7 +340,13 @@ document.getElementById('template-select').addEventListener('change', function (
                     <div class="medication-row grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                         <div class="md:col-span-3">
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.medication_name') }}</label>
-                            <input type="text" name="medications[${index}][name]" value="${med.name}" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                            <div class="relative">
+                                <select name="medications[${index}][inventory_item_id]" class="medication-select w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow mb-2" onchange="updateMedName(this, ${index})">
+                                    <option value="">{{ __('file.select_inventory_item_optional') }}</option>
+                                    ${inventoryItems.map(item => `<option value="${item.id}" data-name="${item.name}${item.generic_name ? ' ('+item.generic_name+')' : ''}" ${med.inventory_item_id == item.id ? 'selected' : ''}>${item.name}${item.generic_name ? ' ('+item.generic_name+')' : ''}</option>`).join('')}
+                                </select>
+                                <input type="text" name="medications[${index}][name]" id="med_name_${index}" value="${med.name}" required placeholder="{{ __('file.or_enter_custom_name') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                            </div>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.dosage') }}</label>
@@ -277,8 +366,12 @@ document.getElementById('template-select').addEventListener('change', function (
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.frequency') }}</label>
                             <input type="text" name="medications[${index}][frequency]" value="${med.frequency || ''}" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.duration_days') }}</label>
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.per_day_abbr') }}</label>
+                            <input type="number" name="medications[${index}][per_day]" value="${med.per_day || 1}" step="0.5" min="0.5" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('file.days') }}</label>
                             <input type="number" name="medications[${index}][duration_days]" value="${med.duration_days || ''}" min="1" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                         </div>
                         <div class="md:col-span-1 flex items-end justify-center">
@@ -294,7 +387,7 @@ document.getElementById('template-select').addEventListener('change', function (
             medicationIndex = meds.length;
         })
         .catch(() => {
-            alert('{{ __('file.template_load_error') }}');
+            showNotification('{{ __('file.template_load_error') }}', 'error');
         });
 });
 
@@ -304,15 +397,31 @@ function switchTab(tabName) {
         b.classList.remove('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
         b.classList.add('text-gray-500','dark:text-gray-400','hover:text-gray-700','dark:hover:text-gray-300','hover:bg-gray-50','dark:hover:bg-gray-700/30');
     });
+
+    // Update mobile select if present
+    const mobileSelect = document.getElementById('mobile-tab-select');
+    if (mobileSelect) mobileSelect.value = tabName;
+
     document.getElementById('content-' + tabName).classList.remove('hidden');
     const btn = document.getElementById('tab-' + tabName);
-    btn.classList.add('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
-    btn.classList.remove('text-gray-500','dark:text-gray-400');
+    if (btn) {
+        btn.classList.add('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
+        btn.classList.remove('text-gray-500','dark:text-gray-400');
+
+        // Scroll the tab into view on mobile without shifting the entire page
+        const nav = btn.closest('nav');
+        if (nav && nav.classList.contains('flex')) {
+            const navRect = nav.getBoundingClientRect();
+            const btnRect = btn.getBoundingClientRect();
+            const offset = (btnRect.left - navRect.left) - (navRect.width / 2) + (btnRect.width / 2);
+            nav.scrollBy({ left: offset, behavior: 'smooth' });
+        }
+    }
 }
 </script>
 
 <style>
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 @endsection

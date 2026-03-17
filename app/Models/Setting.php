@@ -23,6 +23,8 @@ class Setting extends Model
         'primary_color',
         'secondary_color',
         'currency',
+        'invoice_paper_size',
+        'prescription_paper_size',
     ];
 
 

@@ -12,6 +12,13 @@ use Illuminate\Validation\Rule;
 
 class AppointmentRequestController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:appointment_requests.index', ['only' => ['index', 'show', 'datatable']]);
+        $this->middleware('permission:appointment_requests.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:appointment_requests.edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:appointment_requests.delete', ['only' => ['destroy']]);
+    }
     /**
      * Display listing of appointment requests (admin/staff view)
      */
@@ -108,10 +115,10 @@ class AppointmentRequestController extends Controller
                 'status_badge'           => $statusBadge,
                 'status'                 => $req->status, // Critical: used in view for conditional buttons
                 'show_url'               => route('appointment_requests.show', $req),
-                'edit_url'               => route('appointment_requests.edit', $req), // Always sent
+                'edit_url'               => \Auth::user()->can('appointment_requests.edit') ? route('appointment_requests.edit', $req) : null,
                 'approve_url'            => route('appointment_requests.approve', $req),
                 'reject_url'             => route('appointment_requests.reject', $req),
-                'cancel_url'             => route('appointment_requests.cancel', $req),
+                'cancel_url'             => \Auth::user()->can('appointment_requests.delete') ? route('appointment_requests.cancel', $req) : null,
             ];
         });
 
@@ -295,7 +302,7 @@ class AppointmentRequestController extends Controller
         $carbonDate = \Carbon\Carbon::parse($date);
 
         // Get active schedules for this doctor that cover this date and are active
-        $schedules = DoctorSchedule::where('doctor_id', $doctor->id)
+        $schedules = \App\Models\DoctorSchedule::where('doctor_id', $doctor->id)
             ->where('is_active', true)
             ->whereDate('valid_from', '<=', $date)
             ->where(function ($q) use ($date) {

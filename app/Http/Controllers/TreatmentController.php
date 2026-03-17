@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Auth;
 
 class TreatmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:treatments.index', ['only' => ['index', 'show', 'datatable']]);
+        $this->middleware('permission:treatments.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:treatments.edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:treatments.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index()
     {
         if (!Auth::user()->can('treatments.index')) {
@@ -27,12 +34,14 @@ class TreatmentController extends Controller
 
         return DataTables::of($query)
             ->addColumn('action', function ($row) {
-                $edit_url   = Auth::user()->can('treatments.edit') ? route('treatments.edit', $row) : '';
+                $edit_url = Auth::user()->can('treatments.edit') ? route('treatments.edit', $row) : '';
                 $delete_url = Auth::user()->can('treatments.delete') ? route('treatments.destroy', $row) : '';
 
                 return compact('edit_url', 'delete_url');
             })
-            ->addColumn('delete_url', fn($row) =>
+            ->addColumn(
+                'delete_url',
+                fn($row) =>
                 Auth::user()->can('treatments.delete') ? route('treatments.destroy', $row) : null
             )
             ->editColumn('active', fn($row) => (bool) $row->active)
@@ -48,19 +57,33 @@ class TreatmentController extends Controller
         }
 
         $validated = $request->validate([
-            'name'   => 'required|string|max:255|unique:treatments,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('treatments', 'name')->whereNull('deleted_at'),
+            ],
             'active' => 'boolean',
         ]);
 
-        $last = Treatment::latest('id')->first();
-        $next = $last ? ((int) substr($last->code ?? 'TRT-000', 4)) + 1 : 1;
-        $code = sprintf('TRT-%03d', $next);
+        $treatment = Treatment::withTrashed()->where('name', $request->name)->first();
+        if ($treatment && $treatment->trashed()) {
+            $treatment->restore();
+            $treatment->update([
+                'name' => $validated['name'],
+                'active' => $request->boolean('active', true),
+            ]);
+        } else {
+            $last = Treatment::latest('id')->first();
+            $next = $last ? ((int) substr($last->code ?? 'TRT-000', 4)) + 1 : 1;
+            $code = sprintf('TRT-%03d', $next);
 
-        Treatment::create([
-            'name'   => $validated['name'],
-            'code'   => $code,
-            'active' => $request->boolean('active', true),
-        ]);
+            Treatment::create([
+                'name' => $validated['name'],
+                'code' => $code,
+                'active' => $request->boolean('active', true),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -75,17 +98,17 @@ class TreatmentController extends Controller
         }
 
         $validated = $request->validate([
-            'name'   => [
+            'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('treatments', 'name')->ignore($treatment->id),
+                Rule::unique('treatments', 'name')->ignore($treatment->id)->whereNull('deleted_at'),
             ],
             'active' => 'boolean',
         ]);
 
         $treatment->update([
-            'name'   => $validated['name'],
+            'name' => $validated['name'],
             'active' => $request->boolean('active', $treatment->active),
         ]);
 

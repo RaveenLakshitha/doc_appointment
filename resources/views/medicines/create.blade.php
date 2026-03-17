@@ -3,7 +3,7 @@
 @section('title', 'Add New Medicine')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8 pb-12 pt-20">
+<div class="px-4 sm:px-6 lg:px-8 pb-12 sm:py-6">
     <div class="mb-8">
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
             <a href="{{ route('medicines.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
@@ -24,7 +24,21 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
             <!-- Tabs Navigation -->
             <div class="border-b border-gray-200 dark:border-gray-700">
-                <nav class="flex overflow-x-auto scrollbar-hide" aria-label="Tabs">
+                <!-- Mobile Tab Selector (Visible only on mobile) -->
+                <div class="sm:hidden p-4 bg-white dark:bg-gray-800">
+                    <label for="mobile-tab-select" class="sr-only">Select a tab</label>
+                    <select id="mobile-tab-select" onchange="switchTab(this.value)"
+                        class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-indigo-500">
+                        <option value="basic">Basic Information</option>
+                        <option value="details">Medicine Details</option>
+                        <option value="stock">Stock & Batch</option>
+                        <option value="supplier">Supplier & Pricing</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+
+                <!-- Desktop/Tablet Tab Navigation (Hidden on mobile) -->
+                <nav class="hidden sm:flex overflow-x-auto no-scrollbar " aria-label="Tabs">
                     <button type="button" onclick="switchTab('basic')" id="tab-basic"
                             class="tab-button flex-1 min-w-[120px] px-5 py-4 text-sm font-medium border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">
                         Basic Information
@@ -180,14 +194,14 @@
 
                     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit Cost (Rs.) <span class="text-red-600">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit Cost ({{ $currency_code }}) <span class="text-red-600">*</span></label>
                             <input type="number" step="0.01" name="unit_cost" value="{{ old('unit_cost') }}" min="0" required
                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             @error('unit_cost') <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit Price (Rs.) <span class="text-red-600">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit Price ({{ $currency_code }}) <span class="text-red-600">*</span></label>
                             <input type="number" step="0.01" name="unit_price" value="{{ old('unit_price') }}" min="0" required
                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             @error('unit_price') <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -277,17 +291,32 @@ function switchTab(tabName) {
         btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
     });
 
+    // Update mobile select if present
+    const mobileSelect = document.getElementById('mobile-tab-select');
+    if (mobileSelect) mobileSelect.value = tabName;
+
     document.getElementById(`content-${tabName}`).classList.remove('hidden');
     const selectedBtn = document.getElementById(`tab-${tabName}`);
-    selectedBtn.classList.add('border-indigo-600', 'text-indigo-600', 'dark:border-indigo-500', 'dark:text-indigo-400');
-    selectedBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+    if (selectedBtn) {
+        selectedBtn.classList.add('border-indigo-600', 'text-indigo-600', 'dark:border-indigo-500', 'dark:text-indigo-400');
+        selectedBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+
+        // Scroll the tab into view on mobile without shifting the entire page
+        const nav = selectedBtn.closest('nav');
+        if (nav && nav.classList.contains('flex')) {
+            const navRect = nav.getBoundingClientRect();
+            const btnRect = selectedBtn.getBoundingClientRect();
+            const offset = (btnRect.left - navRect.left) - (navRect.width / 2) + (btnRect.width / 2);
+            nav.scrollBy({ left: offset, behavior: 'smooth' });
+        }
+    }
 }
 
 switchTab('basic');
 </script>
 
 <style>
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 @endsection

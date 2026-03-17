@@ -46,6 +46,8 @@ class Employee extends Model
     ];
 
     protected $casts = [
+        'license_issue_date'  => 'date',
+        'license_expiry_date' => 'date',
         'date_of_birth' => 'date',
         'hire_date' => 'date',
         'termination_date' => 'date',
@@ -109,5 +111,17 @@ class Employee extends Model
     public function approvedLeaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class, 'approved_by');
+    }
+    
+    public static function generateEmployeeCode(): string
+    {
+        $last = self::withTrashed()
+            ->where('employee_code', 'LIKE', 'EMP-%')
+            ->orderByRaw("CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC")
+            ->first();
+
+        $nextNumber = $last ? ((int) substr($last->employee_code, 4)) + 1 : 1;
+
+        return sprintf('EMP-%04d', $nextNumber);
     }
 }

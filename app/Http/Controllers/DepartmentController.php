@@ -12,6 +12,13 @@ use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:departments.index', ['only' => ['index', 'show', 'datatable']]);
+        $this->middleware('permission:departments.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:departments.edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:departments.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index()
     {
         if (!Auth::user()->can('departments.index')) {
@@ -49,14 +56,20 @@ class DepartmentController extends Controller
             'status'            => 'required|in:0,1',
             'location'          => 'nullable|string|max:255',
             'email'             => 'nullable|email|max:255',
-            'phone'             => 'nullable|string|max:50',
+            'phone'             => 'nullable|string|min:7|max:15',
             'description'       => 'nullable|string',
         ]);
 
-        Department::create($validated);
+        $department = Department::withTrashed()->where('name', $request->name)->first();
+        if ($department && $department->trashed()) {
+            $department->restore();
+            $department->update($validated);
+        } else {
+            Department::create($validated);
+        }
 
         return redirect()->route('departments.index')
-            ->with('success', __('file.department_created_successfully', ['name' => $validated['name']]));
+            ->with('success', __('file.department_created_successfully', ['name' => $request->name]));
     }
 
     public function edit(Department $department)
@@ -88,9 +101,14 @@ class DepartmentController extends Controller
         }
 
         $validated = $request->validate([
-            'name'           => 'required|string|max:255|unique:departments,name,' . $department->id,
+            'name'           => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('departments', 'name')->ignore($department->id)->whereNull('deleted_at'),
+            ],
             'email'          => 'nullable|email|max:255',
-            'phone'          => 'nullable|string|max:50',
+            'phone'          => 'nullable|string|min:7|max:15',
             'location'       => 'nullable|string|max:255',
             'status'         => 'required|in:0,1',
             'description'    => 'nullable|string',
@@ -136,16 +154,22 @@ class DepartmentController extends Controller
             ], 403);
         }
 
-        $ids = $request->input('ids', '');
+        $idsInput = $request->input('ids');
 
-        if (empty($ids)) {
+        if (empty($idsInput)) {
             return response()->json([
                 'success' => false,
                 'message' => __('file.no_items_selected')
             ]);
         }
 
-        $idsArray = array_filter(explode(',', $ids), 'is_numeric');
+        if (is_array($idsInput)) {
+            $idsArray = $idsInput;
+        } else {
+            $idsArray = explode(',', $idsInput);
+        }
+
+        $idsArray = array_filter($idsArray, 'is_numeric');
 
         if (empty($idsArray)) {
             return response()->json([
@@ -178,7 +202,8 @@ class DepartmentController extends Controller
             ->withCount('services as specializations_count');
 
         return DataTables::of($query)
-            ->addColumn('delete_url', fn($row) => route('departments.destroy', $row))
+            ->addColumn('edit_url', fn($row) => \Auth::user()->can('departments.edit') ? route('departments.edit', $row) : null)
+            ->addColumn('delete_url', fn($row) => \Auth::user()->can('departments.delete') ? route('departments.destroy', $row) : null)
             ->rawColumns(['status', 'actions'])
             ->make(true);
     }

@@ -11,6 +11,13 @@ use Yajra\DataTables\Facades\DataTables;
 
 class RoomController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:rooms.index', ['only' => ['index', 'show', 'datatable']]);
+        $this->middleware('permission:rooms.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:rooms.edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:rooms.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index()
     {
         if (!Auth::user()->can('rooms.index')) {
@@ -64,7 +71,7 @@ class RoomController extends Controller
             ], 403);
         }
 
-        $validated = $request->validate([
+        $request->validate([
             'department_id' => 'required|exists:departments,id',
             'name'          => [
                 'required',
@@ -86,7 +93,19 @@ class RoomController extends Controller
             'facilities.*'  => 'string|in:wifi,air_conditioning,television,telephone,wheelchair_accessible,attached_bathroom,oxygen_supply,nurse_call_button',
         ]);
 
-        Room::create($validated);
+        $room = Room::withTrashed()
+            ->where(function($q) use ($request) {
+                $q->where('name', $request->name)
+                  ->orWhere('room_number', $request->room_number);
+            })
+            ->first();
+
+        if ($room && $room->trashed()) {
+            $room->restore();
+            $room->update($request->all());
+        } else {
+            Room::create($request->all());
+        }
 
         return response()->json([
             'success' => true,
@@ -117,8 +136,18 @@ class RoomController extends Controller
 
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'name'          => 'required|string|max:255|unique:rooms,name,' . $room->id,
-            'room_number'   => 'required|string|max:50|unique:rooms,room_number,' . $room->id,
+            'name'          => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('rooms', 'name')->ignore($room->id)->whereNull('deleted_at'),
+            ],
+            'room_number'   => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('rooms', 'room_number')->ignore($room->id)->whereNull('deleted_at'),
+            ],
             'floor'         => 'nullable|string|max:50',
             'capacity'      => 'nullable|integer|min:1',
             'is_active'     => 'required|boolean',

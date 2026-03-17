@@ -15,15 +15,15 @@ class InventoryReportController extends Controller
     public function index()
     {
         $categories = Category::orderBy('name')->get(['id', 'name']);
-        $suppliers  = Supplier::orderBy('name')->get(['id', 'name']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
 
         return view('reports.inventory', compact('categories', 'suppliers'));
     }
 
     public function summary(Request $request)
     {
-        $categoryId  = $request->integer('category_id') ?: null;
-        $supplierId  = $request->integer('supplier_id') ?: null;
+        $categoryId = $request->integer('category_id') ?: null;
+        $supplierId = $request->integer('supplier_id') ?: null;
 
         // Base query for inventory items
         $query = InventoryItem::query()
@@ -37,7 +37,7 @@ class InventoryReportController extends Controller
         $totalItems = (clone $query)->count();
 
         $lowStockItems = (clone $query)
-            ->whereColumn('current_stock', '<=', 'reorder_point')
+            ->whereColumn('current_stock', '<=', 'minimum_stock_level')
             ->where('current_stock', '>', 0)
             ->count();
 
@@ -59,8 +59,8 @@ class InventoryReportController extends Controller
         // Stock Status Distribution
         // ────────────────────────────────────────────────
         $stockStatus = [
-            'In Stock'     => (clone $query)->where('current_stock', '>', DB::raw('reorder_point'))->count(),
-            'Low Stock'    => $lowStockItems,
+            'In Stock' => (clone $query)->where('current_stock', '>', DB::raw('minimum_stock_level'))->count(),
+            'Low Stock' => $lowStockItems,
             'Out of Stock' => $outOfStockItems,
         ];
 
@@ -78,18 +78,18 @@ class InventoryReportController extends Controller
         // Top Low Stock Items
         // ────────────────────────────────────────────────
         $topLowStock = (clone $query)
-            ->whereColumn('current_stock', '<=', 'reorder_point')
+            ->whereColumn('current_stock', '<=', 'minimum_stock_level')
             ->orderBy('current_stock', 'asc')
             ->take(10)
             ->get()
             ->map(fn($item) => [
-                'name'            => $item->name,
-                'sku'             => $item->sku ?? '—',
-                'category'        => $item->category?->name ?? '—',
-                'current_stock'   => $item->current_stock,
-                'reorder_point'   => $item->reorder_point,
-                'unit'            => $item->unit_of_measure ?? 'units',
-                'value'           => number_format($item->total_value, 2),
+                'name' => $item->name,
+                'sku' => $item->sku ?? '—',
+                'category' => $item->category?->name ?? '—',
+                'current_stock' => $item->current_stock,
+                'minimum_stock_level' => $item->minimum_stock_level,
+                'unit' => $item->unit_of_measure ?? 'units',
+                'value' => number_format($item->total_value, 2),
                 'days_to_reorder' => $item->lead_time_days ? "~{$item->lead_time_days} days" : '—',
             ]);
 
@@ -106,26 +106,26 @@ class InventoryReportController extends Controller
             ->map(function ($batch) {
                 $daysLeft = Carbon::today()->diffInDays($batch->expiry_date, false);
                 return [
-                    'item_name'     => $batch->item?->name ?? '—',
-                    'batch_number'  => $batch->batch_number,
-                    'expiry_date'   => $batch->expiry_date?->format('M d, Y'),
-                    'days_left'     => $daysLeft,
-                    'quantity'      => $batch->current_quantity,
-                    'category'      => $batch->item?->category?->name ?? '—',
+                    'item_name' => $batch->item?->name ?? '—',
+                    'batch_number' => $batch->batch_number,
+                    'expiry_date' => $batch->expiry_date?->format('M d, Y'),
+                    'days_left' => $daysLeft,
+                    'quantity' => $batch->current_quantity,
+                    'category' => $batch->item?->category?->name ?? '—',
                 ];
             });
 
         return response()->json([
             'summary' => [
-                'total_items'     => $totalItems,
+                'total_items' => $totalItems,
                 'low_stock_items' => $lowStockItems,
-                'expiring_soon'   => $expiringSoon,
+                'expiring_soon' => $expiringSoon,
                 'inventory_value' => number_format($inventoryValue, 2),
             ],
-            'stock_status'     => $stockStatus,
-            'by_category'      => $byCategory,
-            'top_low_stock'    => $topLowStock,
-            'expiring_items'   => $expiringItems,
+            'stock_status' => $stockStatus,
+            'by_category' => $byCategory,
+            'top_low_stock' => $topLowStock,
+            'expiring_items' => $expiringItems,
         ]);
     }
 }

@@ -5,11 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Specialization;
 use App\Models\Department;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Yajra\DataTables\Facades\DataTables;
 
 class SpecializationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:specializations.index', ['only' => ['index', 'show', 'datatable']]);
+        $this->middleware('permission:specializations.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:specializations.edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:specializations.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index()
     {
         if (!Auth::user()->can('specializations.index')) {
@@ -24,13 +33,20 @@ class SpecializationController extends Controller
     {
         $query = Specialization::query()
             ->with('department')
-            ->withCount(['doctors as doctors_count' => fn($q) => $q->where('is_active', true)]);
+            ->withCount([
+                'doctors as doctors_count' => fn($q) => $q->where('is_active', true)
+            ]);
 
         return DataTables::of($query)
-            ->addColumn('department_name', fn($row) => $row->department?->name ?? '-')
-            ->addColumn('delete_url', fn($row) => Auth::user()->can('specializations.delete') 
-                ? route('specializations.destroy', $row) 
-                : null)
+            ->addColumn('department_name', fn($row) => $row->department?->name ?? '—')
+            ->addColumn('delete_url', fn($row) =>
+                Auth::user()->can('specializations.delete')
+                    ? route('specializations.destroy', $row)
+                    : null
+            )
+            ->addColumn('edit_url', fn($row) =>
+                Auth::user()->can('specializations.edit') ? true : null
+            )
             ->editColumn('description', fn($row) => $row->description ?? '')
             ->editColumn('doctors_count', fn($row) => (int) $row->doctors_count)
             ->make(true);
@@ -43,7 +59,9 @@ class SpecializationController extends Controller
                 ->with('error', __('file.specializations_create_denied'));
         }
 
-        $departments = Department::where('status', true)->orderBy('name')->get();
+        $departments = Department::where('status', true)
+            ->orderBy('name')
+            ->get();
 
         return view('specializations.create', compact('departments'));
     }
@@ -51,16 +69,27 @@ class SpecializationController extends Controller
     public function store(Request $request)
     {
         if (!Auth::user()->can('specializations.create')) {
-            abort(403);
+            abort(403, __('file.unauthorized_action'));
         }
 
-        $request->validate([
-            'name'          => 'required|string|max:255|unique:specializations,name',
+        $validated = $request->validate([
+            'name'          => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('specializations', 'name')->whereNull('deleted_at'),
+            ],
             'description'   => 'nullable|string|max:2000',
             'department_id' => 'required|exists:departments,id',
         ]);
 
-        Specialization::create($request->only('name', 'description', 'department_id'));
+        $specialization = Specialization::withTrashed()->where('name', $request->name)->first();
+        if ($specialization && $specialization->trashed()) {
+            $specialization->restore();
+            $specialization->update($validated);
+        } else {
+            Specialization::create($validated);
+        }
 
         return redirect()->route('specializations.index')
             ->with('success', __('file.specialization_created_successfully'));
@@ -73,49 +102,62 @@ class SpecializationController extends Controller
                 ->with('error', __('file.specializations_edit_denied'));
         }
 
-        $departments = Department::where('status', true)->orderBy('name')->get();
+        $departments = Department::where('status', true)
+            ->orderBy('name')
+            ->get();
 
         return view('specializations.edit', compact('specialization', 'departments'));
     }
 
     public function update(Request $request, Specialization $specialization)
     {
-        // if (!Auth::user()->can('specializations.edit')) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Permission denied: specializations.edit',
-        //         'user_id' => Auth::id(),
-        //         'permissions' => Auth::user()->getAllPermissions()->pluck('name')->toArray(),
-        //     ], 403);
-        // }
+        if (!Auth::user()->can('specializations.edit')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('file.unauthorized_action'),
+            ], 403);
+        }
 
+        $validated = $request->validate([
+            'name'          => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('specializations', 'name')->ignore($specialization->id)->whereNull('deleted_at'),
+            ],
+            'description'   => 'nullable|string|max:2000',
+            'department_id' => 'required|exists:departments,id',
+        ]);
 
-        // $request->validate([
-        //     'name'          => 'required|string|max:255|unique:specializations,name,' . $specialization->id,
-        //     'description'   => 'nullable|string|max:2000',
-        //     'department_id' => 'required|exists:departments,id',
-        // ]);
-
-        $specialization->update($request->only('name', 'description', 'department_id'));
+        $specialization->update($validated);
 
         return response()->json([
             'success' => true,
-            'message' => __('file.specialization_updated_successfully')
+            'message' => __('file.specialization_updated_successfully'),
         ]);
     }
 
     public function destroy(Specialization $specialization)
     {
         if (!Auth::user()->can('specializations.delete')) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => __('file.specializations_delete_denied')], 403);
+            }
             return back()->with('error', __('file.specializations_delete_denied'));
         }
 
-        if ($specialization->doctors()->exists()) {
+        if ($specialization->doctors()->where('doctors.is_active', true)->exists()) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => __('file.cannot_delete_specialization_with_doctors')], 422);
+            }
             return back()->with('error', __('file.cannot_delete_specialization_with_doctors'));
         }
 
         $specialization->delete();
 
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => __('file.specialization_deleted_successfully')]);
+        }
         return back()->with('success', __('file.specialization_deleted_successfully'));
     }
 
@@ -124,29 +166,43 @@ class SpecializationController extends Controller
         if (!Auth::user()->can('specializations.delete')) {
             return response()->json([
                 'success' => false,
-                'message' => __('file.specializations_bulk_delete_denied')
+                'message' => __('file.specializations_bulk_delete_denied'),
             ], 403);
         }
 
-        $ids = $request->input('ids', []);
+        $ids = $request->input('ids');
+
         if (is_string($ids)) {
-            $ids = array_filter(explode(',', $ids));
+            $ids = array_filter(array_map('trim', explode(',', $ids ?? '')));
         }
 
-        $request->validate([
+        if (!is_array($ids) || empty($ids)) {
+            return response()->json(['success' => false, 'message' => __('file.no_items_selected')], 400);
+        }
+
+        $validator = Validator::make(['ids' => $ids], [
             'ids'   => 'required|array',
             'ids.*' => 'exists:specializations,id'
         ]);
 
-        $deleted = Specialization::whereIn('id', $ids)
-            ->whereDoesntHave('doctors')
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => __('file.validation_failed'), 'errors' => $validator->errors()], 422);
+        }
+
+        $deletedCount = Specialization::whereIn('id', $ids)
+            ->whereDoesntHave('doctors', function ($q) {
+                $q->where('doctors.is_active', true);
+            })
             ->delete();
+
+        $message = $deletedCount > 0
+            ? __(':count specializations deleted successfully.', ['count' => $deletedCount])
+            : __('file.no_specializations_deleted_or_not_allowed');
 
         return response()->json([
             'success' => true,
-            'message' => $deleted > 0
-                ? __(':count specializations deleted successfully.', ['count' => $deleted])
-                : __('file.no_specializations_deleted')
+            'message' => $message,
+            'deleted' => $deletedCount,
         ]);
     }
 }

@@ -1,166 +1,704 @@
 @extends('layouts.app')
-
-@section('title', 'Edit: ' . Str::limit($inventoryitem->name, 30))
+@section('title', 'Edit Inventory Item')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-        <!-- Header -->
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                Edit Inventory Item: {{ $inventoryitem->name }}
-            </h1>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                SKU: {{ $inventoryitem->sku ?? '—' }}
-            </p>
+    <div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
+
+        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <a href="{{ route('inventory.index') }}"
+                class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Inventory Items</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-900 dark:text-white">Edit Item</span>
+        </div>
+        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">Edit Inventory Item: {{ $inventoryitem->name }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update inventory item record</p>
+    </div>
+
+    <form method="POST" action="{{ route('inventory.update', $inventoryitem) }}" class="space-y-8"
+        enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
+
+        <div
+            class="bg-white dark:bg-transparent rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <!-- Mobile Tab Selector (Visible only on mobile) -->
+            <div class="sm:hidden border-b border-gray-200 dark:border-gray-700 p-4">
+                <label for="mobile-tab-select" class="sr-only">Select a tab</label>
+                <select id="mobile-tab-select" onchange="switchTab(this.value)"
+                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-gray-900 dark:focus:ring-gray-500">
+                    <option value="basic">Basic Information</option>
+                    <option value="stock">Stock & Pricing</option>
+                    <option value="supplier">Supplier Details</option>
+                    <option value="medicine">Medicine & Images</option>
+                    <option value="advanced">Advanced Settings</option>
+                </select>
+            </div>
+
+            <!-- Desktop/Tablet Tab Navigation (Visible on SM and up, Scrollable on larger phones) -->
+            <div
+                class="hidden sm:block border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 relative ">
+                <nav class="flex overflow-x-auto whitespace-nowrap snap-x snap-mandatory scroll-smooth no-scrollbar"
+                    style="-webkit-overflow-scrolling: touch; scroll-behavior: smooth;" aria-label="Tabs">
+                    <button type="button" onclick="switchTab('basic')" id="tab-basic"
+                        class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-400 bg-white dark:bg-gray-800 snap-start">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            <span class="hidden sm:inline">Basic Information</span>
+                            <span class="sm:hidden">Basic</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('stock')" id="tab-stock"
+                        class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors snap-start">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <span class="hidden sm:inline">Stock & Pricing</span>
+                            <span class="sm:hidden">Stock</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('supplier')" id="tab-supplier"
+                        class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors snap-start">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h-4m-4 0H5m14 0h-4m-4 0H5" />
+                            </svg>
+                            <span class="hidden sm:inline">Supplier Details</span>
+                            <span class="sm:hidden">Supplier</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('medicine')" id="tab-medicine"
+                        class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors snap-start">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                            <span class="hidden sm:inline">Medicine & Images</span>
+                            <span class="sm:hidden">Medicine</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="switchTab('advanced')" id="tab-advanced"
+                        class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors snap-start">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span class="hidden sm:inline">Advanced Settings</span>
+                            <span class="sm:hidden">Advanced</span>
+                        </div>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="p-6">
+                <div id="content-basic" class="tab-content">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Item Name
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" name="name" value="{{ old('name', $inventoryitem->name) }}" required
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="e.g. Band-Aid Flexible Fabric">
+                                @error('name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SKU <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="sku" value="{{ old('sku', $inventoryitem->sku) }}" required
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="BAND-FAB-100">
+                                @error('sku') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category
+                                <span class="text-red-500">*</span></label>
+                            <select name="category_id" required
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                <option value="">Select category</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id', $inventoryitem->category_id) == $category->id ? 'selected' : '' }}>
+                                        {{ $category->full_path }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('category_id') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                            <textarea name="description" rows="3"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
+                                placeholder="Brief description of the item...">{{ old('description', $inventoryitem->description) }}</textarea>
+                            @error('description') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unit of
+                                    Measure <span class="text-red-500">*</span></label>
+                                <select name="unit_of_measure" required
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    <option value="">Select unit</option>
+                                    @foreach($units as $unit)
+                                        <option value="{{ $unit->name }}" {{ old('unit_of_measure', $inventoryitem->unit_of_measure) == $unit->name ? 'selected' : '' }}>
+                                            {{ $unit->display_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('unit_of_measure') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Units per
+                                    Package <span class="text-red-500">*</span></label>
+                                <input type="number" name="unit_quantity"
+                                    value="{{ old('unit_quantity', $inventoryitem->unit_quantity) }}" required min="1"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="100">
+                                @error('unit_quantity') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Manufacturer</label>
+                                <input type="text" name="manufacturer"
+                                    value="{{ old('manufacturer', $inventoryitem->manufacturer) }}"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="Johnson & Johnson">
+                                @error('manufacturer') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brand</label>
+                                <input type="text" name="brand" value="{{ old('brand', $inventoryitem->brand) }}"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="Band-Aid">
+                                @error('brand') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model/Version</label>
+                                <input type="text" name="model_version"
+                                    value="{{ old('model_version', $inventoryitem->model_version) }}"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="2024 Edition">
+                                @error('model_version') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Storage
+                                Location</label>
+                            <input type="text" name="storage_location"
+                                value="{{ old('storage_location', $inventoryitem->storage_location) }}"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                placeholder="Warehouse A, Shelf 3">
+                            @error('storage_location') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-stock" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current
+                                    Stock <span class="text-red-500">*</span></label>
+                                <input type="number" name="current_stock"
+                                    value="{{ old('current_stock', $inventoryitem->current_stock) }}" required min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="45">
+                                @error('current_stock') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Minimum
+                                    Stock Level</label>
+                                <input type="number" name="minimum_stock_level"
+                                    value="{{ old('minimum_stock_level', $inventoryitem->minimum_stock_level) }}" min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="10">
+                                @error('minimum_stock_level') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unit Cost
+                                    ({{ $currency_code }}) <span class="text-red-500">*</span></label>
+                                <input type="number" step="0.01" name="unit_cost"
+                                    value="{{ old('unit_cost', $inventoryitem->unit_cost) }}" required min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="850.00">
+                                @error('unit_cost') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unit
+                                    Price ({{ $currency_code }}) <span class="text-red-500">*</span></label>
+                                <input type="number" step="0.01" name="unit_price"
+                                    value="{{ old('unit_price', $inventoryitem->unit_price) }}" required min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="1200.00">
+                                @error('unit_price') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-supplier" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Primary
+                                Supplier</label>
+                            <select name="primary_supplier_id"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                <option value="">None</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" {{ old('primary_supplier_id', $inventoryitem->primary_supplier_id) == $supplier->id ? 'selected' : '' }}>
+                                        {{ $supplier->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('primary_supplier_id') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Supplier
+                                    Item Code</label>
+                                <input type="text" name="supplier_item_code"
+                                    value="{{ old('supplier_item_code', $inventoryitem->supplier_item_code) }}"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="MED-BAND100">
+                                @error('supplier_item_code') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Supplier
+                                    Price ({{ $currency_code }})</label>
+                                <input type="number" step="0.01" name="supplier_price"
+                                    value="{{ old('supplier_price', $inventoryitem->supplier_price) }}" min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="820.00">
+                                @error('supplier_price') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lead Time
+                                    (Days)</label>
+                                <input type="number" name="lead_time_days"
+                                    value="{{ old('lead_time_days', $inventoryitem->lead_time_days) }}" min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="3">
+                                @error('lead_time_days') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Minimum
+                                    Order Qty</label>
+                                <input type="number" name="minimum_order_quantity"
+                                    value="{{ old('minimum_order_quantity', $inventoryitem->minimum_order_quantity) }}"
+                                    min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="50">
+                                @error('minimum_order_quantity') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-medicine" class="tab-content hidden">
+                    <div class="space-y-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Generic
+                                    Name</label>
+                                <input type="text" name="generic_name"
+                                    value="{{ old('generic_name', $inventoryitem->generic_name) }}"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="Paracetamol / Acetaminophen">
+                                @error('generic_name') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Medicine
+                                    Type</label>
+                                <select name="medicine_type"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                                    <option value="">Select type</option>
+                                    <option value="Tablet" {{ old('medicine_type', $inventoryitem->medicine_type) == 'Tablet' ? 'selected' : '' }}>Tablet</option>
+                                    <option value="Capsule" {{ old('medicine_type', $inventoryitem->medicine_type) == 'Capsule' ? 'selected' : '' }}>Capsule</option>
+                                    <option value="Syrup" {{ old('medicine_type', $inventoryitem->medicine_type) == 'Syrup' ? 'selected' : '' }}>Syrup / Suspension
+                                    </option>
+                                    <option value="Injection" {{ old('medicine_type', $inventoryitem->medicine_type) == 'Injection' ? 'selected' : '' }}>Injection /
+                                        Ampoule</option>
+                                    <option value="Cream" {{ old('medicine_type', $inventoryitem->medicine_type) == 'Cream' ? 'selected' : '' }}>Cream / Ointment
+                                    </option>
+                                    <option value="Other" {{ old('medicine_type', $inventoryitem->medicine_type) == 'Other' ? 'selected' : '' }}>Other</option>
+                                </select>
+                                @error('medicine_type') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dosage /
+                                    Strength</label>
+                                <input type="text" name="dosage" value="{{ old('dosage', $inventoryitem->dosage) }}"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="500 mg, 250 mg/5 ml">
+                                @error('dosage') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}
+                                </p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tax Rate
+                                    (%)</label>
+                                <input type="number" step="0.01" name="tax_rate"
+                                    value="{{ old('tax_rate', $inventoryitem->tax_rate) }}" min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="5.00">
+                                @error('tax_rate') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Side
+                                Effects</label>
+                            <textarea name="side_effects" rows="3"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
+                                placeholder="Nausea, dizziness, rash...">{{ old('side_effects', $inventoryitem->side_effects) }}</textarea>
+                            @error('side_effects') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precautions &
+                                Warnings</label>
+                            <textarea name="precautions_warnings" rows="3"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
+                                placeholder="Not for patients with liver disease...">{{ old('precautions_warnings', $inventoryitem->precautions_warnings) }}</textarea>
+                            @error('precautions_warnings') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Storage
+                                Conditions (select all that apply)</label>
+                            <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                @php
+                                    $conditions = ['Room temperature', 'Cool place', 'Refrigerate (2-8°C)', 'Protect from light', 'Protect from moisture', 'Do not freeze'];
+                                    $savedConditions = json_decode($inventoryitem->storage_conditions ?? '[]', true) ?: [];
+                                @endphp
+                                @foreach($conditions as $condition)
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="storage_conditions[]" value="{{ $condition }}" {{ in_array($condition, old('storage_conditions', $savedConditions)) ? 'checked' : '' }}
+                                            class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ $condition }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('storage_conditions.*') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="is_active" value="1" {{ old('is_active', $inventoryitem->is_active) ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Active / Available</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="expiry_tracking" id="expiry_tracking" value="1" {{ old('expiry_tracking', $inventoryitem->expiry_tracking) ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Track Expiry</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="requires_refrigeration" value="1" {{ old('requires_refrigeration', $inventoryitem->requires_refrigeration) ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Requires
+                                    Refrigeration</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t dark:border-gray-700">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Medicine
+                                    Image</label>
+                                @if($inventoryitem->medicine_image)
+                                    <div id="medicine_preview_container_existing" class="mb-4">
+                                        <img src="{{ Str::startsWith($inventoryitem->medicine_image, ['http://', 'https://']) ? $inventoryitem->medicine_image : asset('storage/' . $inventoryitem->medicine_image) }}"
+                                            alt="Medicine Image"
+                                            class="h-32 w-auto object-contain rounded-md border border-gray-200 dark:border-gray-700">
+                                    </div>
+                                @endif
+                                <div
+                                    class="flex justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 px-6 pt-5 pb-6">
+                                    <div class="space-y-1 text-center">
+                                        <div id="medicine_preview_container" class="hidden mb-4">
+                                            <img id="medicine_preview" src="#" alt="Preview"
+                                                class="mx-auto h-32 w-auto object-contain rounded-md border border-gray-200 dark:border-gray-700">
+                                        </div>
+                                        <svg id="medicine_icon"
+                                            class="mx-auto h-12 w-12 text-gray-400 {{ $inventoryitem->medicine_image ? 'hidden' : '' }}"
+                                            stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path
+                                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                                            <label
+                                                class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                                                <span>{{ $inventoryitem->medicine_image ? 'Change medicine image' : 'Upload medicine image' }}</span>
+                                                <input type="file" name="medicine_image" class="sr-only" accept="image/*"
+                                                    onchange="previewImage(this, 'medicine_preview')">
+                                            </label>
+                                        </div>
+                                        <p id="medicine_filename" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                            PNG, JPG up to 4MB</p>
+                                    </div>
+                                </div>
+                                @error('medicine_image') <p class="mt-2 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Package /
+                                    Box Image</label>
+                                @if($inventoryitem->package_image)
+                                    <div id="package_preview_container_existing" class="mb-4">
+                                        <img src="{{ Str::startsWith($inventoryitem->package_image, ['http://', 'https://']) ? $inventoryitem->package_image : asset('storage/' . $inventoryitem->package_image) }}"
+                                            alt="Package Image"
+                                            class="h-32 w-auto object-contain rounded-md border border-gray-200 dark:border-gray-700">
+                                    </div>
+                                @endif
+                                <div
+                                    class="flex justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 px-6 pt-5 pb-6">
+                                    <div class="space-y-1 text-center">
+                                        <div id="package_preview_container" class="hidden mb-4">
+                                            <img id="package_preview" src="#" alt="Preview"
+                                                class="mx-auto h-32 w-auto object-contain rounded-md border border-gray-200 dark:border-gray-700">
+                                        </div>
+                                        <svg id="package_icon"
+                                            class="mx-auto h-12 w-12 text-gray-400 {{ $inventoryitem->package_image ? 'hidden' : '' }}"
+                                            stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path
+                                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                                            <label
+                                                class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                                                <span>{{ $inventoryitem->package_image ? 'Change package image' : 'Upload package image' }}</span>
+                                                <input type="file" name="package_image" class="sr-only" accept="image/*"
+                                                    onchange="previewImage(this, 'package_preview')">
+                                            </label>
+                                        </div>
+                                        <p id="package_filename" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                            PNG, JPG up to 4MB</p>
+                                    </div>
+                                </div>
+                                @error('package_image') <p class="mt-2 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-advanced" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="controlled_substance" value="1" {{ old('controlled_substance', $inventoryitem->controlled_substance) ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600 focus:ring-gray-900 dark:focus:ring-gray-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Controlled Substance</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="hazardous_material" value="1" {{ old('hazardous_material', $inventoryitem->hazardous_material) ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600 focus:ring-gray-900 dark:focus:ring-gray-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Hazardous Material</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="sterile" value="1" {{ old('sterile', $inventoryitem->sterile) ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600 focus:ring-gray-900 dark:focus:ring-gray-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Sterile Item</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional
+                                Information</label>
+                            <textarea name="additional_info" rows="4"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
+                                placeholder="Safety notes, usage instructions, etc.">{{ old('additional_info', $inventoryitem->additional_info) }}</textarea>
+                            @error('additional_info') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p> @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Form -->
-        <form method="POST" action="{{ route('inventory.update', $inventoryitem) }}" class="p-6 space-y-8">
-            @csrf
-            @method('PUT')
-
-            <!-- Basic Info -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name *</label>
-                    <input type="text" name="name" id="name" value="{{ old('name', $inventoryitem->name) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                    @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="sku" class="block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
-                    <input type="text" name="sku" id="sku" value="{{ old('sku', $inventoryitem->sku) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                    @error('sku') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-            </div>
-
-            <!-- Category & Supplier -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="category_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                    <select name="category_id" id="category_id"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                        <option value="">— Select Category —</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id', $inventoryitem->category_id) == $category->id ? 'selected' : '' }}>
-                                {{ $category->full_path ?? $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('category_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="primary_supplier_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary Supplier</label>
-                    <select name="primary_supplier_id" id="primary_supplier_id"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                        <option value="">— None —</option>
-                        @foreach($suppliers as $supplier)
-                            <option value="{{ $supplier->id }}" {{ old('primary_supplier_id', $inventoryitem->primary_supplier_id) == $supplier->id ? 'selected' : '' }}>
-                                {{ $supplier->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('primary_supplier_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                <textarea name="description" id="description" rows="4"
-                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">{{ old('description', $inventoryitem->description) }}</textarea>
-                @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Unit & Quantity -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="unit_of_measure" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit of Measure</label>
-                    <input type="text" name="unit_of_measure" id="unit_of_measure" value="{{ old('unit_of_measure', $inventoryitem->unit_of_measure) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="unit_quantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit Quantity</label>
-                    <input type="number" name="unit_quantity" id="unit_quantity" min="1" value="{{ old('unit_quantity', $inventoryitem->unit_quantity ?? 1) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="storage_location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Storage Location</label>
-                    <input type="text" name="storage_location" id="storage_location" value="{{ old('storage_location', $inventoryitem->storage_location) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Manufacturer & Brand -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="manufacturer" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Manufacturer</label>
-                    <input type="text" name="manufacturer" id="manufacturer" value="{{ old('manufacturer', $inventoryitem->manufacturer) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand</label>
-                    <input type="text" name="brand" id="brand" value="{{ old('brand', $inventoryitem->brand) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Stock Levels -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-6">
-                <div>
-                    <label for="minimum_stock_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Minimum Stock Level</label>
-                    <input type="number" name="minimum_stock_level" id="minimum_stock_level" min="0" value="{{ old('minimum_stock_level', $inventoryitem->minimum_stock_level ?? 0) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="reorder_point" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Reorder Point</label>
-                    <input type="number" name="reorder_point" id="reorder_point" min="0" value="{{ old('reorder_point', $inventoryitem->reorder_point ?? 0) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="reorder_quantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Reorder Quantity</label>
-                    <input type="number" name="reorder_quantity" id="reorder_quantity" min="1" value="{{ old('reorder_quantity', $inventoryitem->reorder_quantity ?? 1) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Pricing -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
-                <div>
-                    <label for="unit_cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit Cost (Rs.)</label>
-                    <input type="number" name="unit_cost" id="unit_cost" step="0.01" min="0" value="{{ old('unit_cost', $inventoryitem->unit_cost ?? 0) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="unit_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit Price (Rs.)</label>
-                    <input type="number" name="unit_price" id="unit_price" step="0.01" min="0" value="{{ old('unit_price', $inventoryitem->unit_price ?? 0) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center justify-end gap-4 pt-6 border-t">
-                <a href="{{ route('inventory.show', $inventoryitem) }}"
-                   class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-400 transition">
-                    Cancel
-                </a>
-
-                <button type="submit"
-                        class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition shadow-md">
-                    Save Changes
-                </button>
-            </div>
-        </form>
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <button type="submit"
+                class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Update Item
+            </button>
+            <a href="{{ route('inventory.index') }}"
+                class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel
+            </a>
+        </div>
+    </form>
     </div>
-</div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(b => {
+                b.classList.remove('text-gray-900', 'dark:text-white', 'border-b-2', 'border-gray-900', 'dark:border-gray-400', 'bg-white', 'dark:bg-gray-800');
+                b.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700/30');
+            });
+
+            // Update mobile select if present
+            const mobileSelect = document.getElementById('mobile-tab-select');
+            if (mobileSelect) mobileSelect.value = tabName;
+
+            const content = document.getElementById('content-' + tabName);
+            if (content) content.classList.remove('hidden');
+
+            const btn = document.getElementById('tab-' + tabName);
+            if (btn) {
+                btn.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700/30');
+                btn.classList.add('text-gray-900', 'dark:text-white', 'border-b-2', 'border-gray-900', 'dark:border-gray-400', 'bg-white', 'dark:bg-gray-800');
+
+                // Scroll the tab into view on mobile without shifting the entire page
+                const nav = btn.closest('nav');
+                if (nav) {
+                    const navRect = nav.getBoundingClientRect();
+                    const btnRect = btn.getBoundingClientRect();
+                    const offset = (btnRect.left - navRect.left) - (navRect.width / 2) + (btnRect.width / 2);
+                    nav.scrollBy({ left: offset, behavior: 'smooth' });
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for validation errors and switch to the tab with errors
+            const firstError = document.querySelector('.text-red-600');
+            if (firstError) {
+                const tabContent = firstError.closest('.tab-content');
+                if (tabContent) {
+                    const tabId = tabContent.id.replace('content-', '');
+                    switchTab(tabId);
+                    return;
+                }
+            }
+
+            switchTab('basic');
+        });
+
+        function previewImage(input, previewId) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var newContainer = document.getElementById(previewId + '_container');
+                    newContainer.classList.remove('hidden');
+                    document.getElementById(previewId).src = e.target.result;
+
+                    // Hide existing image container if present
+                    var existingContainer = document.getElementById(previewId + '_container_existing');
+                    if (existingContainer) existingContainer.classList.add('hidden');
+
+                    // Hide the generic icon if present
+                    var iconId = previewId.replace('_preview', '_icon');
+                    var icon = document.getElementById(iconId);
+                    if (icon) icon.classList.add('hidden');
+
+                    // Update filename text
+                    var filenameId = previewId.replace('_preview', '_filename');
+                    var text = document.getElementById(filenameId);
+                    if (text) text.textContent = input.files[0].name;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+
+    @push('styles')
+        <style>
+            .tab-button {
+                z-index: 10;
+            }
+        </style>
+    @endpush
 @endsection

@@ -326,8 +326,14 @@ table.dataTable > tbody > tr.child span.dtr-data {
     #docapp-table thead th {
         @apply px-2 py-2;
     }
-    
-    #docapp-table tbody td {
-        @apply px-2 py-1.5;
-    }
 }
+
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+

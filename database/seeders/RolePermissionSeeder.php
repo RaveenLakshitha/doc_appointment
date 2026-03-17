@@ -12,143 +12,258 @@ class RolePermissionSeeder extends Seeder
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Define permissions using dot notation (resource.action)
+        // ── All permissions: ONLY index / create / edit / delete per resource ──
         $permissions = [
-            // ── Dashboards (view only, role-specific)
-            'dashboard.admin',
-            'dashboard.doctor',
-            'dashboard.receptionist',
-            'dashboard.nurse',
-            'dashboard.hr',
-            'dashboard.support',
-            'dashboard.primary_care_provider',
 
-            // ── Doctors & Specializations
-            'doctors.index', 'doctors.create', 'doctors.show', 'doctors.edit', 'doctors.delete',
-            'doctor-schedules.index', 'doctor-schedules.edit',
-            'specializations.index', 'specializations.create', 'specializations.edit', 'specializations.delete',
-            'age-groups.index', 'age-groups.create', 'age-groups.edit', 'age-groups.delete',
+            // Dashboard
+            'dashboard.index',
 
-            // ── Patients
-            'patients.index', 'patients.create', 'patients.show', 'patients.edit', 'patients.delete',
+            // Doctor Panel (doctor-specific views)
+            'doctor-panel.index',
 
-            // ── Appointments
-            'appointments.index', 'appointments.create', 'appointments.show', 'appointments.edit', 'appointments.delete',
-            'appointments.own',           // view own only
-            'appointments.calendar',
-            'appointments.requests',
+            // Doctors & Schedules
+            'doctors.index',
+            'doctors.create',
+            'doctors.edit',
+            'doctors.delete',
+            'doctor-schedules.index',
+            'doctor-schedules.create',
+            'doctor-schedules.edit',
+            'doctor-schedules.delete',
+            'specializations.index',
+            'specializations.create',
+            'specializations.edit',
+            'specializations.delete',
+            'age-groups.index',
+            'age-groups.create',
+            'age-groups.edit',
+            'age-groups.delete',
 
-            'queues.view','queues.manage',
+            // Patients
+            'patients.index',
+            'patients.create',
+            'patients.edit',
+            'patients.delete',
 
-            // ── Prescriptions & Templates
-            'prescriptions.index', 'prescriptions.create', 'prescriptions.edit', 'prescriptions.delete',
-            'medicine-templates.index', 'medicine-templates.create', 'medicine-templates.edit', 'medicine-templates.delete',
+            // Appointments & Queues
+            'appointments.index',
+            'appointments.create',
+            'appointments.edit',
+            'appointments.delete',
+            'queues.index',
 
-            // ── Billing
-            'invoices.index', 'invoices.create', 'invoices.edit', 'invoices.delete', 'invoices.issue',
-            'payments.index', 'payments.create', 'payments.edit', 'payments.delete',
+            // Appointment Requests
+            'appointment_requests.index',
+            'appointment_requests.create',
+            'appointment_requests.edit',
+            'appointment_requests.delete',
 
-            // ── Departments, Rooms, Services
-            'departments.index', 'departments.create', 'departments.edit', 'departments.delete',
-            'treatments.index', 'treatments.create', 'treatments.edit', 'treatments.delete',
-            'rooms.index', 'rooms.create', 'rooms.edit', 'rooms.delete',
-            'services.index', 'services.create', 'services.edit', 'services.delete',
+            // Prescriptions & Medicine Templates
+            'prescriptions.index',
+            'prescriptions.create',
+            'prescriptions.edit',
+            'prescriptions.delete',
+            'medicine-templates.index',
+            'medicine-templates.create',
+            'medicine-templates.edit',
+            'medicine-templates.delete',
 
-            // ── Inventory & Suppliers (← this is what you asked for)
+            // Billing
+            'invoices.index',
+            'invoices.create',
+            'invoices.edit',
+            'invoices.delete',
+            'payments.index',
+            'payments.create',
+            'payments.edit',
+            'payments.delete',
+            'cash-registers.index',
+
+            // Clinic
+            'departments.index',
+            'departments.create',
+            'departments.edit',
+            'departments.delete',
+            'rooms.index',
+            'rooms.create',
+            'rooms.edit',
+            'rooms.delete',
+            'services.index',
+            'services.create',
+            'services.edit',
+            'services.delete',
+            'treatments.index',
+            'treatments.create',
+            'treatments.edit',
+            'treatments.delete',
+
+            // Inventory
             'inventory.index',
-            'inventory-items.index', 'inventory-items.create', 'inventory-items.edit', 'inventory-items.delete',
+            'inventory.create',
+            'inventory.edit',
+            'inventory.delete',
+            'suppliers.index',
+            'suppliers.create',
+            'suppliers.edit',
+            'suppliers.delete',
+            'categories.index',
+            'categories.create',
+            'categories.edit',
+            'categories.delete',
+            'unit-of-measures.index',
+            'unit-of-measures.create',
+            'unit-of-measures.edit',
+            'unit-of-measures.delete',
 
-            'suppliers.index', 'suppliers.create', 'suppliers.show', 'suppliers.edit', 'suppliers.delete',
-            'categories.index', 'categories.create', 'categories.edit', 'categories.delete',
-            'unit-measures.index', 'unit-measures.create', 'unit-measures.edit', 'unit-measures.delete',
+            // Users & Roles
+            'users.index',
+            'users.create',
+            'users.edit',
+            'users.delete',
+            'roles.index',
+            'roles.create',
+            'roles.edit',
+            'roles.delete',
 
-            // ── Users & Roles
-            'users.index', 'users.create', 'users.edit', 'users.delete',
-            'roles.index', 'roles.create', 'roles.edit', 'roles.delete',
+            // HR – Employees
+            'employees.index',
+            'employees.create',
+            'employees.edit',
+            'employees.delete',
 
-            // ── HR / Staff
-            'staff.index', 'staff.create', 'staff.edit', 'staff.delete',
-            'attendance.index', 'attendance.create', 'attendance.edit', 'attendance.delete',
+            // HR – Attendance (singular, not plural)
+            'attendance.index',
+            'attendance.create',
+            'attendance.edit',
+            'attendance.delete',
 
-            'leave-entitlements.index','leave-entitlements.create','leave-entitlements.update','leave-entitlements.delete',
-            'leave-requests.index','leave-requests.create','leave-requests.update','leave-requests.delete',
-            'leave-types.index','leave-types.create','leave-types.update','leave-types.delete',
+            // HR – Leave
+            'leave-types.index',
+            'leave-types.create',
+            'leave-types.edit',
+            'leave-types.delete',
+            'leave-requests.index',
+            'leave-requests.create',
+            'leave-requests.edit',
+            'leave-requests.delete',
+            'leave-requests.approve',
+            'leave-requests.reject',
 
-            // ── Reports
+            // Reports
             'reports.index',
-            'reports.appointments', 'reports.financial', 'reports.patient-visits', 'reports.inventory',
 
-            // ── Settings & Misc
-            'settings.manage',
-
-            // ── Patient-facing actions
-            'appointments.book',
+            // Settings & Dropdowns
+            'settings.index',
+            'settings.edit',
+            'dropdowns.index',
+            'dropdowns.create',
+            'dropdowns.edit',
+            'dropdowns.delete',
         ];
 
-        // Create all permissions if they don't exist
+        // Create all permissions
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // ── Assign permissions to roles ───────────────────────────────────────
+        // ── Role assignments ──────────────────────────────────────────────────
 
-        // Super Admin - gets everything
+        // Admin — gets ALL permissions
         Role::firstOrCreate(['name' => 'admin'])
             ->syncPermissions(Permission::all()->pluck('name'));
 
         // Doctor
         Role::firstOrCreate(['name' => 'doctor'])->syncPermissions([
-            'dashboard.doctor',
-            'patients.index', 'patients.create', 'patients.show', 'patients.edit',
-            'appointments.index', 'appointments.create', 'appointments.show', 'appointments.edit',
-            'appointments.own', 'appointments.calendar',
-            'prescriptions.index', 'prescriptions.create', 'prescriptions.edit',
-            'medicine-templates.index', 'medicine-templates.create', 'medicine-templates.edit',
-        ]);
-
-        // Receptionist
-        Role::firstOrCreate(['name' => 'receptionist'])->syncPermissions([
-            'dashboard.receptionist',
-            'patients.index', 'patients.create', 'patients.show', 'patients.edit',
-            'appointments.index', 'appointments.create', 'appointments.edit', 'appointments.calendar',
-            'invoices.index', 'invoices.create', 'invoices.issue',
-            'payments.index', 'payments.create',
-        ]);
-
-        // Nurse
-        Role::firstOrCreate(['name' => 'nurse'])->syncPermissions([
-            'dashboard.nurse',
-            'patients.index', 'patients.show',
-            'appointments.index', 'appointments.own',
-        ]);
-
-        // HR
-        Role::firstOrCreate(['name' => 'hr'])->syncPermissions([
-            'dashboard.hr',
-            'staff.index', 'staff.create', 'staff.edit', 'staff.delete',
-            'attendance.index', 'attendance.create', 'attendance.edit', 'attendance.delete',
-
-            'leave-requests.index',
-            'users.index', 'users.create', 'users.edit',
-            'roles.index', 'roles.create', 'roles.edit',
+            'dashboard.index',
+            'doctor-panel.index',
+            'patients.index',
+            'patients.create',
+            'patients.edit',
+            'appointments.index',
+            'appointments.create',
+            'appointments.edit',
+            'prescriptions.index',
+            'prescriptions.create',
+            'prescriptions.edit',
+            'medicine-templates.index',
+            'medicine-templates.create',
+            'medicine-templates.edit',
         ]);
 
         // Primary Care Provider
         Role::firstOrCreate(['name' => 'primary_care_provider'])->syncPermissions([
-            'dashboard.primary_care_provider',
-            'patients.index', 'patients.create', 'patients.show', 'patients.edit',
-            'appointments.index', 'appointments.create', 'appointments.edit',
-            'appointments.own', 'appointments.calendar',
-            'prescriptions.index', 'prescriptions.create', 'prescriptions.edit',
+            'dashboard.index',
+            'patients.index',
+            'patients.create',
+            'patients.edit',
+            'appointments.index',
+            'appointments.create',
+            'appointments.edit',
+            'prescriptions.index',
+            'prescriptions.create',
+            'prescriptions.edit',
             'medicine-templates.index',
-            'appointments.book',
+            'inventory.index',
+            'appointment_requests.index',
+            'appointment_requests.create',
+            'appointment_requests.edit',
         ]);
 
-        // Support (maintenance focused)
+        // Receptionist
+        Role::firstOrCreate(['name' => 'receptionist'])->syncPermissions([
+            'dashboard.index',
+            'patients.index',
+            'patients.create',
+            'patients.edit',
+            'appointments.index',
+            'appointments.create',
+            'appointments.edit',
+            'invoices.index',
+            'invoices.create',
+            'payments.index',
+            'payments.create',
+            'cash-registers.index',
+        ]);
+
+        // Nurse
+        Role::firstOrCreate(['name' => 'nurse'])->syncPermissions([
+            'dashboard.index',
+            'patients.index',
+            'appointments.index',
+        ]);
+
+        // HR
+        Role::firstOrCreate(['name' => 'hr'])->syncPermissions([
+            'dashboard.index',
+            'employees.index',
+            'employees.create',
+            'employees.edit',
+            'employees.delete',
+            'attendance.index',
+            'attendance.create',
+            'attendance.edit',
+            'attendance.delete',
+            'leave-requests.index',
+            'leave-requests.create',
+            'leave-requests.edit',
+            'leave-requests.delete',
+            'leave-requests.approve',
+            'leave-requests.reject',
+            'leave-types.index',
+            'leave-types.create',
+            'leave-types.edit',
+            'leave-types.delete',
+            'leave-types.delete',
+            'users.index',
+            'roles.index',
+        ]);
+
+        // Support
         Role::firstOrCreate(['name' => 'support'])->syncPermissions([
-            'dashboard.support',
+            'dashboard.index',
             'departments.index',
-            'rooms.index', 'rooms.edit',   // e.g. update status/cleaning
+            'rooms.index',
+            'rooms.edit',
         ]);
     }
 }

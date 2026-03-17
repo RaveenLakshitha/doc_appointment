@@ -6,25 +6,33 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class SupplierController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:suppliers.index', ['only' => ['index', 'show', 'datatable']]);
+        $this->middleware('permission:suppliers.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:suppliers.edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:suppliers.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index(Request $request)
     {
         if (!Auth::user()->can('suppliers.index')) {
             return redirect()->route('home')
-                ->with('error', 'Sorry! You are not allowed to access this module.');
+                ->with('error', __('file.permission_denied'));
         }
 
         $suppliers = Supplier::query()
             ->when($request->search, function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('contact_person', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%")
-                  ->orWhere('phone', 'like', "%{$request->search}%")
-                  ->orWhere('category', 'like', "%{$request->search}%");
+                    ->orWhere('contact_person', 'like', "%{$request->search}%")
+                    ->orWhere('email', 'like', "%{$request->search}%")
+                    ->orWhere('phone', 'like', "%{$request->search}%")
+                    ->orWhere('category', 'like', "%{$request->search}%");
             })
             ->orderBy('name')
             ->paginate(10)
@@ -35,25 +43,25 @@ class SupplierController extends Controller
 
     public function datatable(Request $request)
     {
-        $draw        = $request->input('draw');
-        $start       = $request->input('start', 0);
-        $length      = $request->input('length', 10);
+        $draw = $request->input('draw');
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
         $searchValue = trim($request->input('search.value', ''));
-        $status      = $request->input('status');
+        $status = $request->input('status');
 
         $query = Supplier::query()
             ->when($searchValue !== '', function ($q) use ($searchValue) {
                 $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('contact_person', 'like', "%{$searchValue}%")
-                  ->orWhere('email', 'like', "%{$searchValue}%")
-                  ->orWhere('phone', 'like', "%{$searchValue}%")
-                  ->orWhere('category', 'like', "%{$searchValue}%")
-                  ->orWhere('location', 'like', "%{$searchValue}%");
+                    ->orWhere('contact_person', 'like', "%{$searchValue}%")
+                    ->orWhere('email', 'like', "%{$searchValue}%")
+                    ->orWhere('phone', 'like', "%{$searchValue}%")
+                    ->orWhere('category', 'like', "%{$searchValue}%")
+                    ->orWhere('location', 'like', "%{$searchValue}%");
             })
             ->when($status === 'active', fn($q) => $q->where('status', true))
             ->when($status === 'inactive', fn($q) => $q->where('status', false));
 
-        $totalRecords    = Supplier::count();
+        $totalRecords = Supplier::count();
         $filteredRecords = (clone $query)->count();
 
         $orderIdx = $request->input('order.0.column');
@@ -69,28 +77,28 @@ class SupplierController extends Controller
 
         $data = $suppliers->map(function ($supplier) {
             $statusHtml = $supplier->status
-                ? '<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>'
-                : '<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                ? '<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">' . __('file.active') . '</span>'
+                : '<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">' . __('file.inactive') . '</span>';
 
             return [
-                'id'             => $supplier->id,
-                'name'           => $supplier->name,
+                'id' => $supplier->id,
+                'name' => $supplier->name,
                 'contact_person' => $supplier->contact_person ?? '-',
-                'email'          => $supplier->email ?? '-',
-                'phone'          => $supplier->phone ?? '-',
-                'location'       => $supplier->location ?? '-',
-                'status_html'    => $statusHtml,
-                'show_url'       => route('suppliers.show', $supplier),
-                'edit_url'       => route('suppliers.edit', $supplier),
-                'delete_url'     => route('suppliers.destroy', $supplier),
+                'email' => $supplier->email ?? '-',
+                'phone' => $supplier->phone ?? '-',
+                'location' => $supplier->location ?? '-',
+                'status_html' => $statusHtml,
+                'show_url' => route('suppliers.show', $supplier),
+                'edit_url' => \Auth::user()->can('suppliers.edit') ? route('suppliers.edit', $supplier) : null,
+                'delete_url' => \Auth::user()->can('suppliers.delete') ? route('suppliers.destroy', $supplier) : null,
             ];
         });
 
         return response()->json([
-            'draw'            => (int) $draw,
-            'recordsTotal'    => $totalRecords,
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data'            => $data->toArray(),
+            'data' => $data->toArray(),
         ]);
     }
 
@@ -98,7 +106,7 @@ class SupplierController extends Controller
     {
         if (!Auth::user()->can('suppliers.create')) {
             return redirect()->route('suppliers.index')
-                ->with('error', 'Sorry! You are not allowed to create suppliers.');
+                ->with('error', __('file.permission_denied'));
         }
 
         return view('suppliers.create');
@@ -111,15 +119,15 @@ class SupplierController extends Controller
         }
 
         $validated = $request->validate([
-            'name'           => ['required', 'string', 'max:255'],
-            'category'       => ['nullable', 'string', 'max:255'],
-            'description'    => ['nullable', 'string'],
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
             'contact_person' => ['nullable', 'string', 'max:255'],
-            'email'          => ['nullable', 'email'],
-            'phone'          => ['nullable', 'string', 'max:20'],
-            'location'       => ['nullable', 'string', 'max:255'],
-            'website'        => ['nullable', 'url', 'max:255'],
-            'status'         => ['sometimes', 'boolean'],
+            'email' => ['nullable', 'email'],
+            'phone' => ['nullable', 'string', 'min:7', 'max:15'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'website' => ['nullable', 'url', 'max:255'],
+            'status' => ['sometimes', 'boolean'],
         ]);
 
         $validated['status'] = $request->boolean('status', true);
@@ -136,14 +144,14 @@ class SupplierController extends Controller
         Supplier::create($validated);
 
         return redirect()->route('suppliers.index')
-            ->with('success', 'Supplier created successfully.');
+            ->with('success', __('file.supplier_created_successfully'));
     }
 
     public function show(Supplier $supplier)
     {
-        if (!Auth::user()->can('suppliers.show')) {
+        if (!Auth::user()->can('suppliers.index')) {
             return redirect()->route('suppliers.index')
-                ->with('error', 'Sorry! You are not allowed to view this supplier.');
+                ->with('error', __('file.permission_denied'));
         }
 
         $supplier->load([
@@ -158,7 +166,7 @@ class SupplierController extends Controller
     {
         if (!Auth::user()->can('suppliers.edit')) {
             return redirect()->route('suppliers.index')
-                ->with('error', 'Sorry! You are not allowed to edit suppliers.');
+                ->with('error', __('file.permission_denied'));
         }
 
         return view('suppliers.edit', compact('supplier'));
@@ -171,74 +179,87 @@ class SupplierController extends Controller
         }
 
         $validated = $request->validate([
-            'name'           => ['required', 'string', 'max:255', Rule::unique('suppliers')->ignore($supplier->id)],
-            'category'       => ['nullable', 'string', 'max:255'],
-            'description'    => ['nullable', 'string'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('suppliers')->ignore($supplier->id)],
+            'category' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
             'contact_person' => ['nullable', 'string', 'max:255'],
-            'email'          => ['nullable', 'email', Rule::unique('suppliers')->ignore($supplier->id)],
-            'phone'          => ['nullable', 'string', 'max:20'],
-            'location'       => ['nullable', 'string', 'max:255'],
-            'website'        => ['nullable', 'url', 'max:255'],
-            'status'         => ['sometimes', 'boolean'],
+            'email' => ['nullable', 'email', Rule::unique('suppliers')->ignore($supplier->id)],
+            'phone' => ['nullable', 'string', 'min:7', 'max:15'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'website' => ['nullable', 'url', 'max:255'],
+            'status' => ['sometimes', 'boolean'],
         ]);
 
         $supplier->update($validated);
 
         return redirect()->route('suppliers.index')
-            ->with('success', 'Supplier updated successfully.');
+            ->with('success', __('file.supplier_updated_successfully'));
     }
 
     public function destroy(Supplier $supplier)
     {
         if (!Auth::user()->can('suppliers.delete')) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => __('file.permission_denied')], 403);
+            }
             return redirect()->route('suppliers.index')
-                ->with('error', 'Sorry! You are not allowed to delete suppliers.');
+                ->with('error', __('file.permission_denied'));
         }
 
         $supplier->delete();
 
-        return back()->with('success', 'Supplier moved to trash successfully.');
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => __('file.supplier_deleted_successfully')]);
+        }
+
+        return back()->with('success', __('file.supplier_trashed_successfully'));
     }
 
     public function bulkDelete(Request $request)
     {
         if (!Auth::user()->can('suppliers.delete')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to delete suppliers.'
-            ], 403);
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => __('file.permission_denied')], 403);
+            }
+            return back()->with('error', __('file.permission_denied'));
         }
 
         $ids = $request->input('ids');
 
-        if (is_string($ids) && !empty($ids)) {
-            $ids = array_filter(explode(',', $ids));
+        if (is_string($ids)) {
+            $ids = array_filter(array_map('trim', explode(',', $ids ?? '')));
         }
 
-        if (empty($ids) || !is_array($ids)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No valid suppliers selected.'
-            ], 422);
+        if (!is_array($ids) || empty($ids)) {
+            $msg = __('file.no_items_selected');
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 400);
+            }
+            return back()->with('error', $msg);
         }
 
-        $validator = \Validator::make(['ids' => $ids], [
+        $validator = Validator::make(['ids' => $ids], [
             'ids'   => 'required|array',
-            'ids.*' => 'exists:suppliers,id',
+            'ids.*' => 'exists:suppliers,id'
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'One or more selected suppliers do not exist or are invalid.'
-            ], 422);
+            $msg = __('file.validation_failed');
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg, 'errors' => $validator->errors()], 422);
+            }
+            return back()->with('error', $msg);
         }
 
         Supplier::whereIn('id', $ids)->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => count($ids) . ' supplier(s) moved to trash successfully.'
-        ]);
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('file.selected_suppliers_deleted')
+            ]);
+        }
+
+        return back()->with('success', __('file.selected_suppliers_deleted'));
     }
 }

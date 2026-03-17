@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="min-h-screen">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name'))</title>
+    <title>@if(View::hasSection('title'))@yield('title') | {{ $clinic_name }}@else{{ $clinic_name }}@endif</title>
+
+    <link rel="icon" href="{{ $clinic_logo ?? asset('images/default-logo.png') }}" type="image/png">
+
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -23,181 +27,263 @@
     </script>
 
     <style>
-        html { transition: background-color 0.3s ease, color 0.3s ease; }
-        [data-tooltip] { position: relative; }
+        html {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        [data-tooltip] {
+            position: relative;
+        }
+
         [data-tooltip]::after {
             content: attr(data-tooltip);
-            position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
-            margin-left: 8px; background:#1f2937; color:white;
-            padding:4px 8px; border-radius:4px; font-size:12px;
-            white-space:nowrap; opacity:0; pointer-events:none;
-            transition:opacity .2s; z-index:10;
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 8px;
+            background: #1f2937;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s;
+            z-index: 10;
         }
-        .sidebar-collapsed [data-tooltip]:hover::after { opacity:1; }
-        .sidebar-collapsed .sidebar-text { display:none; }
-        nav::-webkit-scrollbar { width:0; }
-        nav { -ms-overflow-style:none; scrollbar-width:none; }
+
+        .sidebar-collapsed [data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        .sidebar-collapsed .sidebar-text {
+            display: none;
+        }
+
+        nav::-webkit-scrollbar {
+            width: 0;
+        }
+
+        nav {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 
-<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-<div class="flex min-h-screen">
+<body
+    class="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden">
 
 
-    <div id="sidebar-overlay"
-         class="fixed inset-0 bg-black opacity-50 z-40 hidden lg:hidden"></div>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black opacity-50 z-40 hidden lg:hidden"></div>
 
-    <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
 
 
-        @if (isset($header))
-            <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
-                </div>
-            </header>
-        @endif
+            @if (isset($header))
+                <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 flex-shrink-0">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endif
 
-        <main class="flex-1 p-4 lg:p-2 bg-gray-50 dark:bg-gray-900/50">
-            @yield('content')
-        </main>
+            <main class="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
+                @yield('content')
+            </main>
+        </div>
     </div>
-</div>
 
-@stack('scripts')
+    @stack('scripts')
 
-<script>
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggle-sidebar');
-    const collapseIcon = document.getElementById('collapse-icon');
-    const overlay = document.getElementById('sidebar-overlay');
-    const openBtn = document.getElementById('open-sidebar');
-    const closeBtn = document.getElementById('close-sidebar');
-    const fullscreenToggle = document.getElementById('fullscreen-toggle');
-    const enterIcon = document.getElementById('enter-fullscreen-icon');
-    const exitIcon = document.getElementById('exit-fullscreen-icon');
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const collapseIcon = document.getElementById('collapse-icon');
+        const overlay = document.getElementById('sidebar-overlay');
+        const openBtn = document.getElementById('open-sidebar');
+        const closeBtn = document.getElementById('close-sidebar');
+        const fullscreenToggle = document.getElementById('fullscreen-toggle');
+        const enterIcon = document.getElementById('enter-fullscreen-icon');
+        const exitIcon = document.getElementById('exit-fullscreen-icon');
 
-    openBtn?.addEventListener('click', () => {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-    });
-    closeBtn?.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-    });
-    overlay?.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-    });
+        openBtn?.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        });
+        closeBtn?.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        });
+        overlay?.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        });
 
-    toggleBtn?.addEventListener('click', () => {
-        sidebar.classList.toggle('sidebar-collapsed');
-        const collapsed = sidebar.classList.contains('sidebar-collapsed');
-        sidebar.style.width = collapsed ? '64px' : '16rem';
-        // collapseIcon.innerHTML = collapsed
-        //     ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>'
-        //     : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>';
-        localStorage.setItem('sidebarCollapsed', collapsed);
-    });
+        toggleBtn?.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+            const collapsed = sidebar.classList.contains('sidebar-collapsed');
+            sidebar.style.width = collapsed ? '64px' : '16rem';
+            // collapseIcon.innerHTML = collapsed
+            //     ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>'
+            //     : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>';
+            localStorage.setItem('sidebarCollapsed', collapsed);
+        });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('sidebarCollapsed') === 'true') {
-            sidebar.classList.add('sidebar-collapsed');
-            sidebar.style.width = '64px';
-           // collapseIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>';
-        }
-    });
-
-    const html = document.documentElement;
-    const themeToggle = document.getElementById('theme-toggle-navbar');
-    const sunIcon = document.getElementById('sun-icon-navbar');
-    const moonIcon = document.getElementById('moon-icon-navbar');
-
-    function applyTheme(theme) {
-        if (theme === 'dark') {
-            html.classList.add('dark');
-            sunIcon?.classList.remove('hidden');
-            moonIcon?.classList.add('hidden');
-        } else {
-            html.classList.remove('dark');
-            sunIcon?.classList.add('hidden');
-            moonIcon?.classList.remove('hidden');
-        }
-        localStorage.setItem('theme', theme);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        applyTheme(saved || (prefersDark ? 'dark' : 'light'));
-    });
-
-    themeToggle?.addEventListener('click', () => {
-        applyTheme(html.classList.contains('dark') ? 'light' : 'dark');
-    });
-
-    function enterFullscreen() {
-        const elem = document.documentElement;
-        const promise = elem.requestFullscreen?.() ||
-                        elem.webkitRequestFullscreen?.() ||
-                        elem.msRequestFullscreen?.();
-        if (promise) {
-            promise
-                .then(() => {
-                    localStorage.setItem('autoFullscreen', 'true');
-                    localStorage.setItem('lastFullscreenTime', Date.now().toString());
-                })
-                .catch(() => {});
-        }
-    }
-
-    function exitFullscreen() {
-        const promise = document.exitFullscreen?.() ||
-                        document.webkitExitFullscreen?.() ||
-                        document.msExitFullscreen?.();
-        if (promise) promise.catch(() => {});
-        localStorage.removeItem('autoFullscreen');
-        localStorage.removeItem('lastFullscreenTime');
-    }
-
-    function updateFullscreenIcon() {
-        const isFullscreen = !!(
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-        );
-        enterIcon?.classList.toggle('hidden', isFullscreen);
-        exitIcon?.classList.toggle('hidden', !isFullscreen);
-    }
-
-    fullscreenToggle?.addEventListener('click', () => {
-        if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-            exitFullscreen();
-        } else {
-            enterFullscreen();
-        }
-    });
-
-    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
-        document.addEventListener(event, () => {
-            updateFullscreenIcon();
-            if (document.fullscreenElement) {
-                localStorage.setItem('lastFullscreenTime', Date.now().toString());
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('sidebar-collapsed');
+                sidebar.style.width = '64px';
+                // collapseIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>';
             }
         });
-    });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updateFullscreenIcon();
-        if (localStorage.getItem('autoFullscreen') === 'true') {
-            const lastTime = localStorage.getItem('lastFullscreenTime');
-            const now = Date.now();
-            if (lastTime && (now - parseInt(lastTime)) < 5000) {
-                setTimeout(enterFullscreen, 50);
+        const html = document.documentElement;
+        const themeToggle = document.getElementById('theme-toggle-navbar');
+        const sunIcon = document.getElementById('sun-icon-navbar');
+        const moonIcon = document.getElementById('moon-icon-navbar');
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                sunIcon?.classList.remove('hidden');
+                moonIcon?.classList.add('hidden');
+            } else {
+                html.classList.remove('dark');
+                sunIcon?.classList.add('hidden');
+                moonIcon?.classList.remove('hidden');
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+        });
+
+        themeToggle?.addEventListener('click', () => {
+            applyTheme(html.classList.contains('dark') ? 'light' : 'dark');
+        });
+
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            const promise = elem.requestFullscreen?.() ||
+                elem.webkitRequestFullscreen?.() ||
+                elem.msRequestFullscreen?.();
+            if (promise) {
+                promise
+                    .then(() => {
+                        localStorage.setItem('autoFullscreen', 'true');
+                        localStorage.setItem('lastFullscreenTime', Date.now().toString());
+                    })
+                    .catch(() => { });
             }
         }
-    });
-</script>
+
+        function exitFullscreen() {
+            const promise = document.exitFullscreen?.() ||
+                document.webkitExitFullscreen?.() ||
+                document.msExitFullscreen?.();
+            if (promise) promise.catch(() => { });
+            localStorage.removeItem('autoFullscreen');
+            localStorage.removeItem('lastFullscreenTime');
+        }
+
+        function updateFullscreenIcon() {
+            const isFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+            enterIcon?.classList.toggle('hidden', isFullscreen);
+            exitIcon?.classList.toggle('hidden', !isFullscreen);
+        }
+
+        fullscreenToggle?.addEventListener('click', () => {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                exitFullscreen();
+            } else {
+                enterFullscreen();
+            }
+        });
+
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
+            document.addEventListener(event, () => {
+                updateFullscreenIcon();
+                if (document.fullscreenElement) {
+                    localStorage.setItem('lastFullscreenTime', Date.now().toString());
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateFullscreenIcon();
+            if (localStorage.getItem('autoFullscreen') === 'true') {
+                const lastTime = localStorage.getItem('lastFullscreenTime');
+                const now = Date.now();
+                if (lastTime && (now - parseInt(lastTime)) < 5000) {
+                    setTimeout(enterFullscreen, 50);
+                }
+            }
+        });
+    </script>
+    <!-- Dynamic Notifications Container -->
+    <div id="notification-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        function showNotification(message, type = 'success', duration = 3000) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+
+            const icons = {
+                success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+
+            const colors = {
+                success: 'from-emerald-500 to-teal-600 shadow-emerald-500/20',
+                error: 'from-rose-500 to-red-600 shadow-rose-500/20',
+                info: 'from-blue-500 to-indigo-600 shadow-blue-500/20'
+            };
+
+            notification.className = `pointer-events-auto flex items-center min-w-[320px] max-w-md bg-gradient-to-r ${colors[type]} text-white p-4 rounded-2xl shadow-2xl transform translate-x-full transition-all duration-500 ease-out opacity-0 backdrop-blur-md border border-white/10`;
+            notification.style.setProperty('--duration', `${duration}ms`);
+
+            notification.innerHTML = `
+                <div class="flex-shrink-0 bg-white/20 p-2 rounded-xl backdrop-blur-sm mr-3">
+                    ${icons[type]}
+                </div>
+                <div class="flex-grow font-medium text-sm pr-2">
+                    ${message}
+                </div>
+                <button class="flex-shrink-0 hover:bg-white/20 p-1 rounded-lg transition-colors ml-2" onclick="this.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="absolute bottom-0 left-0 h-1 bg-white/30 rounded-full overflow-hidden" style="width: 100%">
+                    <div class="h-full bg-white/50 animate-progress" style="animation-duration: var(--duration)"></div>
+                </div>
+            `;
+
+            container.appendChild(notification);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                notification.classList.remove('translate-x-full', 'opacity-0');
+            });
+
+            // Auto remove
+            setTimeout(() => {
+                notification.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => notification.remove(), 500);
+            }, duration);
+        }
+    </script>
 </body>
+
 </html>

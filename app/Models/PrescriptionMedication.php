@@ -11,11 +11,12 @@ class PrescriptionMedication extends Model
 
     protected $fillable = [
         'prescription_id',
-        'inventory_item_id',     
-        'name',                  
+        'inventory_item_id',
+        'name',
         'dosage',
         'route',
         'frequency',
+        'per_day',
         'instructions',
         'duration_days',
     ];

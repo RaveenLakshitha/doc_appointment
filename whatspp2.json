@@ -1,0 +1,753 @@
+{
+    "version": "7.3",
+    "data_api_version": "3.0",
+    "routing_model": {
+        "TYPE": ["DOCTOR_SELECT", "SPECIALIZATION"],
+        "SPECIALIZATION": ["AGE_GROUP"],
+        "AGE_GROUP": ["PREFERRED_LANGUAGE"],
+        "PREFERRED_LANGUAGE": ["VISIT_TYPE"],
+        "DOCTOR_SELECT": ["VISIT_TYPE"],
+        "VISIT_TYPE": ["PATIENT_NEW", "PHONE_LOOKUP"],
+        "PHONE_LOOKUP": ["PATIENT_SELECT", "PREFERRED_TIME"],
+        "PATIENT_SELECT": ["PREFERRED_TIME"],
+        "PATIENT_NEW": ["PREFERRED_TIME"],
+        "PREFERRED_TIME": ["REASON"],
+        "REASON": ["SUMMARY"],
+        "SUMMARY": []
+    },
+    "screens": [
+        {
+            "id": "TYPE",
+            "title": "...",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextSubheading",
+                        "text": "Hi! Welcome to Medical Centre🖐️"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "Request to schedule an appointment with our expert consultants."
+                    },
+                    {
+                        "type": "Form",
+                        "name": "type_form",
+                        "children": [
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "I want to see",
+                                "name": "appointment_type",
+                                "data-source": [
+                                    { "id": "specific", "title": "Specific doctor" },
+                                    { "id": "any", "title": "Specilized doctor from" }
+                                ],
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "trigger": "select_appointment_type",
+                                        "appointment_type": "${form.appointment_type}",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "SPECIALIZATION",
+            "title": "Specialization",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "any" },
+                "specializations": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "title": { "type": "string" } } }, "__example__": [] },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_groups": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "title": { "type": "string" } } }, "__example__": [] },
+                "doctor": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextSubheading",
+                        "text": "Choose a Specialization"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "Please select the department you are looking for👇"
+                    },
+                    {
+                        "type": "Form",
+                        "name": "specialization_form",
+                        "children": [
+                            {
+                                "type": "Dropdown",
+                                "label": "Specialization",
+                                "name": "specialization",
+                                "data-source": "${data.specializations}",
+                                "required": true,
+                                "on-select-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "trigger": "specialization_selected",
+                                        "appointment_type": "${data.appointment_type}",
+                                        "specialization": "${form.specialization}",
+                                        "error_message": ""
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": { "type": "screen", "name": "AGE_GROUP" },
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "specialization": "${data.specialization}",
+                                        "age_groups": [],
+                                        "age_group": "",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "AGE_GROUP",
+            "title": "Patient Age Group",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "any" },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_groups": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "title": { "type": "string" } } }, "__example__": [] },
+                "age_group": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextSubheading",
+                        "text": "What's the patient's age group?"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "This helps us suggest the most suitable specialist."
+                    },
+                    {
+                        "type": "Form",
+                        "name": "age_group_form",
+                        "children": [
+                            {
+                                "type": "Dropdown",
+                                "label": "Age Group",
+                                "name": "age_group",
+                                "data-source": "${data.age_groups}",
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": { "type": "screen", "name": "PREFERRED_LANGUAGE" },
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "specialization": "${data.specialization}",
+                                        "age_group": "${form.age_group}",
+                                        "preferred_language": "",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "PREFERRED_LANGUAGE",
+            "title": "Preferred Language",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "any" },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "en" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextSubheading",
+                        "text": "In which language do you prefer the consultation?"
+                    },
+                    {
+                        "type": "Form",
+                        "name": "language_form",
+                        "children": [
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "Preferred Language",
+                                "name": "preferred_language",
+                                "data-source": [
+                                    { "id": "en", "title": "English" },
+                                    { "id": "es", "title": "Spanish" }
+                                ],
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": { "type": "screen", "name": "VISIT_TYPE" },
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "specialization": "${data.specialization}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${form.preferred_language}",
+                                        "visit_type": "",
+                                        "doctor": "",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "DOCTOR_SELECT",
+            "title": "Select Doctor",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "doctors": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "title": { "type": "string" } } }, "__example__": [] },
+                "doctor": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "doctor_form",
+                        "children": [
+                            {
+                                "type": "TextSubheading",
+                                "text": "Here are the doctors"
+                            },
+                            {
+                                "type": "TextBody",
+                                "text": "Please select the doctor you would like to meet👇"
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "Doctor",
+                                "name": "doctor",
+                                "data-source": "${data.doctors}",
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": { "type": "screen", "name": "VISIT_TYPE" },
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "doctor": "${form.doctor}",
+                                        "specialization": "${data.specialization}",
+                                        "visit_type": "",
+                                        "age_group": "",
+                                        "preferred_language": "",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "VISIT_TYPE",
+            "title": "Visit Type",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "visit_type": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "visit_type_form",
+                        "children": [
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "Is this your first visit or a follow-up?",
+                                "name": "visit_type",
+                                "data-source": [
+                                    { "id": "first", "title": "First Visit" },
+                                    { "id": "followup", "title": "Follow-up Visit" }
+                                ],
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "trigger": "select_visit_type",
+                                        "appointment_type": "${data.appointment_type}",
+                                        "visit_type": "${form.visit_type}",
+                                        "doctor": "${data.doctor}",
+                                        "specialization": "${data.specialization}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "PHONE_LOOKUP",
+            "title": "Existing Patient",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "visit_type": { "type": "string", "__example__": "followup" },
+                "phone": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "phone_form",
+                        "children": [
+                            {
+                                "type": "TextBody",
+                                "text": "Enter your phone number to find your existing record(s)"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Phone Number",
+                                "name": "phone",
+                                "input-type": "phone",
+                                "required": true,
+                                "helper-text": "Same number used during previous visits"
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Find My Record",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "trigger": "lookup_patient_by_phone",
+                                        "phone": "${form.phone}",
+                                        "appointment_type": "${data.appointment_type}",
+                                        "visit_type": "${data.visit_type}",
+                                        "doctor": "${data.doctor}",
+                                        "specialization": "${data.specialization}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "PATIENT_SELECT",
+            "title": "Select Patient",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "visit_type": { "type": "string", "__example__": "followup" },
+                "phone": { "type": "string", "__example__": "" },
+                "patients": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "title": { "type": "string" } } }, "__example__": [] },
+                "selected_patient": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextSubheading",
+                        "text": "Multiple patients found"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "Please select the correct patient:"
+                    },
+                    {
+                        "type": "Form",
+                        "name": "patient_select_form",
+                        "children": [
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "Select patient",
+                                "name": "selected_patient",
+                                "data-source": "${data.patients}",
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue with this patient",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "trigger": "select_patient",
+                                        "selected_patient": "${form.selected_patient}",
+                                        "phone": "${data.phone}",
+                                        "appointment_type": "${data.appointment_type}",
+                                        "visit_type": "${data.visit_type}",
+                                        "doctor": "${data.doctor}",
+                                        "specialization": "${data.specialization}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+                {
+            "id": "PATIENT_NEW",
+            "title": "New Patient Details",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "visit_type": { "type": "string", "__example__": "first" },
+                "first_name": { "type": "string", "__example__": "" },
+                "last_name": { "type": "string", "__example__": "" },
+                "phone": { "type": "string", "__example__": "" },
+                "email": { "type": "string", "__example__": "" },
+                "age": { "type": "string", "__example__": "30" },
+                "gender": { "type": "string", "__example__": "" },
+                "address": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "patient_form",
+                        "children": [
+                            {
+                                "type": "TextBody",
+                                "text": "Enter the Patient details"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "First Name",
+                                "name": "first_name",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Last Name",
+                                "name": "last_name",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Phone",
+                                "name": "phone",
+                                "input-type": "phone",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Email",
+                                "name": "email",
+                                "input-type": "email",
+                                "required": false
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Age",
+                                "name": "age",
+                                "input-type": "number",
+                                "required": true,
+                                "helper-text": "Enter the patient's age in years (e.g. 25)"
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "Gender",
+                                "name": "gender",
+                                "data-source": [
+                                    { "id": "male", "title": "Male" },
+                                    { "id": "female", "title": "Female" },
+                                    { "id": "other", "title": "Other" }
+                                ],
+                                "required": true
+                            },
+                            {
+                                "type": "TextArea",
+                                "label": "Address",
+                                "name": "address",
+                                "required": false
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "trigger": "create_patient",
+                                        "first_name": "${form.first_name}",
+                                        "last_name": "${form.last_name}",
+                                        "phone": "${form.phone}",
+                                        "email": "${form.email}",
+                                        "age": "${form.age}",
+                                        "gender": "${form.gender}",
+                                        "address": "${form.address}",
+                                        "appointment_type": "${data.appointment_type}",
+                                        "visit_type": "${data.visit_type}",
+                                        "doctor": "${data.doctor}",
+                                        "specialization": "${data.specialization}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "PREFERRED_TIME",
+            "title": "Preferred Time",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "patient": { "type": "string", "__example__": "" },
+                "visit_type": { "type": "string", "__example__": "first" },
+                "preferred_time": { "type": "string", "__example__": "next" },
+                "specialization": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "preferred_time_form",
+                        "children": [
+                            {
+                                "type": "TextBody",
+                                "text": "When do you prefer to meet the doctor?"
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "Preferred Time",
+                                "name": "preferred_time",
+                                "data-source": [
+                                    { "id": "next", "title": "Next available slot" },
+                                    { "id": "7days", "title": "Within next 7 days" },
+                                    { "id": "15days", "title": "Within next 15 days" }
+                                ],
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": { "type": "screen", "name": "REASON" },
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "patient": "${data.patient}",
+                                        "visit_type": "${data.visit_type}",
+                                        "preferred_time": "${form.preferred_time}",
+                                        "specialization": "${data.specialization}",
+                                        "doctor": "${data.doctor}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "reason": "",
+                                        "details_text": "",
+                                        "notes": "",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "REASON",
+            "title": "Reason for Visit",
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "patient": { "type": "string", "__example__": "" },
+                "visit_type": { "type": "string", "__example__": "first" },
+                "preferred_time": { "type": "string", "__example__": "next" },
+                "reason": { "type": "string", "__example__": "" },
+                "notes": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "details_text": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "reason_form",
+                        "children": [
+                            {
+                                "type": "TextArea",
+                                "label": "Reason for visit",
+                                "name": "reason",
+                                "required": true,
+                                "helper-text": "Please describe your main concern"
+                            },
+                            {
+                                "type": "TextArea",
+                                "label": "Additional notes",
+                                "name": "notes",
+                                "required": false
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": { "type": "screen", "name": "SUMMARY" },
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "patient": "${data.patient}",
+                                        "visit_type": "${data.visit_type}",
+                                        "preferred_time": "${data.preferred_time}",
+                                        "reason": "${form.reason}",
+                                        "specialization": "${data.specialization}",
+                                        "doctor": "${data.doctor}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "notes": "${form.notes}",
+                                        "details_text": "${data.details_text}",
+                                        "error_message": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "SUMMARY",
+            "title": "Summary & Confirmation",
+            "terminal": true,
+            "data": {
+                "appointment_type": { "type": "string", "__example__": "specific" },
+                "patient": { "type": "string", "__example__": "" },
+                "visit_type": { "type": "string", "__example__": "first" },
+                "preferred_time": { "type": "string", "__example__": "next" },
+                "reason": { "type": "string", "__example__": "" },
+                "notes": { "type": "string", "__example__": "" },
+                "specialization": { "type": "string", "__example__": "" },
+                "doctor": { "type": "string", "__example__": "" },
+                "age_group": { "type": "string", "__example__": "" },
+                "preferred_language": { "type": "string", "__example__": "" },
+                "details_text": { "type": "string", "__example__": "" },
+                "error_message": { "type": "string", "__example__": "" }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "summary_form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Appointment Summary"
+                            },
+                            {
+                                "type": "TextBody",
+                                "text": "${data.details_text}"
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Confirm Appointment",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "appointment_type": "${data.appointment_type}",
+                                        "patient": "${data.patient}",
+                                        "visit_type": "${data.visit_type}",
+                                        "preferred_time": "${data.preferred_time}",
+                                        "reason": "${data.reason}",
+                                        "specialization": "${data.specialization}",
+                                        "doctor": "${data.doctor}",
+                                        "age_group": "${data.age_group}",
+                                        "preferred_language": "${data.preferred_language}",
+                                        "notes": "${data.notes}",
+                                        "error_message": "",
+                                        "complete": true
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -16,7 +16,7 @@
         "phpseclib/phpseclib": "3.0",
         "spatie/laravel-permission": "^6.23",
         "yajra/laravel-datatables": "^12.0",
-        "yajra/laravel-datatables-oracle": "12.0"
+        "yajra/laravel-datatables-oracle": "^12.7"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

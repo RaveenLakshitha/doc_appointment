@@ -32,27 +32,27 @@ class NewAppointmentCreated extends Notification
     public function toArray(object $notifiable): array
     {
         $patientName = $this->appointment->patient?->getFullNameAttribute() ?? 'Unknown Patient';
-        $typeLabel   = match ($this->appointment->appointment_type) {
-            Appointment::TYPE_SPECIFIC         => 'Specific Doctor',
-            Appointment::TYPE_ANY              => 'Any Doctor',
-            Appointment::TYPE_PRIMARY_PROVIDER => 'Primary Provider',
-            default                            => 'Unknown Type',
+        $typeLabel = match ($this->appointment->appointment_type) {
+            Appointment::TYPE_SPECIFIC => __('file.specific_doctor'),
+            Appointment::TYPE_ANY => __('file.any_doctor'),
+            default => __('file.unknown_type'),
         };
 
         return [
-            'appointment_id'    => $this->appointment->id,
-            'patient_name'      => $patientName,
-            'reason'            => $this->appointment->reason_for_visit,
-            'type'              => $typeLabel,
-            'scheduled'         => $this->appointment->scheduled_start 
-                ? $this->appointment->scheduled_start->format('M d, Y h:i A') 
-                : 'Not scheduled yet',
-            'message'           => "New appointment request from {$patientName}",
-            'created_at_human'  => $this->appointment->created_at->diffForHumans(),
+            'title' => __('file.new_appointment') ?? 'New Appointment',
+            'appointment_id' => $this->appointment->id,
+            'patient_name' => $patientName,
+            'reason' => $this->appointment->reason_for_visit,
+            'type' => $typeLabel,
+            'scheduled' => $this->appointment->scheduled_start
+                ? $this->appointment->scheduled_start->format('M d, Y h:i A')
+                : __('file.not_scheduled_yet'),
+            'message' => __('file.notification_new_appointment', ['patient' => $patientName]),
+            'created_at_human' => $this->appointment->created_at->diffForHumans(),
             // Optional: for UI styling / icons
-            'icon'              => 'calendar-plus',    
-            'color'             => 'blue',             
-            'link'              => route('appointments.show', $this->appointment->id),
+            'icon' => 'calendar-plus',
+            'color' => 'blue',
+            'link' => route('appointments.show', $this->appointment->id),
         ];
     }
 }

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Patient extends Model
 {
@@ -17,6 +18,7 @@ class Patient extends Model
         'middle_name',
         'last_name',
         'date_of_birth',
+        'age',
         'gender',
         'marital_status',
         'address',
@@ -70,58 +72,41 @@ class Patient extends Model
         'secondary_insurance_provider',
         'secondary_policy_number',
 
-        'preferred_billing_method', // insurance_first, self_pay, etc.
-        'payment_methods',          // JSON: ['credit_card', 'debit_card', 'cash', ...]
-
-        'receive_appointment_reminders',
-        'receive_lab_results',
-        'receive_prescription_notifications',
-        'receive_newsletter',
-
-        'profile_photo_path',
-        'consent_hipaa',
-        'consent_treatment',
-        'consent_financial',
-        'additional_documents',     
+        'preferred_billing_method',
+        'payment_methods',
 
         'medical_record_number',
         'is_active',
         'is_deleted',
         'primary_care_provider_id',
+        'document',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date:Y-m-d',
 
         // Booleans
-        'is_active'                     => 'boolean',
-        'is_deleted'                    => 'boolean',
-        'receive_appointment_reminders' => 'boolean',
-        'receive_lab_results'           => 'boolean',
-        'receive_prescription_notifications' => 'boolean',
-        'receive_newsletter'            => 'boolean',
-        'consent_hipaa'                 => 'boolean',
-        'consent_treatment'             => 'boolean',
-        'consent_financial'             => 'boolean',
+        'is_active' => 'boolean',
+        'is_deleted' => 'boolean',
 
         // Integers
         'height_cm' => 'integer',
         'weight_kg' => 'integer',
 
         // JSON / Arrays
-        'allergies'                  => 'array',
-        'current_medications'        => 'array',
-        'chronic_conditions'         => 'array',
-        'past_surgeries'             => 'array',
-        'previous_hospitalizations'  => 'array',
-        'payment_methods'            => 'array',
-        'additional_documents'       => 'array',
-        'family_history_diabetes'    => 'boolean',
-        'family_history_hypertension'=> 'boolean',
-        'family_history_heart_disease'=> 'boolean',
-        'family_history_cancer'      => 'boolean',
-        'family_history_asthma'      => 'boolean',
-        'family_history_mental_health'=> 'boolean',
+        'allergies' => 'array',
+        'current_medications' => 'array',
+        'chronic_conditions' => 'array',
+        'past_surgeries' => 'array',
+        'previous_hospitalizations' => 'array',
+        'payment_methods' => 'array',
+        'family_history_diabetes' => 'boolean',
+        'family_history_hypertension' => 'boolean',
+        'family_history_heart_disease' => 'boolean',
+        'family_history_cancer' => 'boolean',
+        'family_history_asthma' => 'boolean',
+        'family_history_mental_health' => 'boolean',
+        'age' => 'integer',
     ];
 
     // === Relationships ===
@@ -141,13 +126,6 @@ class Patient extends Model
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
     }
 
-    public function getProfilePhotoUrlAttribute(): ?string
-    {
-        return $this->profile_photo_path
-            ? Storage::disk('public')->url($this->profile_photo_path)
-            : null;
-    }
-
     // === Scopes ===
     public function scopeActive($query)
     {
@@ -163,5 +141,5 @@ class Patient extends Model
     {
         return $this->hasMany(BillingInvoice::class);
     }
-    
+
 }

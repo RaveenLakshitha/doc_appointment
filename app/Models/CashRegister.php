@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class CashRegister extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'user_id',
         'opening_balance',
@@ -53,6 +56,11 @@ class CashRegister extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
     // ────────────────────────────────────────────────
     //  Helpers & Business Logic
     // ────────────────────────────────────────────────
@@ -72,7 +80,7 @@ class CashRegister extends Model
             ->sum('amount');
 
         $cashOut = $this->transactions()
-            ->whereIn('type', ['refund', 'cash_out', 'petty_cash', 'correction_out'])
+            ->whereIn('type', ['refund', 'cash_out', 'petty_cash', 'correction_out', 'expense', 'purchase'])
             ->sum('amount');
 
         return round($this->opening_balance + $cashIn - $cashOut, 2);

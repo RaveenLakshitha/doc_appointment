@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Patient;
 use App\Models\BillingInvoice;
 use App\Models\BillingInvoiceItem;
@@ -11,6 +12,8 @@ use App\Models\Treatment;
 use App\Models\Payment;
 use App\Models\Appointment;
 use App\Models\Doctor;
+use App\Notifications\AppointmentPaid;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -82,10 +85,10 @@ class BillingInvoiceController extends Controller
 
         $data = $invoices->map(function ($i) {
             $statusBadge = match ($i->status) {
-                'paid'           => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Paid</span>',
+                'paid' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Paid</span>',
                 'partially_paid' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Partially Paid</span>',
-                'overdue'        => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Overdue</span>',
-                default          => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">Sent</span>',
+                'overdue' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Overdue</span>',
+                default => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">Sent</span>',
             };
 
             $actions = '<div class="flex items-center justify-end gap-1">'
@@ -95,24 +98,37 @@ class BillingInvoiceController extends Controller
                 . '<a href="' . route('invoices.print', $i) . '" target="_blank" class="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">'
                 . '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>'
                 . '</a>'
+                . '<button type="button" onclick="confirmDelete(\'' . route('invoices.destroy', $i) . '\')" class="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">'
+                . '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>'
+                . '</button>'
                 . '</div>';
 
+            $setting = cache('settings') ?? \App\Models\Setting::first() ?? new \App\Models\Setting();
+            $currency = $setting->currency ?? 'USD';
+
             return [
+                'id' => $i->id,
                 'invoice_number' => $i->invoice_number,
-                'patient_name'   => $i->patient?->getFullNameAttribute() ?? 'N/A',
-                'invoice_date'   => $i->invoice_date->format('M d, Y'),
-                'total'          => '$' . number_format($i->total, 2),
-                'balance_due'    => '$' . number_format($i->balance_due, 2),
-                'status_html'    => $statusBadge,
-                'actions'        => $actions,
+                'patient_name' => $i->patient?->getFullNameAttribute() ?? 'N/A',
+                'invoice_date' => $i->invoice_date->format('M d, Y'),
+                'total' => $currency . number_format($i->total, 2),
+                'balance_due' => $currency . number_format($i->balance_due, 2),
+                'balance_due_raw' => (float)$i->balance_due,
+                'status_html' => $statusBadge,
+                'is_printed_html' => $i->is_printed 
+                    ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">' . trans('file.printed') . '</span>'
+                    : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">' . trans('file.not_printed') . '</span>',
+                'show_url' => route('invoices.show', $i),
+                'print_url' => route('invoices.print', $i) . '?redirect=invoices',
+                'delete_url' => \Auth::user()->can('invoices.delete') ? route('invoices.destroy', $i) : null,
             ];
         });
 
         return response()->json([
-            'draw'            => (int)$draw,
-            'recordsTotal'    => $totalRecords,
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data'            => $data->toArray(),
+            'data' => $data->toArray(),
         ]);
     }
 
@@ -172,15 +188,15 @@ class BillingInvoiceController extends Controller
             ->get(['id', 'name', 'price', 'description']);
 
         $inventoryItems = InventoryItem::where('is_active', true)
-            ->where('current_stock', '>', 0)
             ->orderBy('name')
-            ->get(['id', 'name', 'generic_name', 'unit_price', 'current_stock', 'medicine_image']);
+            ->get(['id', 'name', 'generic_name', 'unit_price', 'current_stock', 'minimum_stock_level', 'medicine_image']);
 
         $preloadedItems = [];
         $preselectedPatientId = null;
         $preselectedDoctorId = null;
 
         $appointmentId = $request->query('appointment_id');
+        $appointment = null;
 
         if ($appointmentId) {
             $appointment = Appointment::with([
@@ -200,12 +216,12 @@ class BillingInvoiceController extends Controller
                         ?? $treatment->price ?? 0;
 
                     $preloadedItems[] = [
-                        'type'     => 'treatment',
-                        'id'       => $treatment->id,
-                        'name'     => $treatment->name,
-                        'price'    => $price,
+                        'type' => 'treatment',
+                        'id' => $treatment->id,
+                        'name' => $treatment->name,
+                        'price' => $price,
                         'quantity' => $treatment->pivot->quantity ?? 1,
-                        'source'   => 'appointment',
+                        'source' => 'appointment',
                         'doctor_id' => $appointment->doctor_id,
                     ];
                 }
@@ -218,18 +234,22 @@ class BillingInvoiceController extends Controller
                     foreach ($latestPrescription->medications as $med) {
                         $item = $med->inventoryItem;
 
-                        if (!$item || $item->current_stock <= 0) {
+                        if (!$item) {
                             continue;
                         }
 
-                        $preloadedItems[] = [
-                            'type'     => 'inventory',
-                            'id'       => $item->id,
-                            'name'     => $med->display_name,
-                            'price'    => $item->unit_price,
-                            'quantity' => $med->duration_days ?? 1,
-                            'source'   => 'prescription',
-                        ];
+                        // We still only auto-add to cart if there's stock, 
+                        // but the summary modal will show everything.
+                        if ($item->current_stock > $item->minimum_stock_level) {
+                            $preloadedItems[] = [
+                                'type' => 'inventory',
+                                'id' => $item->id,
+                                'name' => $med->name ?? ($item->generic_name ?: $item->name),
+                                'price' => $item->unit_price,
+                                'quantity' => ($med->per_day ?? 1) * ($med->duration_days ?? 1),
+                                'source' => 'prescription',
+                            ];
+                        }
                     }
                 }
             }
@@ -242,26 +262,30 @@ class BillingInvoiceController extends Controller
             'inventoryItems',
             'preloadedItems',
             'preselectedPatientId',
-            'preselectedDoctorId'
+            'preselectedDoctorId',
+            'appointmentId',
+            'appointment'
         ));
     }
 
     public function posStore(Request $request)
     {
         $validated = $request->validate([
-            'patient_id'         => 'required|exists:patients,id',
-            'doctor_id'          => 'nullable|exists:doctors,id',
-            'items'              => 'required|array|min:1',
-            'items.*.type'       => 'required|in:service,inventory,treatment',
-            'items.*.id'         => 'required|integer',
-            'items.*.quantity'   => 'required|integer|min:1',
-            'items.*.doctor_id'  => 'required_if:items.*.type,treatment|nullable|exists:doctors,id',
-            'tax_rate'           => 'nullable|numeric|min:0|max:100',
-            'discount_amount'    => 'nullable|numeric|min:0',
-            'payment_method'     => 'nullable|in:cash,card,bank_transfer,cheque,other',
-            'payment_reference'  => 'nullable|string|max:255',
-            'amount_paid_now'    => 'nullable|numeric|min:0',
-            'notes'              => 'nullable|string',
+            'patient_id' => 'required|exists:patients,id',
+            'doctor_id' => 'nullable|exists:doctors,id',
+            'items' => 'required|array|min:1',
+            'items.*.type' => 'required|in:service,inventory,treatment',
+            'items.*.id' => 'required|integer',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.doctor_id' => 'required_if:items.*.type,treatment|nullable|exists:doctors,id',
+            'tax_rate' => 'nullable|numeric|min:0|max:100',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|in:cash,card,bank_transfer,cheque,other',
+            'payment_reference' => 'nullable|string|max:255',
+            'amount_paid_now' => 'nullable|numeric|min:0',
+            'appointment_id' => 'nullable|exists:appointments,id',
+            'notes' => 'nullable|string',
+            'is_printed' => 'boolean',
         ]);
 
         return DB::transaction(function () use ($validated) {
@@ -270,25 +294,25 @@ class BillingInvoiceController extends Controller
 
             foreach ($validated['items'] as $cartItem) {
                 $type = $cartItem['type'];
-                $id   = $cartItem['id'];
-                $qty  = $cartItem['quantity'];
+                $id = $cartItem['id'];
+                $qty = $cartItem['quantity'];
 
                 if ($type === 'service') {
                     $item = Service::findOrFail($id);
                     $price = $item->price;
-                    $name  = $item->name;
+                    $name = $item->name;
                 } elseif ($type === 'treatment') {
                     $item = Treatment::findOrFail($id);
                     $price = $item->doctors()->find($cartItem['doctor_id'])?->pivot->price
                         ?? $item->price ?? 0;
-                    $name  = $item->name;
+                    $name = $item->name;
                 } else {
                     $item = InventoryItem::findOrFail($id);
-                    if ($item->current_stock < $qty) {
-                        throw new \Exception("Insufficient stock for {$item->name}");
+                    if ($item->current_stock - $qty < $item->minimum_stock_level) {
+                        throw new \Exception("Cannot fulfill request: Minimum stock level reached for {$item->name}");
                     }
                     $price = $item->unit_price;
-                    $name  = $item->name . ($item->generic_name ? " ({$item->generic_name})" : '');
+                    $name = $item->name . ($item->generic_name ? " ({$item->generic_name})" : '');
                 }
 
                 $lineTotal = $price * $qty;
@@ -296,36 +320,38 @@ class BillingInvoiceController extends Controller
 
                 $invoiceItems[] = [
                     'itemable_type' => $type === 'service' ? Service::class : ($type === 'treatment' ? Treatment::class : InventoryItem::class),
-                    'itemable_id'   => $id,
-                    'description'   => $name,
-                    'quantity'      => $qty,
-                    'unit_price'    => $price,
-                    'total'         => $lineTotal,
-                    'doctor_id'     => $cartItem['doctor_id'] ?? null,
+                    'itemable_id' => $id,
+                    'description' => $name,
+                    'quantity' => $qty,
+                    'unit_price' => $price,
+                    'total' => $lineTotal,
+                    'doctor_id' => $cartItem['doctor_id'] ?? null,
                 ];
             }
 
-            $taxRate   = $validated['tax_rate'] ?? 0;
+            $taxRate = $validated['tax_rate'] ?? 0;
             $taxAmount = $subtotal * ($taxRate / 100);
-            $discount  = $validated['discount_amount'] ?? 0;
-            $total     = $subtotal + $taxAmount - $discount;
+            $discount = $validated['discount_amount'] ?? 0;
+            $total = $subtotal + $taxAmount - $discount;
 
             $amountPaidNow = $validated['amount_paid_now'] ?? 0;
 
             $invoice = BillingInvoice::create([
-                'invoice_number'   => $this->generateInvoiceNumber(),
-                'patient_id'       => $validated['patient_id'],
-                'invoice_date'     => now(),
-                'due_date'         => now()->addDays(7),
-                'type'             => 'POS',
-                'subtotal'         => $subtotal,
-                'tax_amount'       => $taxAmount,
-                'discount_amount'  => $discount,
-                'total'            => $total,
-                'paid_amount'      => $amountPaidNow,
-                'balance_due'      => $total - $amountPaidNow,
-                'status'           => $this->determineStatus($amountPaidNow, $total),
-                'notes'            => $validated['notes'] ?? null,
+                'invoice_number' => $this->generateInvoiceNumber(),
+                'patient_id' => $validated['patient_id'],
+                'invoice_date' => now(),
+                'due_date' => now()->addDays(7),
+                'appointment_id' => $validated['appointment_id'] ?? null,
+                'type' => 'POS',
+                'subtotal' => $subtotal,
+                'tax_amount' => $taxAmount,
+                'discount_amount' => $discount,
+                'total' => $total,
+                'paid_amount' => $amountPaidNow,
+                'balance_due' => $total - $amountPaidNow,
+                'status' => $this->determineStatus($amountPaidNow, $total),
+                'notes' => $validated['notes'] ?? null,
+                'is_printed' => $validated['is_printed'] ?? true,
             ]);
 
             foreach ($invoiceItems as $itemData) {
@@ -336,12 +362,12 @@ class BillingInvoiceController extends Controller
                 $paymentMethod = $validated['payment_method'] ?? 'cash';
 
                 $payment = $invoice->payments()->create([
-                    'amount'        => $amountPaidNow,
-                    'payment_date'  => now(),
-                    'method'        => $paymentMethod,
-                    'reference'     => $validated['payment_reference'] ?? null,
-                    'notes'         => 'POS partial/full payment',
-                    'user_id'       => auth()->id(),
+                    'amount' => $amountPaidNow,
+                    'payment_date' => now(),
+                    'method' => $paymentMethod,
+                    'reference' => $validated['payment_reference'] ?? null,
+                    'notes' => 'POS partial/full payment',
+                    'user_id' => auth()->id(),
                 ]);
 
                 $openRegister = auth()->user()
@@ -354,23 +380,23 @@ class BillingInvoiceController extends Controller
                     $payment->update(['cash_register_id' => $openRegister->id]);
 
                     $transactionType = match (strtolower($paymentMethod)) {
-                        'cash'          => 'cash_sale',
-                        'card'          => 'card_sale',
+                        'cash' => 'cash_sale',
+                        'card' => 'card_sale',
                         'bank_transfer' => 'bank_transfer_sale',
-                        'cheque'        => 'cheque_sale',
-                        'other'         => 'other_sale',
-                        default         => 'cash_sale',
+                        'cheque' => 'cheque_sale',
+                        'other' => 'other_sale',
+                        default => 'cash_sale',
                     };
 
                     $openRegister->transactions()->create([
-                        'user_id'            => auth()->id(),
+                        'user_id' => auth()->id(),
                         'billing_invoice_id' => $invoice->id,
-                        'payment_id'         => $payment->id,
-                        'type'               => $transactionType,
-                        'payment_method'     => $paymentMethod,
-                        'amount'             => $amountPaidNow,
-                        'happened_at'        => now(),
-                        'notes'              => 'POS sale - Invoice #' . $invoice->invoice_number,
+                        'payment_id' => $payment->id,
+                        'type' => $transactionType,
+                        'payment_method' => $paymentMethod,
+                        'amount' => $amountPaidNow,
+                        'happened_at' => now(),
+                        'notes' => 'POS sale - Invoice #' . $invoice->invoice_number,
                     ]);
 
                     $openRegister->expected_closing_balance = $openRegister->calculateExpectedClosingBalance();
@@ -385,14 +411,28 @@ class BillingInvoiceController extends Controller
                 }
             }
 
+            if ($invoice->isFullyPaid() && $invoice->appointment_id) {
+                $appointment = Appointment::find($invoice->appointment_id);
+                if ($appointment) {
+                    $appointment->update(['status' => Appointment::STATUS_PAID]);
+                    
+                    // Trigger Payment Notification
+                    $payment = $invoice->payments()->latest()->first();
+                    if ($payment) {
+                        NotificationService::send('appointment_paid', new AppointmentPaid($payment), array_filter([$appointment->doctor?->user, $appointment->patient?->user]));
+                    }
+                }
+            }
+
             return response()->json([
-                'success'       => true,
-                'invoice_id'    => $invoice->id,
-                'invoice_number'=> $invoice->invoice_number,
-                'total'         => $total,
-                'paid_amount'   => $amountPaidNow,
-                'balance_due'   => $invoice->balance_due,
-                'status'        => $invoice->status,
+                'success' => true,
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'total' => $total,
+                'paid_amount' => $amountPaidNow,
+                'balance_due' => $invoice->balance_due,
+                'status' => $invoice->status,
+                'is_printed' => (bool)$invoice->is_printed,
             ]);
         });
     }
@@ -408,18 +448,18 @@ class BillingInvoiceController extends Controller
                 $pivotPrice = $t->pivot->price ?? 0;
 
                 return [
-                    'id'      => $t->id,
-                    'name'    => $t->name,
-                    'code'    => $t->code,
-                    'price'   => (float) $pivotPrice,
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'code' => $t->code,
+                    'price' => (float) $pivotPrice,
                     'display' => $pivotPrice > 0 ? number_format($pivotPrice, 2) : '—'
                 ];
             });
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
             'treatments' => $treatments,
-            'doctor_name'=> $doctor->full_name
+            'doctor_name' => $doctor->full_name
         ]);
     }
 
@@ -443,10 +483,44 @@ class BillingInvoiceController extends Controller
     public function print(BillingInvoice $invoice)
     {
         $invoice->load(['patient', 'items.itemable', 'payments.user']);
-        $pdf = \PDF::loadView('invoices.print', compact('invoice'))
-            ->setPaper('a4')
+        $pdf = Pdf::loadView('invoices.print', compact('invoice'))
+            ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'sans-serif', 'isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
         return $pdf->stream('invoice-' . $invoice->invoice_number . '.pdf');
+    }
+
+    public function destroy(BillingInvoice $invoice)
+    {
+        $invoice->delete();
+
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => __('file.invoice_deleted_successfully')]);
+        }
+
+        return back()->with('success', __('file.invoice_deleted_successfully'));
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (is_string($ids)) {
+            $ids = array_filter(explode(',', $ids));
+        }
+
+        if (empty($ids)) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => __('file.no_items_selected')], 400);
+            }
+            return back()->with('error', __('file.no_items_selected'));
+        }
+
+        BillingInvoice::whereIn('id', $ids)->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => __('file.invoices_deleted_successfully')]);
+        }
+
+        return back()->with('success', __('file.invoices_deleted_successfully'));
     }
 
     private function generateInvoiceNumber()
@@ -459,9 +533,64 @@ class BillingInvoiceController extends Controller
         return $prefix . '-' . str_pad($seq, 5, '0', STR_PAD_LEFT);
     }
 
+    public function lastTransaction()
+    {
+        $lastInvoice = BillingInvoice::with('patient')
+            ->where('type', 'POS')
+            ->latest()
+            ->first();
+
+        if (!$lastInvoice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No transactions found.'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'invoice_number' => $lastInvoice->invoice_number,
+            'patient_name' => $lastInvoice->patient?->full_name ?? 'N/A',
+            'time' => $lastInvoice->created_at->format('h:i A'),
+            'payment_method' => $lastInvoice->payments()->latest()->first()?->method ?? 'N/A',
+            'total' => number_format($lastInvoice->total, 2),
+            'id' => $lastInvoice->id,
+        ]);
+    }
+
+    public function completedAppointments()
+    {
+        $appointments = \App\Models\Appointment::with(['patient', 'doctor'])
+            ->where('status', \App\Models\Appointment::STATUS_COMPLETED)
+            ->whereDoesntHave('invoices')
+            ->latest('completed_at')
+            ->get();
+
+        $data = $appointments->map(function ($app) {
+            return [
+                'id' => $app->id,
+                'patient_name' => $app->patient?->full_name ?? 'N/A',
+                'doctor_name' => $app->doctor?->full_name ?? 'N/A',
+                'completed_at' => $app->completed_at ? $app->completed_at->format('M d, Y h:i A') : ($app->updated_at ? $app->updated_at->format('M d, Y h:i A') : 'N/A'),
+                'appointment_number' => $app->appointment_number ?? $app->id,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'appointments' => $data
+        ]);
+    }
+
     public function printHtml(BillingInvoice $invoice)
     {
         $invoice->load(['patient', 'items.itemable', 'payments.user']);
-        return view('invoices.print-html', compact('invoice'));
+        $redirect = request('redirect', 'invoices');
+        
+        $settings = \App\Models\Setting::first();
+        $paperSize = $settings->invoice_paper_size ?? 'A4';
+        $viewName = $paperSize === '80mm' ? 'invoices.print-html-80mm' : 'invoices.print-html-a4';
+        
+        return view($viewName, compact('invoice', 'redirect'));
     }
 }

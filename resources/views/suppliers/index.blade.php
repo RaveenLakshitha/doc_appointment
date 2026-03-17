@@ -3,348 +3,409 @@
 @section('title', __('file.suppliers'))
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8 pb-4 sm:py-12 pt-20">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
-                {{ __('file.suppliers') }}
-            </h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {{ __('file.manage_suppliers') }}
-            </p>
+    <div class="px-4 sm:px-6 lg:px-8 pb-4 sm:py-12 pt-20">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
+                    {{ __('file.suppliers') }}
+                </h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('file.manage_suppliers') }}
+                </p>
+            </div>
+
+            <div class="flex flex-row-reverse sm:flex-row gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="relative">
+                    <button type="button" id="filter-toggle"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition border border-gray-300 dark:border-gray-600 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        {{ __('file.Filters') }}
+                        <span id="filter-count"
+                            class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <a href="{{ route('suppliers.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="hidden sm:inline">{{ __('file.add_supplier') }}</span>
+                    <span class="sm:hidden">Add</span>
+                </a>
+            </div>
         </div>
 
-        <div class="flex flex-row-reverse sm:flex-row gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            <div class="relative">
-                <button type="button" id="filter-toggle"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition border border-gray-300 dark:border-gray-600 shadow-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                    </svg>
-                    {{ __('file.Filters') }}
-                    <span id="filter-count" class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        <div id="filter-backdrop"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 opacity-0"></div>
+
+        <div id="filter-drawer"
+            class="fixed z-50 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out
+            bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl translate-y-full
+            md:top-0 md:right-0 md:bottom-auto md:left-auto md:h-full md:w-96 md:max-h-none md:rounded-none md:rounded-l-lg md:translate-y-0 md:translate-x-full">
+
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ __('file.filters') }}
+                </h3>
+                <button type="button" id="close-drawer"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <a href="{{ route('suppliers.create') }}" 
-               class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span class="hidden sm:inline">{{ __('file.add_supplier') }}</span>
-                <span class="sm:hidden">Add</span>
-            </a>
-        </div>
-    </div>
-
-    <div id="filter-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 opacity-0"></div>
-
-    <div id="filter-drawer" class="fixed z-50 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out
-        bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl translate-y-full
-        md:top-0 md:right-0 md:bottom-auto md:left-auto md:h-full md:w-96 md:max-h-none md:rounded-none md:rounded-l-lg md:translate-y-0 md:translate-x-full">
-        
-        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ __('file.filters') }}
-            </h3>
-            <button type="button" id="close-drawer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="p-6 overflow-y-auto max-h-[calc(85vh-140px)] md:max-h-[calc(100vh-140px)]">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ __('file.status') }}
-                    </label>
-                    <select id="filter-status" class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        <option value="">{{ __('file.all_statuses') }}</option>
-                        <option value="active">{{ __('file.active') }}</option>
-                        <option value="inactive">{{ __('file.inactive') }}</option>
-                    </select>
+            <div class="p-6 overflow-y-auto max-h-[calc(85vh-140px)] md:max-h-[calc(100vh-140px)]">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {{ __('file.status') }}
+                        </label>
+                        <select id="filter-status"
+                            class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                            <option value="">{{ __('file.all_statuses') }}</option>
+                            <option value="active">{{ __('file.active') }}</option>
+                            <option value="inactive">{{ __('file.inactive') }}</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
+
+            <div
+                class="bottom-0 left-0 right-0 flex gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                <button type="button" id="clear-filters"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    {{ __('file.clear') }}
+                </button>
+                <button type="button" id="apply-filters"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
+                    {{ __('file.apply') }}
+                </button>
             </div>
         </div>
 
-        <div class="bottom-0 left-0 right-0 flex gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-            <button type="button" id="clear-filters" class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-                {{ __('file.clear') }}
-            </button>
-            <button type="button" id="apply-filters" class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
-                {{ __('file.apply') }}
-            </button>
+        <div id="bulk-delete-form" class="hidden mb-6">
+            <form method="POST" action="{{ route('suppliers.bulkDelete') }}" id="bulk-delete-form-el"
+                class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex justify-between items-center">
+                @csrf
+                <div id="bulk-ids-container"></div>
+                <span class="text-sm font-medium text-red-800 dark:text-red-300">
+                    <span id="selected-count">0</span> {{ __('file.supplier_selected') }}
+                </span>
+                <button type="submit"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition">
+                    {{ __('file.delete_selected') }}
+                </button>
+            </form>
+        </div>
+
+        <div
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-right pr-6" style="width: 80px; min-width: 80px;">
+                                <input type="checkbox" id="select-all"
+                                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.name') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.contact_person') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.email') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.phone') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.location') }}</th>
+                            <th
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.status') }}</th>
+                            <th
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ __('file.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div id="bulk-delete-form" class="hidden mb-6">
-        <form method="POST" action="{{ route('suppliers.bulkDelete') }}" class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex justify-between items-center">
-            @csrf
-            <input type="hidden" name="ids" id="bulk-ids">
-            <span class="text-sm font-medium text-red-800 dark:text-red-300">
-                <span id="selected-count">0</span> {{ __('file.supplier_selected') }}
-            </span>
-            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition">
-                {{ __('file.delete_selected') }}
-            </button>
-        </form>
-    </div>
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterToggle = document.getElementById('filter-toggle');
+                const filterDrawer = document.getElementById('filter-drawer');
+                const filterBackdrop = document.getElementById('filter-backdrop');
+                const closeDrawer = document.getElementById('close-drawer');
+                const filterCount = document.getElementById('filter-count');
+                const filterStatus = document.getElementById('filter-status');
 
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-900">
-                    <tr>
-                        <th class="px-4 sm:px-6 py-3 text-right pr-6" style="width: 80px; min-width: 80px;">
-                            <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.name') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.contact_person') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.email') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.phone') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.location') }}</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.status') }}</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('file.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                function openDrawer() {
+                    filterBackdrop.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    setTimeout(() => {
+                        filterBackdrop.classList.add('opacity-100');
+                        filterBackdrop.classList.remove('opacity-0');
+                        if (window.innerWidth >= 768) {
+                            filterDrawer.classList.remove('md:translate-x-full');
+                        } else {
+                            filterDrawer.classList.remove('translate-y-full');
+                        }
+                    }, 10);
+                }
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const filterToggle   = document.getElementById('filter-toggle');
-    const filterDrawer   = document.getElementById('filter-drawer');
-    const filterBackdrop = document.getElementById('filter-backdrop');
-    const closeDrawer    = document.getElementById('close-drawer');
-    const filterCount    = document.getElementById('filter-count');
-    const filterStatus   = document.getElementById('filter-status');
-
-    function openDrawer() {
-        filterBackdrop.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        setTimeout(() => {
-            filterBackdrop.classList.add('opacity-100');
-            filterBackdrop.classList.remove('opacity-0');
-            if (window.innerWidth >= 768) {
-                filterDrawer.classList.remove('md:translate-x-full');
-            } else {
-                filterDrawer.classList.remove('translate-y-full');
-            }
-        }, 10);
-    }
-
-    function closeDrawerFunc() {
-        filterBackdrop.classList.remove('opacity-100');
-        filterBackdrop.classList.add('opacity-0');
-        if (window.innerWidth >= 768) {
-            filterDrawer.classList.add('md:translate-x-full');
-        } else {
-            filterDrawer.classList.add('translate-y-full');
-        }
-        setTimeout(() => {
-            filterBackdrop.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 300);
-    }
-
-    filterToggle.addEventListener('click', e => { e.stopPropagation(); openDrawer(); });
-    closeDrawer.addEventListener('click', closeDrawerFunc);
-    filterBackdrop.addEventListener('click', closeDrawerFunc);
-    filterDrawer.addEventListener('click', e => e.stopPropagation());
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && !filterBackdrop.classList.contains('hidden')) closeDrawerFunc();
-    });
-
-    function updateFilterCount() {
-        const count = [filterStatus.value].filter(Boolean).length;
-        filterCount.textContent = count;
-        filterCount.classList.toggle('hidden', count === 0);
-    }
-
-    const table = $('#docapp-table').DataTable({
-        processing: true,
-        serverSide: true,
-        responsive: true,
-        ajax: {
-            url: '{{ route("suppliers.datatable") }}',
-            data: function(d) {
-                d.status = filterStatus.value;
-            }
-        },
-        order: [[1, 'asc']],
-        columnDefs: [
-            { targets: 0, orderable: false, className: 'dtr-control', responsivePriority: 1 },
-            { targets: 1, responsivePriority: 2 },
-            { targets: -1, orderable: false, searchable: false, responsivePriority: 1 }
-        ],
-        columns: [
-            { 
-                data: 'id',
-                render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`,
-                className: 'text-center',
-                orderable: false
-            },
-            { 
-                data: 'name', 
-                render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '-'}</div>` 
-            },
-            { data: 'contact_person', render: data => data || '-' },
-            { 
-                data: 'email', 
-                render: data => `<span class="text-sm text-gray-600 dark:text-gray-400 truncate">${data || '-'}</span>` 
-            },
-            { data: 'phone', render: data => data || '-' },
-            { data: 'location', render: data => data || '-' },
-            { 
-                data: 'status_html',
-                className: 'text-center',
-                render: data => data || '-'
-            },
-            { 
-                data: null,
-                orderable: false,
-                searchable: false,
-                className: 'text-right whitespace-nowrap',
-                render: (data, type, row) => `
-                    <div class="flex items-center justify-end gap-1">
-                        <a href="${row.show_url}" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="View">
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                        </a>
-                        <a href="${row.edit_url}" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Edit">
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        </a>
-                        <form method="POST" action="${row.delete_url}" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" onclick="return confirm('{{ __("file.confirm_delete_supplier") }}')" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors" title="Delete">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        </form>
-                    </div>
-                `
-            }
-        ],
-        layout: {
-            topStart: {
-                buttons: [
-                    { 
-                        extend: 'pageLength', 
-                        className: 'inline-flex items-center gap-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium transition shadow-sm' 
-                    },
-                    { 
-                        extend: 'collection', 
-                        text: "{{ __('file.Export') }}", 
-                        className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium', 
-                        buttons: [
-                            { 
-                                extend: 'copy', 
-                                text: "{{ __('file.copy') }}",
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } 
-                            },
-                            { 
-                                extend: 'excel', 
-                                text: 'Excel', 
-                                filename: 'Suppliers_{{ date("Y-m-d") }}',
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } 
-                            },
-                            { 
-                                extend: 'csv', 
-                                text: 'CSV', 
-                                filename: 'Suppliers_{{ date("Y-m-d") }}',
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } 
-                            },
-                            { 
-                                extend: 'pdf', 
-                                text: 'PDF', 
-                                filename: 'Suppliers_{{ date("Y-m-d") }}', 
-                                title: 'Supplier List',
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } 
-                            },
-                            { 
-                                extend: 'print', 
-                                text: "{{ __('file.print') }}",
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } 
-                            }
-                        ]
+                function closeDrawerFunc() {
+                    filterBackdrop.classList.remove('opacity-100');
+                    filterBackdrop.classList.add('opacity-0');
+                    if (window.innerWidth >= 768) {
+                        filterDrawer.classList.add('md:translate-x-full');
+                    } else {
+                        filterDrawer.classList.add('translate-y-full');
                     }
-                ]
-            },
-            topEnd: 'search',
-            bottomStart: 'info',
-            bottomEnd: 'paging'
-        },
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
-        language: {
-            search: "",
-            searchPlaceholder: "{{ __('file.search_suppliers') }}",
-            lengthMenu: "{{ __('file.show_entries') }}",
-            info: "{{ __('file.showing_entries') }}",
-            emptyTable: "{{ __('file.no_items_found') }}",
-            processing: "{{ __('file.processing') }}"
-        },
-        autoWidth: false,
-        scrollX: false
-    });
+                    setTimeout(() => {
+                        filterBackdrop.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    }, 300);
+                }
 
-    document.getElementById('apply-filters').addEventListener('click', () => {
-        table.draw();
-        updateFilterCount();
-        closeDrawerFunc();
-    });
+                filterToggle.addEventListener('click', e => { e.stopPropagation(); openDrawer(); });
+                closeDrawer.addEventListener('click', closeDrawerFunc);
+                filterBackdrop.addEventListener('click', closeDrawerFunc);
+                filterDrawer.addEventListener('click', e => e.stopPropagation());
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape' && !filterBackdrop.classList.contains('hidden')) closeDrawerFunc();
+                });
 
-    document.getElementById('clear-filters').addEventListener('click', () => {
-        filterStatus.value = '';
-        table.draw();
-        updateFilterCount();
-    });
+                function updateFilterCount() {
+                    const count = [filterStatus.value].filter(Boolean).length;
+                    filterCount.textContent = count;
+                    filterCount.classList.toggle('hidden', count === 0);
+                }
 
-    filterStatus.addEventListener('change', updateFilterCount);
+                const table = $('#docapp-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    responsive: false,
+                    ajax: {
+                        url: '{{ route("suppliers.datatable") }}',
+                        data: function (d) {
+                            d.status = filterStatus.value;
+                        }
+                    },
+                    order: [[1, 'asc']],
+                    columnDefs: [
+                        { targets: 0, orderable: false, className: 'dtr-control', responsivePriority: 1 },
+                        { targets: 1, responsivePriority: 2 },
+                        { targets: -1, orderable: false, searchable: false, responsivePriority: 1 }
+                    ],
+                    columns: [
+                        {
+                            data: 'id',
+                            render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`,
+                            className: 'text-center',
+                            orderable: false
+                        },
+                        {
+                            data: 'name',
+                            render: data => `<div class="font-medium text-gray-900 dark:text-white">${data || '-'}</div>`
+                        },
+                        { data: 'contact_person', render: data => data || '-' },
+                        {
+                            data: 'email',
+                            render: data => `<span class="text-sm text-gray-600 dark:text-gray-400 truncate">${data || '-'}</span>`
+                        },
+                        { data: 'phone', render: data => data || '-' },
+                        { data: 'location', render: data => data || '-' },
+                        {
+                            data: 'status_html',
+                            className: 'text-center',
+                            render: data => data || '-'
+                        },
+                        {
+                            data: null,
+                            orderable: false,
+                            searchable: false,
+                            className: 'text-right whitespace-nowrap',
+                            render: (data, type, row) => `
+                            <div class="flex items-center justify-end gap-1">
+                                <a href="${row.show_url}" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="View">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </a>
+                                <a href="${row.edit_url}" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Edit">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </a>
+                                <button type="button" onclick="confirmDelete('${row.delete_url}')" class="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors" title="Delete">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        `
+                        }
+                    ],
+                    layout: {
+                        topStart: {
+                            buttons: [
+                                {
+                                    extend: 'pageLength',
+                                    className: 'inline-flex items-center gap-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium transition shadow-sm'
+                                },
+                                {
+                                    extend: 'collection',
+                                    text: "{{ __('file.Export') }}",
+                                    className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium',
+                                    buttons: [
+                                        {
+                                            extend: 'copy',
+                                            text: "{{ __('file.copy') }}",
+                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                        },
+                                        {
+                                            extend: 'excel',
+                                            text: 'Excel',
+                                            filename: 'Suppliers_{{ date("Y-m-d") }}',
+                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                        },
+                                        {
+                                            extend: 'csv',
+                                            text: 'CSV',
+                                            filename: 'Suppliers_{{ date("Y-m-d") }}',
+                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                        },
+                                        {
+                                            extend: 'pdf',
+                                            text: 'PDF',
+                                            filename: 'Suppliers_{{ date("Y-m-d") }}',
+                                            title: 'Supplier List',
+                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            text: "{{ __('file.print') }}",
+                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        topEnd: 'search',
+                        bottomStart: 'info',
+                        bottomEnd: 'paging'
+                    },
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    language: {
+                        search: "",
+                        searchPlaceholder: "{{ __('file.search_suppliers') }}",
+                        lengthMenu: "{{ __('file.show_entries') }}",
+                        info: "{{ __('file.showing_entries') }}",
+                        emptyTable: "{{ __('file.no_items_found') }}",
+                        processing: "{{ __('file.processing') }}"
+                    },
+                    autoWidth: false,
+                    scrollX: false
+                });
 
-    $('#select-all').on('change', function () {
-        $('.row-checkbox').prop('checked', this.checked);
-        updateBulkDelete();
-    });
+                document.getElementById('apply-filters').addEventListener('click', () => {
+                    table.draw();
+                    updateFilterCount();
+                    closeDrawerFunc();
+                });
 
-    $(document).on('change', '.row-checkbox', updateBulkDelete);
+                document.getElementById('clear-filters').addEventListener('click', () => {
+                    filterStatus.value = '';
+                    table.draw();
+                    updateFilterCount();
+                });
 
-    function updateBulkDelete() {
-        const count = $('.row-checkbox:checked').length;
-        $('#bulk-delete-form').toggleClass('hidden', count === 0);
-        $('#selected-count').text(count);
-        $('#bulk-ids').val($('.row-checkbox:checked').map(function() { return this.value; }).get().join(','));
-    }
+                filterStatus.addEventListener('change', updateFilterCount);
 
-    $('#bulk-delete-form form').on('submit', function (e) {
-        e.preventDefault();
-        if (!confirm('{{ __("file.confirm_delete_selected_suppliers") }}')) return;
+                $('#select-all').on('change', function () {
+                    $('.row-checkbox').prop('checked', this.checked);
+                    updateBulkDelete();
+                });
 
-        $.ajax({
-            url: this.action,
-            method: 'POST',
-            data: $(this).serialize(),
-            success: (data) => {
-                table.draw(false);
-                $('.row-checkbox').prop('checked', false);
-                $('#select-all').prop('checked', false);
-                updateBulkDelete();
-            },
-            error: (xhr) => {
-                alert(xhr.responseJSON?.message || 'Error deleting selected suppliers');
-            }
-        });
-    });
+                $(document).on('change', '.row-checkbox', updateBulkDelete);
 
-    updateFilterCount();
-});
-</script>
-@endpush
+                function updateBulkDelete() {
+                    const checked = $('.row-checkbox:checked');
+                    const count = checked.length;
+                    $('#bulk-delete-form').toggleClass('hidden', count === 0);
+                    $('#selected-count').text(count);
+                    
+                    const container = document.getElementById('bulk-ids-container');
+                    container.innerHTML = '';
+                    checked.each(function () {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = this.value;
+                        container.appendChild(input);
+                    });
+                }
+
+                $('#bulk-delete-form-el').on('submit', function (e) {
+                    e.preventDefault();
+                    if (!confirm('{{ __("file.confirm_delete_selected_items") }}')) return;
+
+                    $.ajax({
+                        url: this.action,
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        success: (response) => {
+                            table.draw(false);
+                            $('.row-checkbox').prop('checked', false); // Clear individual checkboxes
+                            $('#select-all').prop('checked', false);
+                            updateBulkDelete();
+                            if (typeof showNotification === 'function') showNotification('Success', response.message || 'Suppliers deleted successfully.', 'success');
+                        },
+                        error: (xhr) => {
+                            const msg = xhr.responseJSON?.message || 'Delete failed.';
+                            if (typeof showNotification === 'function') showNotification('Error', msg, 'error');
+                        }
+                    });
+                });
+
+                window.confirmDelete = function (url) {
+                    if (!confirm('{{ __("file.confirm_delete_item") }}')) return;
+                    
+                    $.ajax({
+                        url: url,
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            _method: 'DELETE'
+                        },
+                        success: function (response) {
+                        table.draw(false);
+                        if (response.success) {
+                            if (typeof showNotification === 'function') showNotification('Success', response.message, 'success');
+                        } else {
+                            if (typeof showNotification === 'function') showNotification('Error', response.message, 'error');
+                        }
+                    },
+                    error: function (xhr) {
+                        const msg = xhr.responseJSON?.message || 'Delete failed.';
+                        if (typeof showNotification === 'function') showNotification('Error', msg, 'error');
+                    }
+                    });
+                };
+
+                updateFilterCount();
+            });
+        </script>
+    @endpush
 @endsection

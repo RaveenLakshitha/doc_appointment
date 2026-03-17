@@ -1,42 +1,51 @@
-{{-- resources/views/services/edit.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Edit Service')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
-    <div class="mb-8">
-        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
-            <a href="{{ route('services.index') }}" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Services</a>
+    <div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
+
+        <div class=" flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <a href="{{ route('services.index') }}"
+                class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Services</a>
             <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
             <span class="text-gray-900 dark:text-white">Edit Service</span>
         </div>
         <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">Edit Service: {{ $service->name }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update service details, equipment, and availability</p>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update service details and assigned equipment</p>
     </div>
 
     <form method="POST" action="{{ route('services.update', $service) }}" class="space-y-8">
         @csrf @method('PUT')
 
-        <div class="bg-white dark:bg-transparent rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div
+            class="bg-white dark:bg-transparent rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="border-b border-gray-200 dark:border-gray-700">
-                <nav class="flex overflow-x-auto scrollbar-hide" aria-label="Tabs">
+                <!-- Mobile Tab Selector (Visible only on mobile) -->
+                <div class="sm:hidden p-4 bg-white dark:bg-gray-800">
+                    <label for="mobile-tab-select" class="sr-only">Select a tab</label>
+                    <select id="mobile-tab-select" onchange="switchTab(this.value)"
+                        class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-gray-900 dark:focus:ring-gray-500">
+                        <option value="basic">Basic Information</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="details">Details</option>
+                    </select>
+                </div>
+
+                <!-- Desktop/Tablet Tab Navigation (Hidden on mobile) -->
+                <nav class="hidden sm:flex overflow-x-auto no-scrollbar " aria-label="Tabs">
                     <button type="button" onclick="switchTab('basic')" id="tab-basic"
-                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-400 bg-gray-50 dark:bg-gray-700/50">
+                        class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-400 bg-gray-50 dark:bg-gray-700/50">
                         Basic Information
                     </button>
                     <button type="button" onclick="switchTab('equipment')" id="tab-equipment"
-                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
+                        class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
                         Equipment
                     </button>
-                    <button type="button" onclick="switchTab('availability')" id="tab-availability"
-                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
-                        Availability Slots
-                    </button>
                     <button type="button" onclick="switchTab('details')" id="tab-details"
-                            class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
+                        class="tab-button flex-1 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all">
                         Details
                     </button>
                 </nav>
@@ -47,13 +56,17 @@
                 <div id="content-basic" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Name <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" value="{{ old('name', $service->name) }}" required class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Name
+                                <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" value="{{ old('name', $service->name) }}" required
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                             @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department <span class="text-red-500">*</span></label>
-                            <select name="department_id" required class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department <span
+                                    class="text-red-500">*</span></label>
+                            <select name="department_id" required
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 <option value="">Select department</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id', $service->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
@@ -63,26 +76,35 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type <span class="text-red-500">*</span></label>
-                            <select name="type" required class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type <span
+                                    class="text-red-500">*</span></label>
+                            <select name="type" required
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 <option value="">Select type</option>
                                 <option value="Diagnostic" {{ old('type', $service->type) == 'Diagnostic' ? 'selected' : '' }}>Diagnostic</option>
                                 <option value="Therapeutic" {{ old('type', $service->type) == 'Therapeutic' ? 'selected' : '' }}>Therapeutic</option>
                                 <option value="Consultation" {{ old('type', $service->type) == 'Consultation' ? 'selected' : '' }}>Consultation</option>
-                                <option value="Other" {{ old('type', $service->type) == 'Other' ? 'selected' : '' }}>Other</option>
+                                <option value="Other" {{ old('type', $service->type) == 'Other' ? 'selected' : '' }}>Other
+                                </option>
                             </select>
                             @error('type') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration (minutes) <span class="text-red-500">*</span></label>
-                            <input type="number" name="duration_minutes" value="{{ old('duration_minutes', $service->duration_minutes) }}" required min="5" step="5" class="w-full px-3 py-2.5 border rounded-lg dark:bg-gray-800">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration
+                                (minutes)</label>
+                            <input type="number" name="duration_minutes"
+                                value="{{ old('duration_minutes', $service->duration_minutes) }}" min="5" step="5"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                             @error('duration_minutes') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price ($) <span class="text-red-500">*</span></label>
-                            <input type="number" name="price" value="{{ old('price', $service->price) }}" required min="0" step="0.01" class="w-full px-3 py-2.5 border rounded-lg dark:bg-gray-800">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price ($) <span
+                                    class="text-red-500">*</span></label>
+                            <input type="number" name="price" value="{{ old('price', $service->price) }}" required min="0"
+                                step="0.01"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
                             @error('price') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -90,16 +112,16 @@
 
                 <!-- Equipment Assignment -->
                 <div id="content-equipment" class="tab-content hidden">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Assign Equipment (Optional)</label>
-                    <div class="space-y-3">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Assign Equipment
+                        (Optional)</label>
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
                         @foreach($equipment as $eq)
                             <label class="flex items-center">
-                                <input type="checkbox" name="equipment[]" value="{{ $eq->id }}"
-                                       {{ $service->equipment->contains($eq->id) || in_array($eq->id, old('equipment', [])) ? 'checked' : '' }}
-                                       class="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500">
+                                <input type="checkbox" name="equipment[]" value="{{ $eq->id }}" {{ $service->equipment->contains($eq->id) || in_array($eq->id, old('equipment', [])) ? 'checked' : '' }}
+                                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700">
                                 <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $eq->name }} 
-                                    <span class="text-xs text-gray-500">({{ $eq->status }})</span>
+                                    {{ $eq->name }}
+                                    <span class="text-xs text-gray-500 ml-1">({{ $eq->status ?? 'N/A' }})</span>
                                 </span>
                             </label>
                         @endforeach
@@ -107,146 +129,102 @@
                     @error('equipment') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Availability Slots -->
-                <div id="content-availability" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Availability Slots</label>
-                        <button type="button" id="add-slot" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-                            + Add Slot
-                        </button>
-                    </div>
-
-                    <div id="slots-container" class="space-y-4">
-                        @if($service->availabilitySlots->count() > 0)
-                            @foreach($service->availabilitySlots as $index => $slot)
-                                <div class="slot-row grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Day</label>
-                                        <select name="slots[{{ $index }}][day]" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                                            @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                                                <option value="{{ $day }}" {{ $slot->day_of_week == $day ? 'selected' : '' }}>{{ $day }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Start Time</label>
-                                        <input type="time" name="slots[{{ $index }}][start_time]" value="{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                                    </div>
-                                    <div class="flex items-end">
-                                        <div class="flex-1">
-                                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">End Time</label>
-                                            <input type="time" name="slots[{{ $index }}][end_time]" value="{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                                        </div>
-                                        <button type="button" onclick="this.closest('.slot-row').remove()" class="ml-3 text-red-600 hover:text-red-700">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6"/></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="slot-row grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Day</label>
-                                    <select name="slots[0][day]" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                                        @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                                            <option value="{{ $day }}">{{ $day }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Start Time</label>
-                                    <input type="time" name="slots[0][start_time]" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">End Time</label>
-                                    <input type="time" name="slots[0][end_time]" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
                 <!-- Details -->
                 <div id="content-details" class="tab-content hidden">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                        <textarea name="description" rows="4" class="w-full px-3 py-2.5 border rounded-lg dark:bg-gray-800">{{ old('description', $service->description) }}</textarea>
+                        <textarea name="description" rows="4"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none">{{ old('description', $service->description ?? '') }}</textarea>
+                        @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
+
                     <div class="mt-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Patient Preparation</label>
-                        <textarea name="patient_preparation" rows="4" class="w-full px-3 py-2.5 border rounded-lg dark:bg-gray-800">{{ old('patient_preparation', $service->patient_preparation) }}</textarea>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Patient Preparation
+                            Instructions</label>
+                        <textarea name="patient_preparation" rows="4"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none">{{ old('patient_preparation', $service->patient_preparation ?? '') }}</textarea>
+                        @error('patient_preparation') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-                        <label class="flex items-center">
-                            <input type="checkbox" name="requires_insurance" value="1" {{ old('requires_insurance', $service->requires_insurance) ? 'checked' : '' }} class="h-4 w-4 text-indigo-600 rounded">
-                            <span class="ml-3 text-sm">Requires Insurance</span>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="requires_insurance" value="1" {{ old('requires_insurance', $service->requires_insurance) ? 'checked' : '' }}
+                                class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Requires Insurance Approval</span>
                         </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" name="requires_referral" value="1" {{ old('requires_referral', $service->requires_referral) ? 'checked' : '' }} class="h-4 w-4 text-indigo-600 rounded">
-                            <span class="ml-3 text-sm">Requires Referral</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="requires_referral" value="1" {{ old('requires_referral', $service->requires_referral) ? 'checked' : '' }}
+                                class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Requires Doctor Referral</span>
                         </label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-end gap-3">
-            <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">
+        <div class="flex flex-col sm:flex-row gap-3 pt-4">
+            <button type="submit"
+                class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
                 Update Service
             </button>
-            <a href="{{ route('services.index') }}" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium">
+            <a href="{{ route('services.index') }}"
+                class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
                 Cancel
             </a>
         </div>
     </form>
-</div>
+    </div>
 
-<script>
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-    document.querySelectorAll('.tab-button').forEach(b => {
-        b.classList.remove('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
-        b.classList.add('text-gray-500','dark:text-gray-400','hover:text-gray-700','dark:hover:text-gray-300','hover:bg-gray-50','dark:hover:bg-gray-700/30');
-    });
-    document.getElementById('content-' + tabName).classList.remove('hidden');
-    document.getElementById('tab-' + tabName).classList.add('text-gray-900','dark:text-white','border-b-2','border-gray-900','dark:border-gray-400','bg-gray-50','dark:bg-gray-700/50');
-    document.getElementById('tab-' + tabName).classList.remove('text-gray-500','dark:text-gray-400');
-}
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(b => {
+                b.classList.remove('text-gray-900', 'dark:text-white', 'border-b-2', 'border-gray-900', 'dark:border-gray-400', 'bg-gray-50', 'dark:bg-gray-700/50');
+                b.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700/30');
+            });
 
-let slotIndex = {{ $service->availabilitySlots->count() }};
-document.getElementById('add-slot').addEventListener('click', function () {
-    const container = document.getElementById('slots-container');
-    const template = `
-        <div class="slot-row grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Day</label>
-                <select name="slots[${slotIndex}][day]" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                    @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                        <option value="{{ $day }}">{{ $day }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Start Time</label>
-                <input type="time" name="slots[${slotIndex}][start_time]" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-            </div>
-            <div class="flex items-end">
-                <div class="flex-1">
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">End Time</label>
-                    <input type="time" name="slots[${slotIndex}][end_time]" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700">
-                </div>
-                <button type="button" onclick="this.closest('.slot-row').remove()" class="ml-3 text-red-600 hover:text-red-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6"/></svg>
-                </button>
-            </div>
-        </div>`;
-    container.insertAdjacentHTML('beforeend', template);
-    slotIndex++;
-});
-</script>
+            // Update mobile select if present
+            const mobileSelect = document.getElementById('mobile-tab-select');
+            if (mobileSelect) mobileSelect.value = tabName;
 
-<style>
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-</style>
+            const content = document.getElementById('content-' + tabName);
+            const button = document.getElementById('tab-' + tabName);
+
+            if (content && button) {
+                content.classList.remove('hidden');
+                button.classList.add('text-gray-900', 'dark:text-white', 'border-b-2', 'border-gray-900', 'dark:border-gray-400', 'bg-gray-50', 'dark:bg-gray-700/50');
+                button.classList.remove('text-gray-500', 'dark:text-gray-400');
+
+                // Scroll the tab into view on mobile without shifting the entire page
+                const nav = button.closest('nav');
+                if (nav && nav.classList.contains('flex')) {
+                    const navRect = nav.getBoundingClientRect();
+                    const btnRect = button.getBoundingClientRect();
+                    const offset = (btnRect.left - navRect.left) - (navRect.width / 2) + (btnRect.width / 2);
+                    nav.scrollBy({ left: offset, behavior: 'smooth' });
+                }
+            }
+        }
+
+        // Open basic tab by default
+        switchTab('basic');
+    </script>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 @endsection

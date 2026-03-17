@@ -6,7 +6,8 @@ import './bootstrap';
 import $ from 'jquery';
 window.$ = window.jQuery = $;
 
-import 'select2';
+import select2 from 'select2';
+select2($);
 import 'select2/dist/css/select2.min.css';
 
 // 2. DataTables core + extensions

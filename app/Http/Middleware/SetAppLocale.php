@@ -12,7 +12,7 @@ class SetAppLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = session('locale') ?? config('app.locale', 'en');
+        $locale = session('locale') ?? $request->cookie('locale') ?? config('app.locale', 'en');
 
         if (in_array($locale, ['en', 'es'])) {
             app()->setLocale($locale);

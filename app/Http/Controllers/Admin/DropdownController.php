@@ -54,6 +54,14 @@ class DropdownController extends Controller
     // Delete single option
     public function destroy(OptionList $option)
     {
+        if ($option->inUse()) {
+            return redirect()->route('dropdowns.index')
+                ->with('error', __('file.option_in_use'));
+        }
+
+        // Clear references in soft-deleted or inactive records to avoid integrity constraint violations
+        $option->cleanupReferences();
+
         $option->delete();
 
         return redirect()->route('dropdowns.index')

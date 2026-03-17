@@ -12,20 +12,38 @@ class Doctor extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'first_name','middle_name','last_name','date_of_birth','gender',
-        'address','city','state','zip_code','email','phone',
-        'emergency_contact_name','emergency_contact_phone',
-        'license_number','license_expiry_date',
-        'qualifications','years_experience','education','certifications',
-        'department_id','position_id','profile_photo','is_active',
+        'user_id',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'date_of_birth',
+        'gender',
+        'address',
+        'city',
+        'state',
+        'zip_code',
+        'email',
+        'phone',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'license_number',
+        'license_expiry_date',
+        'qualifications',
+        'years_experience',
+        'education',
+        'certifications',
+        'department_id',
+        'position_id',
+        'profile_photo',
+        'is_active',
         'primary_specialization_id'
     ];
 
     protected $casts = [
-        'date_of_birth'      => 'date',
-        'license_expiry_date'=> 'date',
-        'years_experience'   => 'integer',
-        'is_active'          => 'boolean',
+        'date_of_birth' => 'date',
+        'license_expiry_date' => 'date',
+        'years_experience' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     public function scopeActive($query)
@@ -41,6 +59,12 @@ class Doctor extends Model
     public function getFullNameAttribute()
     {
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    public function specializations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Specialization::class, 'doctor_specialization')
+            ->withTimestamps();
     }
 
     public function primarySpecialization()
@@ -66,13 +90,14 @@ class Doctor extends Model
     public function rooms(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Room::class, 'doctor_schedules')
-                    ->withPivot('days_of_week', 'start_time', 'end_time', 'valid_from', 'valid_until', 'is_active')
-                    ->withTimestamps();
+            ->withPivot('days_of_week', 'start_time', 'end_time', 'valid_from', 'valid_until', 'is_active')
+            ->withTimestamps();
     }
 
     public function scopeOrderByFullName($query, $direction = 'asc')
     {
-        return $query->orderByRaw("
+        return $query->orderByRaw(
+            "
             CONCAT(
                 COALESCE(last_name, ''),
                 COALESCE(first_name, ''),
@@ -95,20 +120,20 @@ class Doctor extends Model
     public function treatments()
     {
         return $this->belongsToMany(Treatment::class, 'doctor_treatment')
-                    ->withPivot('price')           // doctor-specific price
-                    ->withTimestamps();
+            ->withPivot('price')           // doctor-specific price
+            ->withTimestamps();
     }
 
     public function ageGroups()
     {
         return $this->belongsToMany(AgeGroup::class, 'age_group_doctor')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function languages()
     {
         return $this->belongsToMany(OptionList::class, 'doctor_option', 'doctor_id', 'option_id')
-                    ->where('type', 'language')
-                    ->withTimestamps();
+            ->where('type', 'language')
+            ->withTimestamps();
     }
 }

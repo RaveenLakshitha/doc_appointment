@@ -11,15 +11,15 @@
         <div class="max-w-md w-full space-y-8 text-center">
             <div>
                 <h1 class="text-9xl font-bold text-red-600">404</h1>
-                <p class="mt-4 text-3xl font-semibold text-gray-800">Oops! Page not found</p>
+                <p class="mt-4 text-3xl font-semibold text-gray-800">{{ __('file.error_404_title') }}</p>
                 <p class="mt-2 text-lg text-gray-600">
-                    The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+                    {{ __('file.error_404_message') }}
                 </p>
             </div>
             <div>
                 <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                    {{ auth()->check() ? 'Go to Dashboard' : 'Go to Login' }}
+                    {{ auth()->check() ? __('file.go_to_dashboard') : __('file.go_to_login') }}
                 </a>
             </div>
         </div>

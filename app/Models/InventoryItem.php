@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 class InventoryItem extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /** -----------------------------------------------------------------
      *  Fillable / Casts
@@ -35,16 +36,13 @@ class InventoryItem extends Model
         'sterile',
         'current_stock',
         'minimum_stock_level',
-        'maximum_stock_level',
-        'reorder_point',
-        'reorder_quantity',
         'unit_cost',
         'unit_price',
         'primary_supplier_id',
         'supplier_item_code',
         'supplier_price',
         'lead_time_days',
-         'expiry_date',  
+        'expiry_date',
         'minimum_order_quantity',
 
         // === Medicine-specific fields ===
@@ -62,28 +60,25 @@ class InventoryItem extends Model
 
     protected $casts = [
         'requires_refrigeration' => 'boolean',
-        'controlled_substance'   => 'boolean',
-        'hazardous_material'     => 'boolean',
-        'sterile'                => 'boolean',
-        'expiry_tracking'        => 'boolean',
-        'is_active'              => 'boolean',
+        'controlled_substance' => 'boolean',
+        'hazardous_material' => 'boolean',
+        'sterile' => 'boolean',
+        'expiry_tracking' => 'boolean',
+        'is_active' => 'boolean',
 
-        'unit_quantity'          => 'integer',
-        'current_stock'          => 'integer',
-        'minimum_stock_level'    => 'integer',
-        'maximum_stock_level'    => 'integer',
-        'reorder_point'          => 'integer',
-        'reorder_quantity'       => 'integer',
-        'lead_time_days'         => 'integer',
-        'minimum_order_quantity'=> 'integer',
+        'unit_quantity' => 'integer',
+        'current_stock' => 'integer',
+        'minimum_stock_level' => 'integer',
+        'lead_time_days' => 'integer',
+        'minimum_order_quantity' => 'integer',
 
-        'unit_cost'              => 'decimal:2',
-        'unit_price'             => 'decimal:2',
-        'supplier_price'         => 'decimal:2',
-        'tax_rate'               => 'decimal:2',
-        'expiry_date' => 'date', 
+        'unit_cost' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'supplier_price' => 'decimal:2',
+        'tax_rate' => 'decimal:2',
+        'expiry_date' => 'date',
 
-        'storage_conditions'     => 'array', // JSON -> array
+        'storage_conditions' => 'array', // JSON -> array
     ];
 
     /** -----------------------------------------------------------------
@@ -134,7 +129,8 @@ class InventoryItem extends Model
      * ----------------------------------------------------------------- */
     public function scopeLowStock($query)
     {
-        return $query->whereColumn('current_stock', '<=', 'reorder_point');
+        return $query->whereColumn('current_stock', '<=', 'minimum_stock_level')
+            ->where('current_stock', '>', 0);
     }
 
     public function scopeOutOfStock($query)
@@ -146,7 +142,7 @@ class InventoryItem extends Model
     public function scopeMedicines($query)
     {
         return $query->whereNotNull('generic_name')
-                     ->orWhere('expiry_tracking', true);
+            ->orWhere('expiry_tracking', true);
     }
 
     /** -----------------------------------------------------------------
@@ -201,7 +197,7 @@ class InventoryItem extends Model
             ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Active</span>'
             : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Inactive</span>';
     }
-    
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

@@ -19,19 +19,18 @@ class AppointmentSeeder extends Seeder
         Carbon::setTestNow(Carbon::parse('2026-01-02'));
 
         $patients = Patient::where('is_active', true)->get();
-        $doctors  = Doctor::where('is_active', true)->get();
+        $doctors = Doctor::where('is_active', true)->get();
 
         $statuses = [
-            Appointment::STATUS_PENDING   => 30,
-            Appointment::STATUS_APPROVED  => 50,
+            Appointment::STATUS_PENDING => 30,
+            Appointment::STATUS_APPROVED => 50,
             Appointment::STATUS_CANCELLED => 12,
-            Appointment::STATUS_REJECTED  => 8,
+            Appointment::STATUS_REJECTED => 8,
         ];
 
         $types = [
             Appointment::TYPE_SPECIFIC,
             Appointment::TYPE_ANY,
-            Appointment::TYPE_PRIMARY_PROVIDER,
         ];
 
         foreach ($patients as $patient) {
@@ -41,11 +40,11 @@ class AppointmentSeeder extends Seeder
                 $appointmentType = fake()->randomElement($types);
 
                 $doctor = null;
-                $room   = null;
+                $room = null;
                 $scheduledStart = null;
-                $scheduledEnd   = null;
+                $scheduledEnd = null;
 
-                if (in_array($appointmentType, [Appointment::TYPE_SPECIFIC, Appointment::TYPE_PRIMARY_PROVIDER])) {
+                if (in_array($appointmentType, [Appointment::TYPE_SPECIFIC])) {
                     $doctor = $doctors->random();
                 }
 
@@ -87,7 +86,7 @@ class AppointmentSeeder extends Seeder
                         if (!empty($possibleSlots)) {
                             $slotStart = fake()->randomElement($possibleSlots);
                             $scheduledStart = Carbon::parse($appointmentDate->format('Y-m-d') . ' ' . $slotStart->format('H:i:s'));
-                            $scheduledEnd   = $scheduledStart->copy()->addMinutes(30);
+                            $scheduledEnd = $scheduledStart->copy()->addMinutes(30);
                         }
                     }
                 }
@@ -108,13 +107,13 @@ class AppointmentSeeder extends Seeder
                 $status = fake()->randomElement(array_keys($statuses));
 
                 Appointment::create([
-                    'patient_id'       => $patient->id,
-                    'doctor_id'        => $doctor?->id,
-                    'room_id'          => $room?->id,
-                    'scheduled_start'  => $scheduledStart,
-                    'scheduled_end'    => $scheduledEnd,
+                    'patient_id' => $patient->id,
+                    'doctor_id' => $doctor?->id,
+                    'room_id' => $room?->id,
+                    'scheduled_start' => $scheduledStart,
+                    'scheduled_end' => $scheduledEnd,
                     'appointment_type' => $appointmentType,
-                    'status'           => $status,
+                    'status' => $status,
                     'reason_for_visit' => fake()->randomElement([
                         'Routine check-up',
                         'Follow-up consultation',
@@ -127,15 +126,15 @@ class AppointmentSeeder extends Seeder
                         'Headache evaluation',
                         'Cancer treatment follow-up',
                     ]),
-                    'patient_notes'    => fake()->optional(0.6)->paragraph(1, 3),
-                    'doctor_notes'     => in_array($status, [Appointment::STATUS_APPROVED, Appointment::STATUS_PENDING])
+                    'patient_notes' => fake()->optional(0.6)->paragraph(1, 3),
+                    'doctor_notes' => in_array($status, [Appointment::STATUS_APPROVED, Appointment::STATUS_PENDING])
                         ? fake()->optional(0.7)->paragraph(1, 2)
                         : null,
-                    'admin_notes'      => fake()->optional(0.3)->sentence,
-                    'cancelled_at'     => $status === Appointment::STATUS_CANCELLED
+                    'admin_notes' => fake()->optional(0.3)->sentence,
+                    'cancelled_at' => $status === Appointment::STATUS_CANCELLED
                         ? fake()->dateTimeBetween('-2 months', 'now')
                         : null,
-                    'cancelled_by'     => $status === Appointment::STATUS_CANCELLED ? null : null,
+                    'cancelled_by' => $status === Appointment::STATUS_CANCELLED ? null : null,
                 ]);
             }
         }

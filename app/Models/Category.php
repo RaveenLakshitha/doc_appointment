@@ -35,12 +35,12 @@ class Category extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Category::class, 'parent_id');
+        return $this->belongsTo(Category::class , 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(Category::class, 'parent_id');
+        return $this->hasMany(Category::class , 'parent_id');
     }
 
     public function descendants()
@@ -57,9 +57,15 @@ class Category extends Model
     {
         $path = [$this->name];
         $node = $this;
+        $visited = [$this->id];
 
         while ($node->parent) {
             $node = $node->parent;
+            if (in_array($node->id, $visited)) {
+                array_unshift($path, '... (Circular)');
+                break;
+            }
+            $visited[] = $node->id;
             array_unshift($path, $node->name);
         }
 
@@ -69,9 +75,13 @@ class Category extends Model
     public function getLevelAttribute(): int
     {
         $level = 0;
-        $node  = $this->parent;
+        $node = $this->parent;
+        $visited = [$this->id];
 
         while ($node) {
+            if (in_array($node->id, $visited))
+                break;
+            $visited[] = $node->id;
             $level++;
             $node = $node->parent;
         }

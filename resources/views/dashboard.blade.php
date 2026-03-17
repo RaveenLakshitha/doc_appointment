@@ -15,17 +15,30 @@
 
         {{-- Tabs Navigation --}}
         <div class="mb-8 border-b border-gray-200 dark:border-gray-700">
-            <nav class="flex space-x-8" aria-label="Tabs">
-                <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 py-4 px-1 text-sm font-medium">
+            <!-- Mobile Tab Selector (Visible only on mobile) -->
+            <div class="sm:hidden p-4 bg-white dark:bg-gray-800 rounded-lg mb-4 border border-gray-200 dark:border-gray-700">
+                <label for="mobile-tab-select" class="sr-only">Select a tab</label>
+                <select id="mobile-tab-select" onchange="switchTab(this.value)"
+                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-blue-500">
+                    <option value="overview">Overview</option>
+                    <option value="analytics">Analytics</option>
+                    <option value="reports">Reports</option>
+                    <option value="notifications">Notifications</option>
+                </select>
+            </div>
+
+            <!-- Desktop/Tablet Tab Navigation (Hidden on mobile) -->
+            <nav class="hidden sm:flex space-x-8 no-scrollbar  overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 py-4 px-1 text-sm font-medium whitespace-nowrap">
                     Overview
                 </button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-sm font-medium">
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-sm font-medium whitespace-nowrap">
                     Analytics
                 </button>
-                <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-sm font-medium">
+                <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-sm font-medium whitespace-nowrap">
                     Reports
                 </button>
-                <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-sm font-medium relative">
+                <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-sm font-medium relative whitespace-nowrap">
                     Notifications
                     <span class="absolute top-3 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">12</span>
                 </button>
@@ -43,7 +56,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">$45,231.89</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ $currency_code }}45,231.89</p>
                     <p class="text-sm text-green-600 dark:text-green-400 mt-2">+20.1% from last month</p>
                 </div>
 
@@ -379,7 +392,7 @@
                             ['New appointment request', 'Patient James Wilson requested an appointment for tomorrow.', '30 minutes ago', 'blue'],
                             ['New patient registration', 'Emily Parker has registered as a new patient.', '1 hour ago', 'green'],
                             ['Staff schedule update', 'Dr. Rodriguez has requested time off next week.', '2 hours ago', 'yellow'],
-                            ['Payment received', 'Insurance payment of $1,250 received for patient #12345.', '3 hours ago', 'green']
+                            ['Payment received', 'Insurance payment of {{ $currency_code }}1,250 received for patient #12345.', '3 hours ago', 'green']
                         ] as [$title, $message, $time, $color])
                         <div class="flex space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                             <div class="flex-shrink-0">
@@ -485,8 +498,28 @@ function switchTab(tabName) {
     
     // Add active state to selected tab
     const activeTab = document.getElementById('tab-' + tabName);
-    activeTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-300');
-    activeTab.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+    if (activeTab) {
+        activeTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+        activeTab.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+
+        // Update mobile select if present
+        const mobileSelect = document.getElementById('mobile-tab-select');
+        if (mobileSelect) mobileSelect.value = tabName;
+
+        // Scroll the tab into view on mobile without shifting the entire page
+        const nav = activeTab.closest('nav');
+        if (nav && nav.classList.contains('flex')) {
+            const navRect = nav.getBoundingClientRect();
+            const btnRect = activeTab.getBoundingClientRect();
+            const offset = (btnRect.left - navRect.left) - (navRect.width / 2) + (btnRect.width / 2);
+            nav.scrollBy({ left: offset, behavior: 'smooth' });
+        }
+    }
 }
 </script>
+
+<style>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 @endsection

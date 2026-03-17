@@ -16,7 +16,7 @@ class DoctorPanelScheduleController extends Controller
     public function calendarEvents(Request $request)
     {
         $start = $request->query('start');
-        $end   = $request->query('end');
+        $end = $request->query('end');
 
         $doctor = Auth::user()->doctor;
 
@@ -33,38 +33,41 @@ class DoctorPanelScheduleController extends Controller
 
         foreach ($schedules as $schedule) {
             $days = $schedule->days->pluck('day_of_week')->toArray();
-            if (empty($days)) continue;
+            if (empty($days))
+                continue;
 
             $startTime = $schedule->start_time->format('H:i:s');
-            $endTime   = $schedule->end_time->format('H:i:s');
+            $endTime = $schedule->end_time->format('H:i:s');
             $timeLabel = $schedule->start_time->format('g:i A') . ' - ' . $schedule->end_time->format('g:i A');
 
             $dayNames = collect($days)->map(fn($d) => ucfirst($d))->join(', ');
 
-            $roomInfo = $schedule->room->room_number . ' (' . $schedule->room->department->name . ')';
+            $roomInfo = $schedule->room
+                ? $schedule->room->room_number . ' (' . ($schedule->room->department?->name ?? '—') . ')'
+                : '(Room deleted)';
 
             $dowMap = [
-                'sunday'    => 0,
-                'monday'    => 1,
-                'tuesday'   => 2,
+                'sunday' => 0,
+                'monday' => 1,
+                'tuesday' => 2,
                 'wednesday' => 3,
-                'thursday'  => 4,
-                'friday'    => 5,
-                'saturday'  => 6
+                'thursday' => 4,
+                'friday' => 5,
+                'saturday' => 6
             ];
 
             $dow = array_values(array_map(fn($d) => $dowMap[$d], $days));
 
             $event = [
-                'title'          => "Room $roomInfo",
-                'startTime'      => $startTime,
-                'endTime'        => $endTime,
-                'daysOfWeek'     => $dow,
-                'startRecur'     => $schedule->valid_from?->format('Y-m-d') ?? '2000-01-01',
-                'backgroundColor'=> '#6366f1',
-                'borderColor'    => '#4f46e5',
-                'textColor'      => '#ffffff',
-                'extendedProps'  => [
+                'title'       => "Room $roomInfo · $timeLabel",
+                'startTime'   => $startTime,
+                'endTime'     => $endTime,
+                'daysOfWeek'  => $dow,
+                'startRecur'  => $schedule->valid_from?->format('Y-m-d') ?? '2000-01-01',
+                'backgroundColor' => '#6366f1',
+                'borderColor' => '#4f46e5',
+                'textColor'   => '#ffffff',
+                'extendedProps' => [
                     'room'      => $roomInfo,
                     'time'      => $timeLabel,
                     'days'      => $dayNames,

@@ -3,13 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\Doctor;
 use App\Models\DoctorSessionQueue;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\NotificationSetting;
+use App\Notifications\AppointmentCompleted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class QueueController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:queues.index', ['only' => ['dailyQueueOverview']]);
+    }
+    protected function authorizeQueueManage(Appointment $appointment)
+    {
+        $user = Auth::user();
+        
+        if ($user->can('queues.manage')) {
+            return true;
+        }
+
+        if ($user->doctor && $user->doctor->id === $appointment->doctor_id) {
+            return true;
+        }
+
+        return false;
+    }
     public function dailyQueueOverview(Request $request)
     {
         if (!Auth::user()->can('queues.view')) {
@@ -21,42 +43,115 @@ class QueueController extends Controller
             ? Carbon::parse($request->query('date'))->startOfDay()
             : today();
 
-        $appointments = Appointment::query()
+        $selectedDoctor = $request->query('doctor_id');
+
+        $doctors = Doctor::orderBy('first_name')->get();
+
+        $query = Appointment::query()
             ->whereDate('scheduled_start', $date)
-            ->where('status', Appointment::STATUS_APPROVED)
+            ->whereIn('status', [Appointment::STATUS_APPROVED, Appointment::STATUS_RUNNING, Appointment::STATUS_PAID])
             ->with(['patient' => fn($q) => $q->select('id', 'first_name', 'middle_name', 'last_name')])
             ->orderBy('session_key')
-            ->orderBy('queue_number')
-            ->get();
+            ->orderByRaw("CASE WHEN status = 'running' THEN 0 ELSE 1 END")
+            ->orderBy('queue_number');
+
+        if ($selectedDoctor) {
+            $query->where('doctor_id', $selectedDoctor);
+        }
+
+        $appointments = $query->get();
+
+        $runningDoctorIds = $appointments->where('status', Appointment::STATUS_RUNNING)->pluck('doctor_id')->unique()->toArray();
 
         $queues = $appointments->groupBy('session_key')->map(function ($group) {
             return [
                 'session_key' => $group->first()->session_key,
                 'doctor_name' => $group->first()->doctor?->getFullNameAttribute() ?? 'Unknown',
-                'patients'    => $group->map(fn($appt) => [
+                'patients' => $group->map(fn($appt) => [
                     'queue_number' => $appt->queue_number,
-                    'patient_name' => $appt->patient?->getFullNameAttribute() ?? '—',
-                    'time'         => $appt->scheduled_start?->format('h:i A'),
-                    'id'           => $appt->id,
+                    'patient_name' => $appt->patient?->getFullNameAttribute() ?? '-',
+                    'time' => $appt->scheduled_start?->format('h:i A'),
+                    'id' => $appt->id,
+                    'status' => $appt->status,
+                    'doctor_id' => $appt->doctor_id,
                 ])->sortBy('queue_number'),
             ];
         });
 
-        return view('queues.daily-overview', compact('queues', 'date'));
+        return view('queues.daily-overview', compact('queues', 'date', 'doctors', 'selectedDoctor', 'runningDoctorIds'));
+    }
+
+    public function start(Appointment $appointment)
+    {
+        if (!$this->authorizeQueueManage($appointment)) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.queues_manage_denied')], 403);
+            }
+            return back()->with('error', __('file.queues_manage_denied'));
+        }
+
+        if (!in_array($appointment->status, [Appointment::STATUS_APPROVED, Appointment::STATUS_PAID])) {
+            $msg = __('file.only_approved_appointments_can_be_started') ?? 'Only approved appointments can be started.';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 400);
+            }
+            return back()->with('error', $msg);
+        }
+
+        $updates = [
+            'status' => Appointment::STATUS_RUNNING,
+        ];
+
+        if (!$appointment->queue_number) {
+            $maxNumber = Appointment::query()
+                ->where('session_key', $appointment->session_key)
+                ->where('doctor_id', $appointment->doctor_id)
+                ->whereDate('scheduled_start', $appointment->scheduled_start?->startOfDay())
+                ->max('queue_number');
+
+            $updates['queue_number'] = ($maxNumber ?: 0) + 1;
+        }
+
+        $appointment->update($updates);
+
+        if (isset($updates['queue_number'])) {
+            $this->syncLastNumber(
+                $appointment->session_key,
+                $appointment->doctor_id,
+                $appointment->scheduled_start?->startOfDay()
+            );
+        }
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('file.appointment_started_successfully') ?? 'Appointment started successfully.',
+                'status' => Appointment::STATUS_RUNNING,
+                'queue_number' => $appointment->queue_number
+            ]);
+        }
+
+        return back()->with('success', __('file.appointment_started_successfully') ?? 'Appointment started successfully.');
     }
 
     public function complete(Appointment $appointment)
     {
-        if (!Auth::user()->can('queues.manage')) {
+        if (!$this->authorizeQueueManage($appointment)) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.queues_manage_denied')], 403);
+            }
             return back()->with('error', __('file.queues_manage_denied'));
         }
 
-        if ($appointment->status !== Appointment::STATUS_APPROVED) {
+        if (!in_array($appointment->status, [Appointment::STATUS_APPROVED, Appointment::STATUS_PAID, Appointment::STATUS_RUNNING])) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.only_approved_appointments_can_be_completed')], 400);
+            }
             return back()->with('error', __('file.only_approved_appointments_can_be_completed'));
         }
 
         $appointment->update([
-            'status'       => 'completed',
+            'status' => 'completed',
             'completed_at' => now(),
             'completed_by' => auth()->id(),
         ]);
@@ -67,12 +162,25 @@ class QueueController extends Controller
             $appointment->scheduled_start?->startOfDay()
         );
 
+        \App\Services\NotificationService::send('appointment_completed', new AppointmentCompleted($appointment), array_filter([$appointment->doctor?->user, $appointment->patient?->user]));
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('file.appointment_completed_successfully'),
+                'status' => 'completed'
+            ]);
+        }
+
         return back()->with('success', __('file.appointment_completed_successfully'));
     }
 
     public function updateQueueNumber(Appointment $appointment, Request $request)
     {
-        if (!Auth::user()->can('queues.manage')) {
+        if (!$this->authorizeQueueManage($appointment)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.queues_manage_denied')], 403);
+            }
             return back()->with('error', __('file.queues_manage_denied'));
         }
 
@@ -111,6 +219,7 @@ class QueueController extends Controller
         $maxNumber = 0;
 
         foreach ($appointments as $index => $appt) {
+            /** @var \App\Models\Appointment $appt */
             $newNumber = $index + 1;
             $appt->update(['queue_number' => $newNumber]);
 
@@ -121,8 +230,8 @@ class QueueController extends Controller
 
         DoctorSessionQueue::updateOrCreate(
             [
-                'doctor_id'   => $doctorId,
-                'queue_date'  => $date,
+                'doctor_id' => $doctorId,
+                'queue_date' => $date,
                 'session_key' => $sessionKey,
             ],
             [
@@ -148,8 +257,8 @@ class QueueController extends Controller
 
         DoctorSessionQueue::updateOrCreate(
             [
-                'doctor_id'   => $doctorId,
-                'queue_date'  => $date,
+                'doctor_id' => $doctorId,
+                'queue_date' => $date,
                 'session_key' => $sessionKey,
             ],
             [

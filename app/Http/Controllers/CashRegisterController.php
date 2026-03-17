@@ -31,7 +31,7 @@ class CashRegisterController extends Controller
         $orderDir    = $request->input('order.0.dir', 'desc');
 
         $query = CashRegister::query()
-            ->with('user')
+            ->with(['user', 'transactions'])
             ->select('cash_registers.*');
 
         // Search
@@ -68,10 +68,10 @@ class CashRegisterController extends Controller
 
         $data = $registers->map(function ($register) {
             $statusBadge = match ($register->status) {
-                'open'       => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">Open</span>',
-                'closed'     => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">Closed</span>',
-                'reconciled' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Reconciled</span>',
-                default      => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Discrepancy</span>',
+                'open'       => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">' . __('file.open') . '</span>',
+                'closed'     => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">' . __('file.closed') . '</span>',
+                'reconciled' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">' . __('file.reconciled') . '</span>',
+                default      => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">' . __('file.discrepancy') . '</span>',
             };
 
             return [
@@ -84,6 +84,15 @@ class CashRegisterController extends Controller
                 'status_html'             => $statusBadge,
                 'status'                  => $register->status,
                 'difference'              => $register->difference ? number_format($register->difference, 2) : null,
+                'expenses_total_formatted' => number_format($register->transactions->where('type', 'expense')->sum('amount') ?? 0, 2),
+                'purchases_total_formatted' => number_format($register->transactions->where('type', 'purchase')->sum('amount') ?? 0, 2),
+                'transactions'            => $register->transactions->map(fn($t) => [
+                    'happened_at' => $t->happened_at->format('Y-m-d H:i'),
+                    'type_formatted' => ucfirst(str_replace('_', ' ', $t->type)),
+                    'amount' => $t->amount,
+                    'amount_formatted' => ($t->isOutflow() ? '-' : '+') . number_format($t->amount, 2),
+                    'is_outflow' => $t->isOutflow()
+                ])
             ];
         });
 
@@ -112,7 +121,7 @@ class CashRegisterController extends Controller
             $cashRegister->expected_closing_balance = $cashRegister->calculateExpectedClosingBalance();
         }
 
-        return view('cash-registers.show', compact('cashRegister'));
+        return redirect()->route('cash-registers.index');
     }
 
     /**
@@ -176,15 +185,18 @@ class CashRegisterController extends Controller
     {
         // Authorization: only owner or admin
         if ($cashRegister->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
-            abort(403, 'You are not authorized to close this register.');
+            abort(403, __('file.not_authorized_to_close'));
         }
 
         if (!$cashRegister->isOpen()) {
-            return back()->withErrors(['This register is already closed.']);
+            return response()->json([
+                'success' => false,
+                'message' => __('file.cash_register_already_closed')
+            ], 422);
         }
 
         $request->validate([
-            'actual_closing_balance' => 'required|numeric|min:0',
+            'actual_closing_balance' => 'nullable|numeric|min:0',
             'notes'                  => 'nullable|string|max:1000',
         ]);
 
@@ -192,12 +204,13 @@ class CashRegisterController extends Controller
         try {
             $expected = $cashRegister->calculateExpectedClosingBalance();
 
-            $difference = round($request->actual_closing_balance - $expected, 2);
+            $actualBalance = $request->actual_closing_balance ?? $expected;
+            $difference = round($actualBalance - $expected, 2);
 
             $status = $difference == 0 ? 'closed' : 'discrepancy';
 
             $cashRegister->update([
-                'actual_closing_balance'   => $request->actual_closing_balance,
+                'actual_closing_balance'   => $actualBalance,
                 'expected_closing_balance' => $expected,
                 'difference'               => $difference,
                 'closed_at'                => now(),
@@ -209,57 +222,112 @@ class CashRegisterController extends Controller
             $cashRegister->transactions()->create([
                 'user_id' => Auth::id(),
                 'type'    => 'close_register',
-                'amount'  => $request->actual_closing_balance,
+                'amount'  => $actualBalance,
                 'notes'   => "Closed register - Difference: {$difference}",
             ]);
 
             DB::commit();
 
-            return redirect()->route('cash-registers.show', $cashRegister)
-                ->with('success', 'Cash register closed successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => __('file.cash_register_closed_successfully')
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['Failed to close register: ' . $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => __('file.failed_to_close_register') . ': ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function current()
-{
-    $register = auth()->user()->cashRegisters()
-        ->whereNull('closed_at')
-        ->latest('opened_at')
-        ->first();
+    {
+        $register = auth()->user()->cashRegisters()
+            ->whereNull('closed_at')
+            ->latest('opened_at')
+            ->first();
 
-    if (!$register) {
-        return response()->json(['open' => false]);
+        if (!$register) {
+            return response()->json(['open' => false]);
+        }
+
+        // Calculate real stats (example)
+        $cashSales = $register->transactions()
+            ->where('type', 'cash_sale')
+            ->sum('amount');
+
+        $cardSales = $register->transactions()
+            ->whereIn('type', ['card_sale', 'card_payment'])
+            ->sum('amount');
+
+        $transactionCount = $register->transactions()->count();
+
+        // Expected = opening + cash in - cash out (adjust according to your logic)
+        $expected = $register->calculateExpectedClosingBalance() ?? $register->opening_balance;
+
+        $expensesTotal = $register->transactions()
+            ->where('type', 'expense')
+            ->sum('amount');
+
+        $purchasesTotal = $register->transactions()
+            ->where('type', 'purchase')
+            ->sum('amount');
+
+        return response()->json([
+            'open' => true,
+            'register' => [
+                'id' => $register->id,
+                'opened_at_formatted' => $register->opened_at->format('M d, Y h:i A'),
+                'opening_balance_formatted' => number_format($register->opening_balance, 2),
+                'expected_closing_formatted' => number_format($expected, 2),
+                'cash_sales_formatted' => number_format($cashSales, 2),
+                'card_sales_formatted' => number_format($cardSales, 2),
+                'expenses_total_formatted' => number_format($expensesTotal, 2),
+                'purchases_total_formatted' => number_format($purchasesTotal, 2),
+                'transaction_count' => $transactionCount,
+                // Add more as needed
+            ]
+        ]);
     }
 
-    // Calculate real stats (example)
-    $cashSales = $register->transactions()
-        ->where('type', 'cash_sale')
-        ->sum('amount');
+    /**
+     * Delete a cash register (soft delete)
+     */
+    public function destroy(CashRegister $cashRegister)
+    {
+        $cashRegister->delete();
 
-    $cardSales = $register->transactions()
-        ->whereIn('type', ['card_sale', 'card_payment'])
-        ->sum('amount');
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => __('file.cash_register_deleted_successfully')]);
+        }
 
-    $transactionCount = $register->transactions()->count();
+        return back()->with('success', __('file.cash_register_deleted_successfully'));
+    }
 
-    // Expected = opening + cash in - cash out (adjust according to your logic)
-    $expected = $register->calculateExpectedClosingBalance() ?? $register->opening_balance;
+    /**
+     * Bulk delete cash registers
+     */
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (is_string($ids)) {
+            $ids = array_filter(explode(',', $ids));
+        }
 
-    return response()->json([
-        'open' => true,
-        'register' => [
-            'id' => $register->id,
-            'opened_at_formatted' => $register->opened_at->format('M d, Y h:i A'),
-            'opening_balance_formatted' => number_format($register->opening_balance, 2),
-            'expected_closing_formatted' => number_format($expected, 2),
-            'cash_sales_formatted' => number_format($cashSales, 2),
-            'card_sales_formatted' => number_format($cardSales, 2),
-            'transaction_count' => $transactionCount,
-            // Add more as needed
-        ]
-    ]);
-}
+        if (empty($ids)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.no_items_selected')], 400);
+            }
+            return back()->with('error', __('file.no_items_selected'));
+        }
+
+        CashRegister::whereIn('id', $ids)->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => __('file.selected_cash_registers_deleted')]);
+        }
+
+        return back()->with('success', __('file.selected_cash_registers_deleted'));
+    }
 }

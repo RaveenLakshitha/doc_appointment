@@ -12,13 +12,18 @@ use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:settings.index', ['only' => ['general']]);
+        $this->middleware('permission:settings.edit', ['only' => ['edit', 'update']]);
+    }
     public function general(): View
     {
         $setting = Setting::firstOrCreate([], [
-            'clinic_name'    => config('app.name', 'Clinic Name'),
-            'primary_color'  => '#1e40af',
-            'currency'       => 'USD',
-            'logo_path'      => null,
+            'clinic_name' => config('app.name', 'Clinic Name'),
+            'primary_color' => '#1e40af',
+            'currency' => 'USD',
+            'logo_path' => null,
         ]);
 
         return view('settings.general', compact('setting'));
@@ -52,12 +57,12 @@ class SettingsController extends Controller
 
             return redirect()
                 ->route('settings.general')
-                ->with('success', 'Settings updated successfully!');
+                ->with('success', __('file.settings_updated_successfully'));
 
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error('Database error while updating settings', [
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()
@@ -68,8 +73,8 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             Log::error('Unexpected error updating clinic settings', [
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-                'file'    => $request->file('logo') ? $request->file('logo')->getClientOriginalName() : null,
+                'trace' => $e->getTraceAsString(),
+                'file' => $request->file('logo') ? $request->file('logo')->getClientOriginalName() : null,
             ]);
 
             return redirect()

@@ -13,16 +13,26 @@ class Appointment extends Model
     use HasFactory, SoftDeletes;
 
     // Status constants
-    const STATUS_PENDING   = 'pending';
-    const STATUS_APPROVED  = 'approved';
-    const STATUS_REJECTED  = 'rejected';
+    const STATUS_PENDING = 'pending';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_PAID = 'paid';
+    const STATUS_REJECTED = 'rejected';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_RUNNING = 'running';
 
     // Type constants
-    const TYPE_SPECIFIC         = 'specific';         // Specific doctor selected
-    const TYPE_ANY              = 'any';              // Any available doctor
-    const TYPE_PRIMARY_PROVIDER = 'primary_provider'; // Patient's primary doctor
+    const TYPE_SPECIFIC = 'specific';         // Specific doctor selected
+    const TYPE_ANY = 'any';              // Any available doctor
+
+    public static function getPreferredTimeOptions(): array
+    {
+        return [
+            'next' => __('file.next_available'),
+            '7days' => __('file.within_7_days'),
+            '15days' => __('file.within_15_days'),
+        ];
+    }
 
     protected $fillable = [
         'patient_id',
@@ -32,7 +42,7 @@ class Appointment extends Model
         'reason_for_visit',
         'doctor_notes',
         'patient_notes',
-        'session_key',    
+        'session_key',
         'queue_number',
         'admin_notes',
         'scheduled_start',     // datetime of the appointment
@@ -42,14 +52,23 @@ class Appointment extends Model
         'cancelled_by',        // user_id who cancelled
         'specialization_id',
         'appointment_number',
+        'completed_at',
+        'completed_by',
+        'age_group_id',
+        'preferred_language_id',
+        'preferred_time',
     ];
 
     protected $casts = [
         'scheduled_start' => 'datetime',
-        'scheduled_end'   => 'datetime',
-        'cancelled_at'    => 'datetime',
-        'status'          => 'string',
+        'scheduled_end' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'status' => 'string',
         'appointment_type' => 'string',
+        'appointment_id' => 'integer', // Assuming integer based on typical ID fields
+        'type' => 'string',  // e.g. 'POS', 'Appointment', 'Insurance', 'Manual'
+        'age_group_id' => 'integer',
+        'preferred_language_id' => 'integer',
     ];
 
     // Relationships
@@ -87,7 +106,7 @@ class Appointment extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('scheduled_start', '>=', Carbon::now())
-                     ->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED]);
+            ->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED]);
     }
 
     public function scopeForDoctor($query, $doctorId)
@@ -116,7 +135,7 @@ class Appointment extends Model
         if (!$this->queue_number) {
             return '—';
         }
-        return $this->session_key 
+        return $this->session_key
             ? strtoupper(substr($this->session_key, 0, 1)) . $this->queue_number
             : (string) $this->queue_number;
     }
@@ -132,23 +151,23 @@ class Appointment extends Model
             return '—';
         }
 
-        return $this->session_key 
+        return $this->session_key
             ? strtoupper($this->session_key) . ' #' . $this->queue_number
             : '#' . $this->queue_number;
     }
 
     public function isInQueue(): bool
     {
-        return $this->status === self::STATUS_APPROVED 
+        return $this->status === self::STATUS_APPROVED
             && $this->queue_number !== null;
     }
 
     public function markAsCompleted()
     {
         $this->update([
-            'status'         => 'completed', 
-            'completed_at'   => now(),
-            'completed_by'   => auth()->id(),
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completed_by' => auth()->id(),
         ]);
     }
 
@@ -177,5 +196,15 @@ class Appointment extends Model
             fn($treatment) => $treatment->pivot->quantity * $treatment->pivot->price_at_time
         );
     }
-    
+
+    public function ageGroup(): BelongsTo
+    {
+        return $this->belongsTo(AgeGroup::class);
+    }
+
+    public function preferredLanguage(): BelongsTo
+    {
+        return $this->belongsTo(OptionList::class, 'preferred_language_id');
+    }
+
 }

@@ -5,15 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
 class BillingInvoice extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'invoice_number',
         'patient_id',
         'invoice_date',
         'due_date',
+        'appointment_id',
+        'cash_register_id',
         'type',               // e.g. 'POS', 'Appointment', 'Insurance', 'Manual'
         'reference_po',
         'subtotal',
@@ -24,26 +29,27 @@ class BillingInvoice extends Model
         'balance_due',
         'status',             // pending, partially_paid, paid, held, cancelled, refunded, etc.
         'notes',
+        'is_printed',
     ];
 
     protected $casts = [
-        'invoice_date'     => 'date',
-        'due_date'         => 'date',
-        'subtotal'         => 'decimal:2',
-        'tax_amount'       => 'decimal:2',
-        'discount_amount'  => 'decimal:2',
-        'total'            => 'decimal:2',
-        'paid_amount'      => 'decimal:2',
-        'balance_due'      => 'decimal:2',
-        'created_at'       => 'datetime',
-        'updated_at'       => 'datetime',
+        'invoice_date' => 'date',
+        'due_date' => 'date',
+        'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'balance_due' => 'decimal:2',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // Default values when creating new instance
     protected $attributes = [
-        'paid_amount'   => 0.00,
-        'balance_due'   => 0.00,
-        'status'        => 'pending',     // changed from 'sent' → more suitable for POS flow
+        'paid_amount' => 0.00,
+        'balance_due' => 0.00,
+        'status' => 'pending',     // changed from 'sent' → more suitable for POS flow
     ];
 
     // ────────────────────────────────────────────────
@@ -92,26 +98,26 @@ class BillingInvoice extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'paid'           => 'Paid',
+            'paid' => 'Paid',
             'partially_paid' => 'Partially Paid',
-            'pending'        => 'Pending',
-            'held'           => 'On Hold',
-            'cancelled'      => 'Cancelled',
-            'refunded'       => 'Refunded',
-            default          => ucfirst($this->status ?? 'Unknown'),
+            'pending' => 'Pending',
+            'held' => 'On Hold',
+            'cancelled' => 'Cancelled',
+            'refunded' => 'Refunded',
+            default => ucfirst($this->status ?? 'Unknown'),
         };
     }
 
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            'paid'           => 'green',
+            'paid' => 'green',
             'partially_paid' => 'blue',
-            'pending'        => 'yellow',
-            'held'           => 'orange',
-            'cancelled'      => 'red',
-            'refunded'       => 'purple',
-            default          => 'gray',
+            'pending' => 'yellow',
+            'held' => 'orange',
+            'cancelled' => 'red',
+            'refunded' => 'purple',
+            default => 'gray',
         };
     }
 
@@ -122,7 +128,7 @@ class BillingInvoice extends Model
     public function scopeOverdue($query)
     {
         return $query->where('status', '!=', 'paid')
-                     ->where('due_date', '<', Carbon::today());
+            ->where('due_date', '<', Carbon::today());
     }
 
     public function scopePos($query)

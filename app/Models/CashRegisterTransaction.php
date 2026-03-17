@@ -12,6 +12,8 @@ class CashRegisterTransaction extends Model
         'user_id',
         'billing_invoice_id',
         'payment_id',
+        'expense_id',
+        'purchase_id',
         'type',
         'payment_method',
         'amount',
@@ -48,6 +50,16 @@ class CashRegisterTransaction extends Model
         return $this->belongsTo(Payment::class);
     }
 
+    public function expense(): BelongsTo
+    {
+        return $this->belongsTo(Expense::class);
+    }
+
+    public function purchase(): BelongsTo
+    {
+        return $this->belongsTo(Purchase::class);
+    }
+
     // ────────────────────────────────────────────────
     //  Helpers
     // ────────────────────────────────────────────────
@@ -64,6 +76,6 @@ class CashRegisterTransaction extends Model
 
     public function isOutflow(): bool
     {
-        return in_array($this->type, ['refund', 'cash_out', 'petty_cash', 'correction_out']);
+        return in_array($this->type, ['refund', 'cash_out', 'petty_cash', 'correction_out', 'expense', 'purchase']);
     }
 }

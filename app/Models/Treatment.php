@@ -24,20 +24,20 @@ class Treatment extends Model
     public function doctors()
     {
         return $this->belongsToMany(Doctor::class, 'doctor_treatment')
-                    ->withPivot('price')
-                    ->withTimestamps();
+            ->withPivot('price')
+            ->withTimestamps();
     }
 
     public function appointments()
     {
         return $this->belongsToMany(Appointment::class, 'appointment_treatment')
-                    ->withPivot(['quantity', 'price_at_time', 'notes'])
-                    ->withTimestamps();
+            ->withPivot(['quantity', 'price_at_time', 'notes'])
+            ->withTimestamps();
     }
 
     public function scopeActive($query)
     {
         return $query->where('active', true)
-                     ->whereNull('deleted_at');
+            ->whereNull('deleted_at');
     }
 }

@@ -13,17 +13,20 @@ class AppointmentPrescriptionController extends Controller
 {
     public function create(Appointment $appointment)
     {
-        // if ($appointment->status !== Appointment::STATUS_COMPLETED) {
-        //     return redirect()->route('appointments.show', $appointment)
-        //         ->with('error', 'Prescription can only be created for completed appointments.');
-        // }
+        if (!in_array($appointment->status, [Appointment::STATUS_APPROVED, Appointment::STATUS_COMPLETED])) {
+            return redirect()->route('appointments.show', $appointment)
+                ->with('error', 'Prescription can only be created for approved or completed appointments.');
+        }
+
+        if ($appointment->prescriptions()->exists()) {
+            $existing = $appointment->prescriptions()->latest()->first();
+            return redirect()->route('prescriptions.edit', $existing)
+                ->with('info', 'A prescription already exists for this appointment.');
+        }
 
         $templates = MedicineTemplate::orderBy('name')->get();
 
-        return view('appointments.prescription.create', compact(
-            'appointment',
-            'templates'
-        ));
+        return view('prescriptions.create', compact('appointment', 'templates'));
     }
 
     public function store(Request $request, Appointment $appointment)
@@ -50,23 +53,23 @@ class AppointmentPrescriptionController extends Controller
         }
 
         $validated = $request->validate([
-            'prescription_date'    => 'required|date',
-            'type'                 => 'required|string|max:255',
-            'diagnosis'            => 'nullable|string|max:1000',
-            'notes'                => 'nullable|string|max:2000',
+            'prescription_date' => 'required|date',
+            'type' => 'required|string|max:255',
+            'diagnosis' => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:2000',
             'medicine_template_id' => 'nullable|exists:medicine_templates,id',
-            'medications'          => 'nullable|array',
-            'medications.*.name'   => 'required_if:medications present|string|max:255',
+            'medications' => 'nullable|array',
+            'medications.*.name' => 'required_if:medications present|string|max:255',
         ]);
 
         DB::transaction(function () use ($request, $appointment, $doctor) {
             $prescription = $appointment->prescriptions()->create([
-                'patient_id'         => $appointment->patient_id,
-                'doctor_id'          => $doctor->id,
-                'prescription_date'  => $request->prescription_date,
-                'type'               => $request->type,
-                'diagnosis'          => $request->diagnosis,
-                'notes'              => $request->notes,
+                'patient_id' => $appointment->patient_id,
+                'doctor_id' => $doctor->id,
+                'prescription_date' => $request->prescription_date,
+                'type' => $request->type,
+                'diagnosis' => $request->diagnosis,
+                'notes' => $request->notes,
             ]);
 
             // Template medications
@@ -74,7 +77,11 @@ class AppointmentPrescriptionController extends Controller
                 $template = MedicineTemplate::with('medications')->findOrFail($request->medicine_template_id);
                 foreach ($template->medications as $med) {
                     $prescription->medications()->create($med->only([
-                        'name', 'dosage', 'route', 'frequency', 'instructions'
+                        'name',
+                        'dosage',
+                        'route',
+                        'frequency',
+                        'instructions'
                     ]));
                 }
             }
@@ -84,12 +91,14 @@ class AppointmentPrescriptionController extends Controller
                 foreach ($request->medications as $med) {
                     if (!empty($med['name'])) {
                         $prescription->medications()->create([
-                            'name'          => $med['name'],
-                            'dosage'        => $med['dosage'] ?? null,
-                            'route'         => $med['route'] ?? 'Oral',
-                            'frequency'     => $med['frequency'] ?? null,
+                            'name' => $med['name'],
+                            'inventory_item_id' => $med['inventory_item_id'] ?? null,
+                            'dosage' => $med['dosage'] ?? null,
+                            'route' => $med['route'] ?? 'Oral',
+                            'frequency' => $med['frequency'] ?? null,
+                            'per_day' => $med['per_day'] ?? 1,
                             'duration_days' => $med['duration_days'] ?? null,
-                            'instructions'  => $med['instructions'] ?? null,
+                            'instructions' => $med['instructions'] ?? null,
                         ]);
                     }
                 }

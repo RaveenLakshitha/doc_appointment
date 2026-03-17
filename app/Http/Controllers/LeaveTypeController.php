@@ -9,11 +9,18 @@ use Illuminate\Validation\Rule;
 
 class LeaveTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:leave-types.index', ['only' => ['index', 'datatable']]);
+        $this->middleware('permission:leave-types.create', ['only' => ['store']]);
+        $this->middleware('permission:leave-types.edit', ['only' => ['update']]);
+        $this->middleware('permission:leave-types.delete', ['only' => ['destroy', 'bulkDelete']]);
+    }
     public function index()
     {
         if (!Auth::user()->can('leave-types.index')) {
             return redirect()->route('home')
-                ->with('error', 'Sorry! You are not allowed to access this module.');
+                ->with('error', __('file.module_access_denied'));
         }
 
         return view('leave-types.index');
@@ -21,34 +28,34 @@ class LeaveTypeController extends Controller
 
     public function datatable(Request $request)
     {
-        $draw        = $request->input('draw');
-        $start       = $request->input('start', 0);
-        $length      = $request->input('length', 10);
-        $orderIdx    = $request->input('order.0.column');
-        $orderDir    = $request->input('order.0.dir', 'asc');
+        $draw = $request->input('draw');
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        $orderIdx = $request->input('order.0.column');
+        $orderDir = $request->input('order.0.dir', 'asc');
         $searchValue = trim($request->input('search.value', ''));
-
-        $activeFilter = $request->active;
+        $activeFilter = $request->input('active');
 
         $query = LeaveType::query()
             ->select('leave_types.*')
             ->when($searchValue !== '', function ($q) use ($searchValue) {
                 $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('code', 'like', "%{$searchValue}%")
-                  ->orWhere('description', 'like', "%{$searchValue}%");
+                    ->orWhere('code', 'like', "%{$searchValue}%")
+                    ->orWhere('description', 'like', "%{$searchValue}%");
             })
-            ->when($activeFilter !== null, function ($q) use ($activeFilter) {
+            ->when($activeFilter !== null && $activeFilter !== '', function ($q) use ($activeFilter) {
                 $q->where('active', filter_var($activeFilter, FILTER_VALIDATE_BOOLEAN));
             });
 
-        $totalRecords    = LeaveType::count();
+        $totalRecords = LeaveType::count();
         $filteredRecords = (clone $query)->count();
 
-        $sortColumn = match ((int)$orderIdx) {
-            1 => 'name',
-            2 => 'code',
-            3 => 'days_allowed',
-            4 => 'is_paid',
+        $sortColumn = match ((int) $orderIdx) {
+            0 => 'name',
+            1 => 'code',
+            2 => 'days_allowed',
+            3 => 'is_paid',
+            4 => 'requires_approval',
             5 => 'active',
             default => 'name',
         };
@@ -59,114 +66,157 @@ class LeaveTypeController extends Controller
 
         $data = $types->map(function ($type) {
             $activeHtml = $type->active
-                ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active</span>'
-                : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Inactive</span>';
+                ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">' . __('file.active') . '</span>'
+                : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">' . __('file.inactive') . '</span>';
 
             $paidHtml = $type->is_paid
-                ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Paid</span>'
-                : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Unpaid</span>';
-
-            $edit_url   = Auth::user()->can('leave-types.update') ? route('leave-types.edit', $type) : null;
-            $delete_url = Auth::user()->can('leave-types.delete') ? route('leave-types.destroy', $type) : null;
+                ? '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">' . __('file.paid') . '</span>'
+                : '<span class="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">' . __('file.unpaid') . '</span>';
 
             return [
-                'id'              => $type->id,
-                'name'            => $type->name,
-                'code'            => $type->code ?? '-',
-                'days_allowed'    => $type->days_allowed,
-                'paid_html'       => $paidHtml,
-                'active_html'     => $activeHtml,
-                'edit_url'        => $edit_url,
-                'delete_url'      => $delete_url,
+                'id' => $type->id,
+                'name' => $type->name,
+                'code' => $type->code ?? '-',
+                'days_allowed' => $type->days_allowed,
+                'paid_html' => $paidHtml,
+                'requires_approval' => $type->requires_approval,
+                'active_html' => $activeHtml,
+                'is_active' => $type->active,
+                'is_paid' => $type->is_paid,
+                'description' => $type->description ?? '',
+                'delete_url' => route('leave-types.destroy', $type->id),
             ];
         });
 
         return response()->json([
-            'draw'            => (int)$draw,
-            'recordsTotal'    => $totalRecords,
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data'            => $data->toArray(),
+            'data' => $data->toArray(),
         ]);
-    }
-
-    public function create()
-    {
-        if (!Auth::user()->can('leave-types.create')) {
-            return redirect()->route('leave-types.index')
-                ->with('error', 'Sorry! You are not allowed to create leave types.');
-        }
-
-        return view('leave-types.create');
     }
 
     public function store(Request $request)
     {
         if (!Auth::user()->can('leave-types.create')) {
-            abort(403);
+            return response()->json(['success' => false, 'message' => __('file.unauthorized')], 403);
         }
 
         $validated = $request->validate([
-            'name'              => ['required', 'string', 'max:100', 'unique:leave_types,name'],
-            'code'              => ['nullable', 'string', 'max:10', 'unique:leave_types,code'],
-            'description'       => ['nullable', 'string'],
-            'days_allowed'      => ['required', 'integer', 'min:0', 'max:365'],
-            'is_paid'           => ['sometimes', 'boolean'],
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('leave_types', 'name')->whereNull('deleted_at')
+            ],
+            'code' => [
+                'nullable',
+                'string',
+                'max:10',
+                Rule::unique('leave_types', 'code')->whereNull('deleted_at')
+            ],
+            'description' => ['nullable', 'string'],
+            'days_allowed' => ['required', 'integer', 'min:0', 'max:365'],
+            'is_paid' => ['sometimes', 'boolean'],
             'requires_approval' => ['sometimes', 'boolean'],
-            'active'            => ['sometimes', 'boolean'],
+            'active' => ['sometimes', 'boolean'],
         ]);
 
-        LeaveType::create($validated);
+        $leaveType = LeaveType::withTrashed()
+            ->where(function ($q) use ($request) {
+                $q->where('name', $request->name);
+                if ($request->code) {
+                    $q->orWhere('code', $request->code);
+                }
+            })
+            ->first();
 
-        return redirect()->route('leave-types.index')
-            ->with('success', 'Leave type created successfully.');
-    }
-
-    public function edit(LeaveType $leaveType)
-    {
-        if (!Auth::user()->can('leave-types.update')) {
-            return redirect()->route('leave-types.index')
-                ->with('error', 'Sorry! You are not allowed to edit leave types.');
+        if ($leaveType && $leaveType->trashed()) {
+            $leaveType->restore();
+            $leaveType->update($validated);
+        } else {
+            LeaveType::create($validated);
         }
 
-        return view('leave-types.edit', compact('leaveType'));
+        return response()->json(['success' => true]);
     }
 
     public function update(Request $request, LeaveType $leaveType)
     {
-        if (!Auth::user()->can('leave-types.update')) {
-            abort(403);
+        if (!Auth::user()->can('leave-types.edit')) {
+            return response()->json(['success' => false, 'message' => __('file.unauthorized')], 403);
         }
 
         $validated = $request->validate([
-            'name'              => ['required', 'string', 'max:100', Rule::unique('leave_types')->ignore($leaveType->id)],
-            'code'              => ['nullable', 'string', 'max:10', Rule::unique('leave_types')->ignore($leaveType->id)],
-            'description'       => ['nullable', 'string'],
-            'days_allowed'      => ['required', 'integer', 'min:0', 'max:365'],
-            'is_paid'           => ['sometimes', 'boolean'],
+            'name' => ['required', 'string', 'max:100', Rule::unique('leave_types')->ignore($leaveType->id)->whereNull('deleted_at')],
+            'code' => ['nullable', 'string', 'max:10', Rule::unique('leave_types')->ignore($leaveType->id)->whereNull('deleted_at')],
+            'description' => ['nullable', 'string'],
+            'days_allowed' => ['required', 'integer', 'min:0', 'max:365'],
+            'is_paid' => ['sometimes', 'boolean'],
             'requires_approval' => ['sometimes', 'boolean'],
-            'active'            => ['sometimes', 'boolean'],
+            'active' => ['sometimes', 'boolean'],
         ]);
 
         $leaveType->update($validated);
 
-        return redirect()->route('leave-types.index')
-            ->with('success', 'Leave type updated successfully.');
+        return response()->json(['success' => true]);
     }
 
     public function destroy(LeaveType $leaveType)
     {
         if (!Auth::user()->can('leave-types.delete')) {
-            return redirect()->route('leave-types.index')
-                ->with('error', 'Sorry! You are not allowed to delete leave types.');
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         if ($leaveType->requests()->exists() || $leaveType->entitlements()->exists()) {
-            return back()->with('error', 'Cannot delete: Leave type is in use.');
+            return response()->json([
+                'success' => false,
+                'message' => __('file.leave_type_in_use')
+            ], 422);
         }
 
         $leaveType->delete();
 
-        return redirect()->route('leave-types.index')
-            ->with('success', 'Leave type deleted successfully.');
+        return response()->json(['success' => true]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        if (!Auth::user()->can('leave-types.delete')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => __('file.no_ids_provided')], 400);
+        }
+
+        $idsArray = is_array($ids) ? $ids : explode(',', $ids);
+
+        $types = LeaveType::whereIn('id', $idsArray)->get();
+        $deletedCount = 0;
+        $activeCount = 0;
+
+        foreach ($types as $type) {
+            if ($type->requests()->exists() || $type->entitlements()->exists()) {
+                $activeCount++;
+                continue;
+            }
+            $type->delete();
+            $deletedCount++;
+        }
+
+        if ($deletedCount > 0) {
+            $message = $deletedCount . ' leave type(s) deleted successfully.';
+            if ($activeCount > 0) {
+                $message .= ' ' . $activeCount . ' could not be deleted as they are in use.';
+            }
+            return response()->json(['success' => true, 'message' => $message]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => __('file.leave_type_in_use')
+        ], 422);
     }
 }

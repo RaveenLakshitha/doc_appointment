@@ -26,7 +26,7 @@ class UpdateSettingsRequest extends FormRequest
                 Rule::unique('settings', 'clinic_id')->ignore($settingId),
             ],
             'email'           => 'required|email',
-            'phone'           => 'required|string|max:20',
+            'phone'           => 'required|string|min:7|max:15',
             'address'         => 'required|string',
             'website'         => 'nullable|url',
             'tax_id'          => 'nullable|string|max:50',
@@ -38,6 +38,9 @@ class UpdateSettingsRequest extends FormRequest
 
             'logo'            => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
             'primary_color'   => 'required|string|regex:/^#[a-f0-9]{6}$/i',
+
+            'invoice_paper_size'      => 'required|in:A4,80mm',
+            'prescription_paper_size' => 'required|in:A4,80mm',
         ];
     }
 }

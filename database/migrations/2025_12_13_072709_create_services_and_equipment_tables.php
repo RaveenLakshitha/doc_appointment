@@ -56,23 +56,23 @@ return new class extends Migration
             $table->unique(['service_id', 'equipment_id']);
         });
 
-        Schema::create('service_availability_slots', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('service_id')->constrained()->onDelete('cascade');
-            $table->string('day_of_week');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->timestamps();
+        // Schema::create('service_availability_slots', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('service_id')->constrained()->onDelete('cascade');
+        //     $table->string('day_of_week');
+        //     $table->time('start_time');
+        //     $table->time('end_time');
+        //     $table->timestamps();
 
-            // Prevents duplicate exact slots (recommended)
-            $table->unique(
-                ['service_id', 'day_of_week', 'start_time'],
-                'slot_service_day_start_unique'
-            );
+        //     // Prevents duplicate exact slots (recommended)
+        //     $table->unique(
+        //         ['service_id', 'day_of_week', 'start_time'],
+        //         'slot_service_day_start_unique'
+        //     );
 
-            // Optional: index for faster queries
-            $table->index(['service_id', 'day_of_week']);
-        });
+        //     // Optional: index for faster queries
+        //     $table->index(['service_id', 'day_of_week']);
+        // });
             }
 
     /**

@@ -75,7 +75,7 @@
                 <div>
                     <label>Clinic Logo (512x512px, PNG/JPG/SVG)</label>
                     @if($setting->logo_path)
-                        <img src="{{ Storage::url($setting->logo_path) }}" alt="Logo" class="w-32 h-32 object-contain border mb-2">
+                        <img src="{{ asset('storage/' . $setting->logo_path) }}" alt="Logo" class="w-32 h-32 object-contain border mb-2">
                     @endif
                     <input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
@@ -83,7 +83,7 @@
                 <div>
                     <label>Favicon (32x32px, PNG/ICO)</label>
                     @if($setting->favicon_path)
-                        <img src="{{ Storage::url($setting->favicon_path) }}" alt="Favicon" class="w-8 h-8 mb-2">
+                        <img src="{{ asset('storage/' . $setting->favicon_path) }}" alt="Favicon" class="w-8 h-8 mb-2">
                     @endif
                     <input type="file" name="favicon" accept=".png,.ico" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>

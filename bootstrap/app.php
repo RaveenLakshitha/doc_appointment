@@ -25,6 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Redirect 419 (CSRF token mismatch) back to login with a friendly message
+        $exceptions->render(function (Illuminate\Session\TokenMismatchException $e, Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'CSRF token mismatch. Please refresh and try again.'], 419);
+            }
+            return redirect()->route('login')
+                ->with('status', __('file.session_expired_login_again') ?? 'Your session expired. Please log in again.');
+        });
+
         $exceptions->render(function (Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, Illuminate\Http\Request $request) {
             $statusCode = $e->getStatusCode();
 

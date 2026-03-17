@@ -7,55 +7,53 @@ use Illuminate\Database\Seeder;
 
 class DepartmentSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
         Department::unguard();
 
         $departments = [
             [
-                'name'        => 'Cardiology',
-                'location'    => 'Building A - 3rd Floor',
-                'email'       => 'cardiology@hospital.com',
-                'phone'       => '+1234567001',
-                'status'      => true,
-                'description' => 'Department of Cardiovascular Medicine',
+                'name' => 'Psicoterapia Clínica',
+                'description' => 'Servicios de psicoterapia clínica para niños, adolescentes y adultos.',
+                'status' => true
             ],
             [
-                'name'        => 'Neurology',
-                'location'    => 'Building B - 2nd Floor',
-                'email'       => 'neurology@hospital.com',
-                'phone'       => '+1234567002',
-                'status'      => true,
-                'description' => 'Department of Neurology and Stroke Care',
+                'name' => 'Adicciones',
+                'description' => 'Tratamiento y consejería para adicciones.',
+                'status' => true
             ],
             [
-                'name'        => 'Orthopedics',
-                'location'    => 'Building A - 1st Floor',
-                'email'       => 'orthopedics@hospital.com',
-                'phone'       => '+1234567003',
-                'status'      => true,
-                'description' => 'Department of Orthopedic Surgery',
+                'name' => 'Evaluación',
+                'description' => 'Evaluación Psicológica y Psicométrica.',
+                'status' => true
             ],
             [
-                'name'        => 'Pediatrics',
-                'location'    => 'Building C - 1st Floor',
-                'email'       => 'pediatrics@hospital.com',
-                'phone'       => '+1234567004',
-                'status'      => true,
-                'description' => 'Department of Child Health',
+                'name' => 'Neurodesarrollo',
+                'description' => 'Especialidad en neurodesarrollo.',
+                'status' => true
             ],
             [
-                'name'        => 'Oncology',
-                'location'    => 'Building D - 4th Floor',
-                'email'       => 'oncology@hospital.com',
-                'phone'       => '+1234567005',
-                'status'      => true,
-                'description' => 'Cancer Treatment and Research Center',
+                'name' => 'Tanatología',
+                'description' => 'Acompañamiento en procesos de duelo.',
+                'status' => true
+            ],
+            [
+                'name' => 'Nutrición',
+                'description' => 'Nutrición Clínica.',
+                'status' => true
+            ],
+            [
+                'name' => 'Psiquiatría',
+                'description' => 'Psiquiatría de enlace y Medicina Psicosomática.',
+                'status' => true
             ],
         ];
 
         foreach ($departments as $department) {
-            Department::create($department);
+            Department::updateOrCreate(['name' => $department['name']], $department);
         }
 
         Department::reguard();

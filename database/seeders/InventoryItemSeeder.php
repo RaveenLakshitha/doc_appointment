@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\InventoryItem;
 use App\Models\Category;
 use App\Models\Supplier;
-use App\Models\UnitOfMeasure;
 use Illuminate\Database\Seeder;
 
 class InventoryItemSeeder extends Seeder
@@ -14,189 +13,159 @@ class InventoryItemSeeder extends Seeder
     {
         InventoryItem::unguard();
 
+        // Get a real supplier ID (the first one that exists)
+        $defaultSupplier = Supplier::first();
+
+        if (!$defaultSupplier) {
+            $this->command->error('No suppliers found in the database. Please run SupplierSeeder first.');
+            return;
+        }
+
+        $defaultSupplierId = $defaultSupplier->id;
+
+        $this->command->info("Using supplier ID {$defaultSupplierId} ({$defaultSupplier->name}) for all inventory items.");
+
+        // Helper to safely get category ID
+        $getCategoryId = fn(string $name) => Category::where('name', $name)->first()?->id;
+
         $items = [
-            // Medicines
+            // ───────────────────────────────────────────────
+            // Pain / Fever
+            // ───────────────────────────────────────────────
             [
-                'name'                => 'Paracetamol 500mg Tablets',
-                'sku'                 => 'PARA-500-TAB-100',
-                'category_id'         => Category::where('name', 'Analgesics')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'PharmaCare Distributors')->first()?->id,
-                'generic_name'        => 'Paracetamol',
-                'medicine_type'       => 'Tablet',
-                'dosage'              => '500 mg',
-                'unit_of_measure'     => 'Strip',
-                'unit_quantity'       => 10,
-                'unit_cost'           => 120.00,
-                'unit_price'          => 180.00,
-                'current_stock'       => 450,
-                'minimum_stock_level' => 100,
-                'reorder_point'       => 150,
-                'reorder_quantity'    => 500,
-                'expiry_tracking'     => true,
-                'is_active'           => true,
-            ],
-            [
-                'name'                => 'Amoxicillin 500mg Capsules',
-                'sku'                 => 'AMOX-500-CAP-20',
-                'category_id'         => Category::where('name', 'Antibiotics')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'PharmaCare Distributors')->first()?->id,
-                'generic_name'        => 'Amoxicillin',
-                'medicine_type'       => 'Capsule',
-                'dosage'              => '500 mg',
-                'unit_of_measure'     => 'Box',
-                'unit_quantity'       => 20,
-                'unit_cost'           => 850.00,
-                'unit_price'          => 1200.00,
-                'current_stock'       => 120,
-                'minimum_stock_level' => 30,
-                'reorder_point'       => 50,
-                'reorder_quantity'    => 200,
-                'expiry_tracking'     => true,
-                'is_active'           => true,
-            ],
-            [
-                'name'                => 'Ceftriaxone 1g Injection',
-                'sku'                 => 'CEFT-1G-VIAL',
-                'category_id'         => Category::where('name', 'Antibiotics')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'PharmaCare Distributors')->first()?->id,
-                'generic_name'        => 'Ceftriaxone',
-                'medicine_type'       => 'Injection',
-                'dosage'              => '1 g',
-                'unit_of_measure'     => 'Vial',
-                'unit_quantity'       => 1,
-                'unit_cost'           => 320.00,
-                'unit_price'          => 480.00,
-                'current_stock'       => 85,
-                'minimum_stock_level' => 20,
-                'reorder_point'       => 30,
-                'reorder_quantity'    => 100,
-                'expiry_tracking'     => true,
-                'requires_refrigeration' => true,
-                'is_active'           => true,
-            ],
-            [
-                'name'                => 'Omeprazole 20mg Capsules',
-                'sku'                 => 'OMEP-20-CAP-14',
-                'category_id'         => Category::where('name', 'Pharmaceuticals')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'PharmaCare Distributors')->first()?->id,
-                'generic_name'        => 'Omeprazole',
-                'medicine_type'       => 'Capsule',
-                'dosage'              => '20 mg',
-                'unit_of_measure'     => 'Strip',
-                'unit_quantity'       => 14,
-                'unit_cost'           => 210.00,
-                'unit_price'          => 320.00,
-                'current_stock'       => 320,
-                'minimum_stock_level' => 80,
-                'reorder_point'       => 120,
-                'reorder_quantity'    => 400,
-                'expiry_tracking'     => true,
-                'is_active'           => true,
-            ],
-            [
-                'name'                => 'Salbutamol 100mcg Inhaler',
-                'sku'                 => 'SALB-100-INH',
-                'category_id'         => Category::where('name', 'Pharmaceuticals')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'PharmaCare Distributors')->first()?->id,
-                'generic_name'        => 'Salbutamol',
-                'medicine_type'       => 'Inhaler',
-                'dosage'              => '100 mcg/dose',
-                'unit_of_measure'     => 'Each',
-                'unit_quantity'       => 1,
-                'unit_cost'           => 1450.00,
-                'unit_price'          => 1950.00,
-                'current_stock'       => 65,
-                'minimum_stock_level' => 15,
-                'reorder_point'       => 25,
-                'reorder_quantity'    => 100,
-                'expiry_tracking'     => true,
-                'is_active'           => true,
+                'name' => 'Paracetamol 500 mg Tablets',
+                'sku' => 'PARA-500-TAB-100s',
+                'category_id' => $getCategoryId('Analgesics'),
+                'primary_supplier_id' => $defaultSupplierId,
+                'generic_name' => 'Paracetamol',
+                'medicine_type' => 'Tablet',
+                'dosage' => '500 mg',
+                'unit_of_measure' => 'Strip',
+                'unit_quantity' => 10,
+                'unit_cost' => 85.00,
+                'unit_price' => 150.00,
+                'current_stock' => 680,
+                'minimum_stock_level' => 150,
+                'expiry_tracking' => true,
+                'is_active' => true,
             ],
 
-            // Non-medicine items
             [
-                'name'                => 'Nitrile Examination Gloves (Large)',
-                'sku'                 => 'NITR-L-GLOVE-100',
-                'category_id'         => Category::where('name', 'Gloves')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'Medico Supplies Ltd.')->first()?->id,
-                'unit_of_measure'     => 'Box',
-                'unit_quantity'       => 100,
-                'unit_cost'           => 1850.00,
-                'unit_price'          => 2400.00,
-                'current_stock'       => 280,
+                'name' => 'Paracetamol 1 g IV Injection',
+                'sku' => 'PARA-1G-VIAL-10',
+                'category_id' => $getCategoryId('Injectables') ?? $getCategoryId('General Medicine'),
+                'primary_supplier_id' => $defaultSupplierId,
+                'generic_name' => 'Paracetamol',
+                'medicine_type' => 'Injection',
+                'dosage' => '1000 mg / 100 mL',
+                'unit_of_measure' => 'Vial',
+                'unit_quantity' => 1,
+                'unit_cost' => 420.00,
+                'unit_price' => 780.00,
+                'current_stock' => 85,
+                'minimum_stock_level' => 20,
+                'expiry_tracking' => true,
+                'is_active' => true,
+            ],
+
+            // ───────────────────────────────────────────────
+            // Antibiotics
+            // ───────────────────────────────────────────────
+            [
+                'name' => 'Amoxicillin 500 mg Capsules',
+                'sku' => 'AMOX-500-CAP-20s',
+                'category_id' => $getCategoryId('Antibiotics'),
+                'primary_supplier_id' => $defaultSupplierId,
+                'generic_name' => 'Amoxicillin',
+                'medicine_type' => 'Capsule',
+                'dosage' => '500 mg',
+                'unit_of_measure' => 'Box',
+                'unit_quantity' => 20,
+                'unit_cost' => 720.00,
+                'unit_price' => 1150.00,
+                'current_stock' => 210,
                 'minimum_stock_level' => 50,
-                'reorder_point'       => 80,
-                'reorder_quantity'    => 300,
-                'is_active'           => true,
+                'expiry_tracking' => true,
+                'is_active' => true,
             ],
+
             [
-                'name'                => '3-Ply Surgical Face Masks',
-                'sku'                 => 'MASK-3PLY-50',
-                'category_id'         => Category::where('name', 'Masks')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'Medico Supplies Ltd.')->first()?->id,
-                'unit_of_measure'     => 'Box',
-                'unit_quantity'       => 50,
-                'unit_cost'           => 650.00,
-                'unit_price'          => 950.00,
-                'current_stock'       => 1200,
-                'minimum_stock_level' => 200,
-                'reorder_point'       => 300,
-                'reorder_quantity'    => 1000,
-                'is_active'           => true,
+                'name' => 'Ceftriaxone 1 g IV/IM Injection',
+                'sku' => 'CEFT-1G-VIAL-1',
+                'category_id' => $getCategoryId('Antibiotics') ?? $getCategoryId('Injectables'),
+                'primary_supplier_id' => $defaultSupplierId,
+                'generic_name' => 'Ceftriaxone',
+                'medicine_type' => 'Injection',
+                'dosage' => '1 g',
+                'unit_of_measure' => 'Vial',
+                'unit_quantity' => 1,
+                'unit_cost' => 380.00,
+                'unit_price' => 720.00,
+                'current_stock' => 140,
+                'minimum_stock_level' => 30,
+                'expiry_tracking' => true,
+                'is_active' => true,
             ],
+
+            // ───────────────────────────────────────────────
+            // Gastroenterology
+            // ───────────────────────────────────────────────
             [
-                'name'                => 'Digital Blood Pressure Monitor',
-                'sku'                 => 'BP-MONITOR-DIGI',
-                'category_id'         => Category::where('name', 'Blood Pressure Monitors')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'HealthTech Solutions')->first()?->id,
-                'unit_of_measure'     => 'Each',
-                'unit_quantity'       => 1,
-                'unit_cost'           => 4800.00,
-                'unit_price'          => 6500.00,
-                'current_stock'       => 38,
-                'minimum_stock_level' => 10,
-                'reorder_point'       => 15,
-                'reorder_quantity'    => 50,
-                'is_active'           => true,
-            ],
-            [
-                'name'                => 'Sterile Gauze Swabs 10x10cm',
-                'sku'                 => 'GAUZE-10X10-100',
-                'category_id'         => Category::where('name', 'Gauze Pads')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'Medico Supplies Ltd.')->first()?->id,
-                'unit_of_measure'     => 'Pack',
-                'unit_quantity'       => 100,
-                'unit_cost'           => 950.00,
-                'unit_price'          => 1350.00,
-                'current_stock'       => 420,
+                'name' => 'Omeprazole 20 mg Capsules',
+                'sku' => 'OMEP-20-CAP-30s',
+                'category_id' => $getCategoryId('Anti-ulcer Agents') ?? $getCategoryId('Gastrointestinal'),
+                'primary_supplier_id' => $defaultSupplierId,
+                'generic_name' => 'Omeprazole',
+                'medicine_type' => 'Capsule',
+                'dosage' => '20 mg',
+                'unit_of_measure' => 'Strip',
+                'unit_quantity' => 10,
+                'unit_cost' => 180.00,
+                'unit_price' => 320.00,
+                'current_stock' => 360,
                 'minimum_stock_level' => 80,
-                'reorder_point'       => 120,
-                'reorder_quantity'    => 500,
-                'sterile'             => true,
-                'is_active'           => true,
+                'expiry_tracking' => true,
+                'is_active' => true,
             ],
+
+            // ───────────────────────────────────────────────
+            // Respiratory
+            // ───────────────────────────────────────────────
             [
-                'name'                => 'Disposable Syringes 5ml',
-                'sku'                 => 'SYR-5ML-100',
-                'category_id'         => Category::where('name', 'Syringes & Needles')->first()?->id,
-                'primary_supplier_id' => Supplier::where('name', 'Medico Supplies Ltd.')->first()?->id,
-                'unit_of_measure'     => 'Box',
-                'unit_quantity'       => 100,
-                'unit_cost'           => 1100.00,
-                'unit_price'          => 1600.00,
-                'current_stock'       => 750,
-                'minimum_stock_level' => 150,
-                'reorder_point'       => 250,
-                'reorder_quantity'    => 1000,
-                'sterile'             => true,
-                'is_active'           => true,
+                'name' => 'Salbutamol 100 mcg Inhaler',
+                'sku' => 'SALB-100-INH-200',
+                'category_id' => $getCategoryId('Respiratory') ?? $getCategoryId('Inhalers & Nebulizers'),
+                'primary_supplier_id' => $defaultSupplierId,
+                'generic_name' => 'Salbutamol',
+                'medicine_type' => 'Metered Dose Inhaler',
+                'dosage' => '100 mcg / puff',
+                'unit_of_measure' => 'Each',
+                'unit_quantity' => 1,
+                'unit_cost' => 1250.00,
+                'unit_price' => 1950.00,
+                'current_stock' => 95,
+                'minimum_stock_level' => 20,
+                'expiry_tracking' => true,
+                'is_active' => true,
             ],
+
+            // You can add more items here...
         ];
 
+        $createdCount = 0;
+
         foreach ($items as $item) {
+            if (empty($item['category_id'])) {
+                $this->command->warn("Skipping item '{$item['name']}' — category not found.");
+                continue;
+            }
+
             InventoryItem::create($item);
+            $createdCount++;
         }
 
         InventoryItem::reguard();
+
+        $this->command->info("Inventory items seeded successfully ({$createdCount} items created).");
     }
 }

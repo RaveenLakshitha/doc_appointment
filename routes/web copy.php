@@ -85,12 +85,12 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
 
             // ---------- USER MANAGEMENT ----------
-                Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
-                Route::get('users/datatable', [UserController::class, 'datatable'])->name('users.datatable');
+            Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
+            Route::get('users/datatable', [UserController::class, 'datatable'])->name('users.datatable');
             Route::resource('users', UserController::class);
 
 
-                 Route::resource('roles', RoleController::class)->except(['show']);
+            Route::resource('roles', RoleController::class)->except(['show']);
 
             // ---------- SPECIALIZATIONS ----------
             Route::resource('specializations', SpecializationController::class);
@@ -104,7 +104,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('ambulances/bulk-delete', [AmbulanceController::class, 'bulkDelete'])
                 ->name('ambulances.bulkDelete');
 
-            
+
 
 
             // ---------- SERVICES OFFERED ----------
@@ -113,7 +113,7 @@ Route::middleware(['auth'])->group(function () {
                 ->name('services.bulkDelete');
 
 
-            
+
             // ---------- STAFF ----------
             Route::resource('staff', StaffController::class);
             Route::get('staff/data', [StaffController::class, 'data'])->name('staff.data');
@@ -132,7 +132,7 @@ Route::middleware(['auth'])->group(function () {
                     ->name('inventory');
             });
 
-            
+
 
             Route::get('/primary/patients', [PrimaryPatientController::class, 'index'])
                 ->name('primary.patients.index');
@@ -202,42 +202,42 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/patients/datatable', [PatientController::class, 'datatable'])
-     ->name('patients.datatable')
-     ->middleware(['auth', 'role:admin|primary-therapist']);
+    ->name('patients.datatable')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
 
 Route::post('/patients/bulk-delete', [PatientController::class, 'bulkDelete'])
-     ->name('patients.bulkDelete')
-     ->middleware(['auth', 'role:admin']);
+    ->name('patients.bulkDelete')
+    ->middleware(['auth', 'role:admin']);
 
 Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
 
     // Custom routes MUST come BEFORE resource routes
     Route::get('/patients/filters', [PatientController::class, 'filters'])
-         ->name('patients.filters');
+        ->name('patients.filters');
 
     Route::get('/patients/export/excel', [PatientController::class, 'exportExcel'])
-         ->name('patients.export.excel');
+        ->name('patients.export.excel');
     Route::get('/patients/export/csv', [PatientController::class, 'exportCsv'])
-         ->name('patients.export.csv');
+        ->name('patients.export.csv');
     Route::get('/patients/export/pdf', [PatientController::class, 'exportPdf'])
-         ->name('patients.export.pdf');
+        ->name('patients.export.pdf');
 
     // This must be last!
     Route::resource('patients', PatientController::class);
 });
 
-    
-    Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
+
+Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::get('/categories/{category}/details', [CategoryController::class, 'details'])
-         ->name('categories.details');
+        ->name('categories.details');
 });
 
-    Route::post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'])
-        ->name('categories.bulkDelete')
-        ->middleware(['auth', 'role:admin']);
-    
-    Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
+Route::post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'])
+    ->name('categories.bulkDelete')
+    ->middleware(['auth', 'role:admin']);
+
+Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
 
 
     Route::get('inventory/datatable', [InventoryItemController::class, 'datatable'])
@@ -250,10 +250,10 @@ Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
         ->name('inventory.bulkDelete');
 
     Route::resource('inventory', InventoryItemController::class)
-        ->parameter('inventory', 'inventoryitem'); 
+        ->parameter('inventory', 'inventoryitem');
 
     Route::get('services/datatable', [ServiceController::class, 'datatable'])
-    ->name('services.datatable');
+        ->name('services.datatable');
 
     Route::post('services/bulk-delete', [ServiceController::class, 'bulkDelete'])
         ->name('services.bulkDelete');
@@ -262,13 +262,13 @@ Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
 });
 
 
-            // ---------- PHARMACY ----------
+// ---------- PHARMACY ----------
 Route::get('medicines-datatable', [MedicineController::class, 'datatable'])
-                ->name('medicines.datatable');
+    ->name('medicines.datatable');
 
 Route::delete('medicines/bulk-delete', [MedicineController::class, 'bulkDelete'])
     ->name('medicines.bulkDelete');
-    
+
 Route::resource('medicines', MedicineController::class);
 
 Route::get('/pos', [BillingInvoiceController::class, 'pos'])->name('invoices.pos');
@@ -276,19 +276,19 @@ Route::post('/pos/sale', [BillingInvoiceController::class, 'posStore'])->name('i
 Route::get('/invoices', [BillingInvoiceController::class, 'index'])->name('invoices.index');
 Route::get('/invoices/datatable', [BillingInvoiceController::class, 'datatable'])->name('invoices.datatable');
 Route::get('/invoices/filters', [BillingInvoiceController::class, 'filters'])->name('invoices.filters');
-Route::get('/invoices/{invoice}', [BillingInvoiceController::class, 'show'])->name('invoices.show');
+Route::get('/invoices/{invoice}', [BillingInvoiceController::class, 'show'])->name('invoices.index');
 Route::get('/invoices/{invoice}/print', [BillingInvoiceController::class, 'print'])->name('invoices.print');
 
 Route::get('/patients/{patient}/billing/datatable', [PatientBillingController::class, 'data'])
-     ->name('patients.billing.datatable');
+    ->name('patients.billing.datatable');
 
-     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
 Route::get('/payments/datatable', [PaymentController::class, 'datatable'])->name('payments.datatable');
 
 // For recording payment on an invoice (already used in invoice show page)
 Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('invoices.payments.store');
 
-    // ---------- INVENTORY ----------
+// ---------- INVENTORY ----------
 Route::middleware(['auth', 'role:admin|primary-therapist'])->group(function () {
     Route::resource('unit-of-measures', UnitOfMeasureController::class);
     Route::resource('suppliers', SupplierController::class);
@@ -306,103 +306,103 @@ Route::prefix('medicine-templates')
     ->as('medicine-templates.')
     ->group(function () {
 
-    Route::get('/datatable', [MedicineTemplateController::class, 'datatable'])
-        ->name('datatable');
+        Route::get('/datatable', [MedicineTemplateController::class, 'datatable'])
+            ->name('datatable');
 
-    // routes/web.php
-    Route::get('/medicine-templates/{id}/medications', [MedicineTemplateController::class, 'getMedications'])->name('medications');
+        // routes/web.php
+        Route::get('/medicine-templates/{id}/medications', [MedicineTemplateController::class, 'getMedications'])->name('medications');
 
-    Route::get('/filters', [MedicineTemplateController::class, 'filters'])
-        ->name('filters');
+        Route::get('/filters', [MedicineTemplateController::class, 'filters'])
+            ->name('filters');
 
-    Route::delete('/bulk-delete', [MedicineTemplateController::class, 'bulkDelete'])
-        ->name('bulkDelete');
+        Route::delete('/bulk-delete', [MedicineTemplateController::class, 'bulkDelete'])
+            ->name('bulkDelete');
 
-    // Correct parameter name: medicine_template (not medicationTemplate)
-    Route::resource('', MedicineTemplateController::class)
-        ->parameters(['' => 'medicine_template']);
+        // Correct parameter name: medicine_template (not medicationTemplate)
+        Route::resource('', MedicineTemplateController::class)
+            ->parameters(['' => 'medicine_template']);
 
-    Route::prefix('categories')
-        ->as('categories.')
-        ->group(function () {
-            Route::post('/', [MedicationTemplateCategoryController::class, 'store'])
-                ->name('store');
+        Route::prefix('categories')
+            ->as('categories.')
+            ->group(function () {
+                Route::post('/', [MedicationTemplateCategoryController::class, 'store'])
+                    ->name('store');
 
-            Route::put('/{category}', [MedicationTemplateCategoryController::class, 'update'])
-                ->name('update');
+                Route::put('/{category}', [MedicationTemplateCategoryController::class, 'update'])
+                    ->name('update');
 
-            Route::delete('/{category}', [MedicationTemplateCategoryController::class, 'destroy'])
-                ->name('destroy');
-        });
-});
+                Route::delete('/{category}', [MedicationTemplateCategoryController::class, 'destroy'])
+                    ->name('destroy');
+            });
+    });
 
 
 
-            // ---------- PRESCRIPTIONS ----------
+// ---------- PRESCRIPTIONS ----------
 
-            Route::get('prescriptions-datatable', [PrescriptionController::class, 'datatable'])
-                ->name('prescriptions.datatable');
+Route::get('prescriptions-datatable', [PrescriptionController::class, 'datatable'])
+    ->name('prescriptions.datatable');
 
-            Route::delete('prescriptions/bulk-delete', [PrescriptionController::class, 'bulkDelete'])
-                ->name('prescriptions.bulkDelete');
-                
-            Route::resource('prescriptions', PrescriptionController::class);
+Route::delete('prescriptions/bulk-delete', [PrescriptionController::class, 'bulkDelete'])
+    ->name('prescriptions.bulkDelete');
 
-            // Appointment-specific prescription creation
-            Route::get('appointments/{appointment}/prescription/create', [AppointmentPrescriptionController::class, 'create'])
-                ->name('appointments.prescription.create');
+Route::resource('prescriptions', PrescriptionController::class);
 
-            Route::post('appointments/{appointment}/prescription', [AppointmentPrescriptionController::class, 'store'])
-                ->name('appointments.prescription.store');
-                
+// Appointment-specific prescription creation
+Route::get('appointments/{appointment}/prescription/create', [AppointmentPrescriptionController::class, 'create'])
+    ->name('appointments.prescription.create');
 
-        Route::get('/doctors/datatable', [DoctorController::class, 'datatable'])
-            ->name('doctors.datatable')
-            ->middleware(['auth', 'role:admin|primary-therapist']);
+Route::post('appointments/{appointment}/prescription', [AppointmentPrescriptionController::class, 'store'])
+    ->name('appointments.prescription.store');
 
-        Route::get('/doctors/filters', [DoctorController::class, 'filters'])
-            ->name('doctors.filters')
-            ->middleware(['auth', 'role:admin|primary-therapist']);
 
-        Route::post('/doctors/bulk-delete', [DoctorController::class, 'bulkDelete'])
-            ->name('doctors.bulkDelete')
-            ->middleware(['auth', 'role:admin']);
+Route::get('/doctors/datatable', [DoctorController::class, 'datatable'])
+    ->name('doctors.datatable')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
 
-        // Then the resource route (must be last)
-        Route::middleware(['auth', 'role:admin|primary-therapist'])
-            ->resource('doctors', DoctorController::class);
+Route::get('/doctors/filters', [DoctorController::class, 'filters'])
+    ->name('doctors.filters')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
+
+Route::post('/doctors/bulk-delete', [DoctorController::class, 'bulkDelete'])
+    ->name('doctors.bulkDelete')
+    ->middleware(['auth', 'role:admin']);
+
+// Then the resource route (must be last)
+Route::middleware(['auth', 'role:admin|primary-therapist'])
+    ->resource('doctors', DoctorController::class);
 
 Route::post('/therapists/bulk-delete', [TherapistController::class, 'bulkDelete'])
     ->name('therapists.bulkDelete')
     ->middleware(['auth', 'role:admin']);
 
 
-    Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/api/patients/search', [PatientSearchController::class, 'search']);
     Route::get('/api/appointments/slots', [AppointmentSlotController::class, 'index']);
-    });
+});
 
-    Route::middleware(['auth', 'role:admin|primary-therapist'])
+Route::middleware(['auth', 'role:admin|primary-therapist'])
     ->resource('specializations', SpecializationController::class)->except(['show']);
 
 Route::post('/specializations/bulk-delete', [SpecializationController::class, 'bulkDelete'])
     ->name('specializations.bulkDelete')
     ->middleware(['auth', 'role:admin']);
 
-    Route::get('/specializations/datatable', [SpecializationController::class, 'datatable'])
+Route::get('/specializations/datatable', [SpecializationController::class, 'datatable'])
     ->name('specializations.datatable');
 
-    
-            // ---------- DEPARTMENTS ----------
-            Route::resource('departments', DepartmentController::class)->except(['show']);
 
-    // DataTables AJAX endpoint
-    Route::get('/departments/datatable', [DepartmentController::class, 'datatable'])
-        ->name('departments.datatable');
+// ---------- DEPARTMENTS ----------
+Route::resource('departments', DepartmentController::class)->except(['show']);
 
-    // Bulk delete
-    Route::post('/departments/bulk-delete', [DepartmentController::class, 'bulkDelete'])
-        ->name('departments.bulkDelete');
+// DataTables AJAX endpoint
+Route::get('/departments/datatable', [DepartmentController::class, 'datatable'])
+    ->name('departments.datatable');
+
+// Bulk delete
+Route::post('/departments/bulk-delete', [DepartmentController::class, 'bulkDelete'])
+    ->name('departments.bulkDelete');
 // routes/web.php
 
 Route::middleware(['auth', 'role:admin'])->name('settings.')->group(function () {
@@ -426,10 +426,10 @@ Route::post('rooms/bulk-delete', [RoomController::class, 'bulkDelete'])->name('r
 Route::resource('rooms', RoomController::class);
 
 Route::get('doctor-schedules/calendar', [DoctorScheduleController::class, 'calendar'])
-     ->name('doctor-schedules.calendar');
+    ->name('doctor-schedules.calendar');
 
 Route::get('doctor-schedules/calendar-events', [DoctorScheduleController::class, 'calendarEvents'])
-     ->name('doctor-schedules.calendar-events');
+    ->name('doctor-schedules.calendar-events');
 Route::get('doctor-schedules-datatable', [DoctorScheduleController::class, 'datatable'])->name('doctor-schedules.datatable');
 Route::get('doctor-schedules-filters', [DoctorScheduleController::class, 'filters'])->name('doctor-schedules.filters');
 Route::post('doctor-schedules/bulk-delete', [DoctorScheduleController::class, 'bulkDelete'])->name('doctor-schedules.bulkDelete');
@@ -488,24 +488,26 @@ Route::middleware(['auth', 'role:admin|staff|doctor'])->group(function () {
 
     Route::get('/appointments/doctors/by-specialization/{specialization_id}', [AppointmentController::class, 'getDoctorsBySpecialization'])->name('appointments.doctors.by_specialization');
 
-     Route::get('/available-slots/{doctor}', [AppointmentController::class, 'availableSlots'])
+    Route::get('/available-slots/{doctor}', [AppointmentController::class, 'availableSlots'])
         ->name('appointments.availableSlots');
-        
+
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
         ->name('appointments.cancel');
 
     Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])
         ->name('appointments.complete');
 
-        Route::get('/appointments/{appointment}/ticket', [AppointmentController::class, 'ticket'])
+    Route::get('/appointments/{appointment}/ticket', [AppointmentController::class, 'ticket'])
         ->name('appointments.ticket')
         ->whereNumber('appointment');
 
     Route::get('/appointments/pending', [AppointmentController::class, 'pending'])
-    ->name('appointments.pending');
+        ->name('appointments.pending');
 
-    Route::patch('/appointments/{appointment}/assign', 
-        [AppointmentController::class, 'assignDoctor'])
+    Route::patch(
+        '/appointments/{appointment}/assign',
+        [AppointmentController::class, 'assignDoctor']
+    )
         ->name('appointments.assign');
 
     // Individual actions (approve, reject, assign)
@@ -514,8 +516,10 @@ Route::middleware(['auth', 'role:admin|staff|doctor'])->group(function () {
     Route::patch('/appointments/{appointment}/reject', [AppointmentController::class, 'reject'])
         ->name('appointments.reject');
 
-    Route::get('/doctors/{doctor}/available-slots', 
-        [AppointmentController::class, 'availableSlots'])
+    Route::get(
+        '/doctors/{doctor}/available-slots',
+        [AppointmentController::class, 'availableSlots']
+    )
         ->name('doctors.available-slots');
 
     Route::get('appointments/{appointment}/treatments/edit', [AppointmentController::class, 'editTreatments'])
@@ -528,55 +532,55 @@ Route::middleware(['auth', 'role:admin|staff|doctor'])->group(function () {
         ->name('treatments.price');
 
     Route::patch('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])
-    ->name('appointments.complete');
+        ->name('appointments.complete');
 
     Route::get('doctors/{doctor}/specialization', [AppointmentController::class, 'getDoctorSpecialization']);
 
     Route::resource('appointments', AppointmentController::class);
-    });
+});
 
-    
-    Route::middleware(['auth'])->group(function () {
-        Route::resource('treatments', TreatmentController::class)->except(['show']);
-        
-        // Extra routes
-        Route::patch('treatments/{treatment}/toggle-active', [TreatmentController::class, 'toggleActive'])
-            ->name('treatments.toggle-active');
-            
-        Route::get('treatments/{treatment}/details', [TreatmentController::class, 'getTreatment'])
-            ->name('treatments.details');
-    });
 
-    Route::middleware('auth')->group(function () {
-        Route::get('/queues/daily', [QueueController::class, 'dailyQueueOverview'])
-            ->name('queues.daily');
-    });
+Route::middleware(['auth'])->group(function () {
+    Route::resource('treatments', TreatmentController::class)->except(['show']);
 
-    // For marking completed
-    Route::post('/queues/daily/complete/{appointment}', [QueueController::class, 'complete'])
-        ->name('queues.complete');
+    // Extra routes
+    Route::patch('treatments/{treatment}/toggle-active', [TreatmentController::class, 'toggleActive'])
+        ->name('treatments.toggle-active');
 
-    // For updating queue number
-    Route::post('/queues/daily/update-queue/{appointment}', [QueueController::class, 'updateQueueNumber'])
-        ->name('queues.update-queue');
+    Route::get('treatments/{treatment}/details', [TreatmentController::class, 'getTreatment'])
+        ->name('treatments.details');
+});
 
-    
- Route::get('/appointment-requests/datatable', [AppointmentRequestController::class, 'datatable'])
-            ->name('appointment_requests.datatable')
-            ->middleware(['auth', 'role:admin|primary-therapist']);
+Route::middleware('auth')->group(function () {
+    Route::get('/queues/daily', [QueueController::class, 'dailyQueueOverview'])
+        ->name('queues.daily');
+});
 
-    Route::get('/appointment-requests/filters', [AppointmentRequestController::class, 'filters'])
-        ->name('appointment_requests.filters')
-        ->middleware(['auth', 'role:admin|primary-therapist']);
+// For marking completed
+Route::post('/queues/daily/complete/{appointment}', [QueueController::class, 'complete'])
+    ->name('queues.complete');
 
-    Route::post('/appointment-requests/bulk-delete', [AppointmentRequestController::class, 'bulkDelete'])
-        ->name('appointment_requests.bulkDelete')
-        ->middleware(['auth', 'role:admin']);
-    Route::get('/doctors/{doctor}/available-times', [AppointmentRequestController::class, 'availableTimes'])
+// For updating queue number
+Route::post('/queues/daily/update-queue/{appointment}', [QueueController::class, 'updateQueueNumber'])
+    ->name('queues.update-queue');
+
+
+Route::get('/appointment-requests/datatable', [AppointmentRequestController::class, 'datatable'])
+    ->name('appointment_requests.datatable')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
+
+Route::get('/appointment-requests/filters', [AppointmentRequestController::class, 'filters'])
+    ->name('appointment_requests.filters')
+    ->middleware(['auth', 'role:admin|primary-therapist']);
+
+Route::post('/appointment-requests/bulk-delete', [AppointmentRequestController::class, 'bulkDelete'])
+    ->name('appointment_requests.bulkDelete')
+    ->middleware(['auth', 'role:admin']);
+Route::get('/doctors/{doctor}/available-times', [AppointmentRequestController::class, 'availableTimes'])
     ->name('doctors.available_times');
-    Route::patch('appointment-requests/{appointmentRequest}/approve', [AppointmentRequestController::class, 'approve'])->name('appointment_requests.approve');
-    Route::patch('appointment-requests/{appointmentRequest}/reject', [AppointmentRequestController::class, 'reject'])->name('appointment_requests.reject');
-    Route::patch('appointment-requests/{appointmentRequest}/cancel', [AppointmentRequestController::class, 'cancel'])->name('appointment_requests.cancel');
-    Route::middleware(['auth', 'role:admin|primary-therapist'])
+Route::patch('appointment-requests/{appointmentRequest}/approve', [AppointmentRequestController::class, 'approve'])->name('appointment_requests.approve');
+Route::patch('appointment-requests/{appointmentRequest}/reject', [AppointmentRequestController::class, 'reject'])->name('appointment_requests.reject');
+Route::patch('appointment-requests/{appointmentRequest}/cancel', [AppointmentRequestController::class, 'cancel'])->name('appointment_requests.cancel');
+Route::middleware(['auth', 'role:admin|primary-therapist'])
     ->resource('appointment_requests', AppointmentRequestController::class);
 

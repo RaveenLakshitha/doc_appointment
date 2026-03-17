@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use App\Models\Setting;
 
 class AuthController extends Controller
@@ -20,15 +21,7 @@ class AuthController extends Controller
 
     public function showLoginForm()
     {
-        $setting = cache('settings') ?? cache()->remember('settings', now()->addHour(), fn() => Setting::first() ?? (object)[]);
-
-        return view('auth.login', [
-            'clinic_name'   => $setting?->clinic_name ?? config('app.name', 'CallOfDoctor'),
-            'clinic_logo'   => $setting?->logo_path
-                ? Storage::url($setting->logo_path)
-                : null,
-            'primary_color' => $setting?->primary_color ?? '#1e40af',
-        ]);
+        return view('auth.login');
     }
 
     public function showRegisterForm()
@@ -53,7 +46,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -72,14 +65,18 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $data = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email',
-            'password'              => 'required|min:8|confirmed',
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->where('is_deleted', false),
+            ],
+            'password' => 'required|min:8|confirmed',
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
 
@@ -104,8 +101,8 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'token'    => 'required',
-            'email'    => 'required|email',
+            'token' => 'required',
+            'email' => 'required|email',
             'password' => 'required|min:8|confirmed',
         ]);
 
@@ -129,6 +126,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login')
+            ->with('status', __('file.logged_out_successfully') ?? 'You have been logged out successfully.');
     }
 }
