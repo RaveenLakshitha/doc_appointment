@@ -186,7 +186,7 @@
         <div class="patient-doctor">
             <strong>{{ __('file.patient') }}:</strong> {{ $prescription->patient->getFullNameAttribute() ?? '—' }}<br>
             {{ __('file.age') }}:
-            {{ $prescription->patient->date_of_birth ? $prescription->patient->date_of_birth->age . ' ' . __('file.yrs') : '—' }}
+            @if($prescription->patient->date_of_birth) <span style="background-color: #e0e7ff; color: #3730a3; padding: 2px 4px; border-radius: 4px; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">{{ $prescription->patient->date_of_birth->age }} {{ __('file.yrs') }}</span> @else — @endif
             | {{ __('file.gender') }}:
             {{ $prescription->patient->gender ? __('file.' . strtolower($prescription->patient->gender)) : '—' }}<br>
             {{ __('file.phone') }}: {{ $prescription->patient->phone ?? '—' }}<br>

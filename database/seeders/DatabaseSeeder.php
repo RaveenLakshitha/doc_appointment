@@ -17,36 +17,34 @@ class DatabaseSeeder extends Seeder
   {
     // User::factory(10)->create();
     $this->call([
+        // RolePermissionSeeder::class,
+        // DepartmentSeeder::class,
+        // SpecializationSeeder::class,
+        // RoomSeeder::class,
+        // CategorySeeder::class,
+        // UnitOfMeasureSeeder::class,
+        // SupplierSeeder::class,
+        // AgeGroupSeeder::class,
+        // LeaveTypeSeeder::class,
+        // DropdownSeeder::class,
 
         // UserSeeder::class,
-        //  AgeGroupSeeder::class,
-        //  RolePermissionSeeder::class,
-        //UnitOfMeasureSeeder::class,
-        // CategorySeeder::class,
-        // SupplierSeeder::class,
-        //InventoryItemSeeder::class,
-        //    PatientSeeder::class,
-        //  AppointmentSeeder::class,
-        //     MedicationTemplateCategorySeeder::class,
-        //  DepartmentSeeder::class,
-        //SpecializationSeeder::class,
-        //     DoctorSeeder::class,
-        //   ServicesSeeder::class,
-      MedicineTemplateSeeder::class,
-      // PrescriptionSeeder::class,
-      // RoomSeeder::class,
-      // DoctorScheduleSeeder::class,
-      //  DropdownSeeder::class,
-      //AppointmentRequestSeeder::class,
-      // AppointmentSeeder::class,
-      //DoctorSeeder::class,
-      // EmployeeSeeder::class,
-      //CategorySeeder::class,
-      //     InventoryItemSeeder::class,
-      // MedicineSeeder::class,
-      //   MedicineBatchSeeder::class,
-      // LeaveTypeSeeder::class,
+        // EmployeeSeeder::class,
+        // DoctorSeeder::class, // Omitted as requested
 
+      PatientSeeder::class,
+      // MedicineTemplateSeeder::class,
+      // InventoryItemSeeder::class,
+      // ServicesSeeder::class,
+
+      // TreatmentSeeder::class,
+      // ExpenseCategorySeeder::class,
+      // ExpenseSeeder::class,
+
+      // DoctorScheduleSeeder::class,
+      //PrescriptionSeeder::class,
+      // AppointmentSeeder::class,
+      // AppointmentRequestSeeder::class,
     ]);
 
     // User::factory()->create([

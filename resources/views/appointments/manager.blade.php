@@ -82,102 +82,103 @@
     </script>
     <style type="text/tailwindcss">
         @layer base {
-                                                                                                                                                                                                                                                            :root {
-                                                                                                                                                                                                                                                                --background: 210 40% 98%;
-                                                                                                                                                                                                                                                                --foreground: 222.2 84% 4.9%;
-                                                                                                                                                                                                                                                                --card: 0 0% 100%;
-                                                                                                                                                                                                                                                                --card-foreground: 222.2 84% 4.9%;
-                                                                                                                                                                                                                                                                --popover: 0 0% 100%;
-                                                                                                                                                                                                                                                                --popover-foreground: 222.2 84% 4.9%;
-                                                                                                                                                                                                                                                                --primary: 226 70% 55.5%; /* indigo-600 */
-                                                                                                                                                                                                                                                                --primary-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --secondary: 210 40% 96.1%;
-                                                                                                                                                                                                                                                                --secondary-foreground: 222.2 47.4% 11.2%;
-                                                                                                                                                                                                                                                                --muted: 210 40% 96.1%;
-                                                                                                                                                                                                                                                                --muted-foreground: 215.4 16.3% 46.9%;
-                                                                                                                                                                                                                                                                --accent: 210 40% 96.1%;
-                                                                                                                                                                                                                                                                --accent-foreground: 222.2 47.4% 11.2%;
-                                                                                                                                                                                                                                                                --destructive: 0 84.2% 60.2%;
-                                                                                                                                                                                                                                                                --destructive-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --border: 214.3 31.8% 91.4%;
-                                                                                                                                                                                                                                                                --input: 214.3 31.8% 91.4%;
-                                                                                                                                                                                                                                                                --ring: 226 70% 55.5%;
-                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                    :root {
+                                                                                                                                                                                                                                                                                                --background: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --foreground: 222.2 84% 4.9%;
+                                                                                                                                                                                                                                                                                                --card: 0 0% 100%;
+                                                                                                                                                                                                                                                                                                --card-foreground: 222.2 84% 4.9%;
+                                                                                                                                                                                                                                                                                                --popover: 0 0% 100%;
+                                                                                                                                                                                                                                                                                                --popover-foreground: 222.2 84% 4.9%;
+                                                                                                                                                                                                                                                                                                --primary: 226 70% 55.5%; /* indigo-600 */
+                                                                                                                                                                                                                                                                                                --primary-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --secondary: 210 40% 96.1%;
+                                                                                                                                                                                                                                                                                                --secondary-foreground: 222.2 47.4% 11.2%;
+                                                                                                                                                                                                                                                                                                --muted: 210 40% 96.1%;
+                                                                                                                                                                                                                                                                                                --muted-foreground: 215.4 16.3% 46.9%;
+                                                                                                                                                                                                                                                                                                --accent: 210 40% 96.1%;
+                                                                                                                                                                                                                                                                                                --accent-foreground: 222.2 47.4% 11.2%;
+                                                                                                                                                                                                                                                                                                --destructive: 0 84.2% 60.2%;
+                                                                                                                                                                                                                                                                                                --destructive-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --border: 214.3 31.8% 91.4%;
+                                                                                                                                                                                                                                                                                                --input: 214.3 31.8% 91.4%;
+                                                                                                                                                                                                                                                                                                --ring: 226 70% 55.5%;
+                                                                                                                                                                                                                                                                                            }
 
-                                                                                                                                                                                                                                                            .dark {
-                                                                                                                                                                                                                                                                --background: 222.2 84% 4.9%; /* gray-900 or similar */
-                                                                                                                                                                                                                                                                --foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --card: 217.2 32.6% 17.5%; /* gray-800 or similar */
-                                                                                                                                                                                                                                                                --card-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --popover: 222.2 84% 4.9%;
-                                                                                                                                                                                                                                                                --popover-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --primary: 226 70% 55.5%;
-                                                                                                                                                                                                                                                                --primary-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --secondary: 217.2 32.6% 17.5%;
-                                                                                                                                                                                                                                                                --secondary-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --muted: 217.2 32.6% 17.5%;
-                                                                                                                                                                                                                                                                --muted-foreground: 215 20.2% 65.1%;
-                                                                                                                                                                                                                                                                --accent: 217.2 32.6% 17.5%;
-                                                                                                                                                                                                                                                                --accent-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --destructive: 0 62.8% 30.6%;
-                                                                                                                                                                                                                                                                --destructive-foreground: 210 40% 98%;
-                                                                                                                                                                                                                                                                --border: 217.2 32.6% 17.5%;
-                                                                                                                                                                                                                                                                --input: 217.2 32.6% 17.5%;
-                                                                                                                                                                                                                                                                --ring: 226 70% 55.5%;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                        @layer utilities {
-                                                                                                                                                                                                                                                            .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
-                                                                                                                                                                                                                                                            .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-                                                                                                                                                                                                                                                            .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
-                                                                                                                                                                                                                                                            select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; -webkit-appearance: none; appearance: none; }
-                                                                                                                                                                                                                                                             .dark select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23ccc' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); }
-                                                                                                                                                                                                                                                             .dark ::-webkit-calendar-picker-indicator { filter: invert(1); }
-                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                        @layer components {
-                                                                                                                                                                                                                                                            .form-input {
-                                                                                                                                                                                                                                                                @apply bg-background border border-input rounded text-foreground px-3 py-1.5 font-sans text-[0.83rem] outline-none transition-all w-full h-[34px] placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/15 dark:focus:ring-ring/30 transition-colors duration-300;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .filter-chip {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center px-2.5 py-[3px] rounded-full text-[0.72rem] font-medium border border-border bg-background text-muted-foreground cursor-pointer transition-all whitespace-nowrap hover:bg-accent hover:text-foreground hover:border-muted-foreground dark:hover:border-foreground/30 transition-colors duration-300;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .filter-chip.active {
-                                                                                                                                                                                                                                                                @apply bg-primary text-primary-foreground border-primary;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .btn-primary-sm {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-[0.8rem] font-medium border border-primary cursor-pointer transition-all hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-300;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .btn-secondary-sm {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-secondary text-secondary-foreground text-[0.8rem] font-medium border border-border cursor-pointer transition-all hover:bg-accent hover:border-muted-foreground dark:hover:border-foreground/30 disabled:opacity-50 transition-colors duration-300;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .btn-outline-sm {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-[26px] px-2 rounded bg-transparent text-foreground text-[0.73rem] font-medium border border-border cursor-pointer transition-all hover:bg-accent dark:hover:border-foreground/30 disabled:opacity-50 transition-colors duration-300;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .btn-green-sm {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-status-green text-white text-[0.8rem] font-medium cursor-pointer transition-all hover:bg-status-green/85;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .btn-sky-sm {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-status-sky text-white text-[0.8rem] font-medium cursor-pointer transition-all hover:bg-status-sky/85;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                            .btn-amber-sm {
-                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-status-amber text-white text-[0.8rem] font-medium cursor-pointer transition-all hover:bg-status-amber/85;
-                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                            .dark {
+                                                                                                                                                                                                                                                                                                --background: 222.2 84% 4.9%; /* gray-900 or similar */
+                                                                                                                                                                                                                                                                                                --foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --card: 217.2 32.6% 17.5%; /* gray-800 or similar */
+                                                                                                                                                                                                                                                                                                --card-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --popover: 222.2 84% 4.9%;
+                                                                                                                                                                                                                                                                                                --popover-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --primary: 226 70% 55.5%;
+                                                                                                                                                                                                                                                                                                --primary-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --secondary: 217.2 32.6% 17.5%;
+                                                                                                                                                                                                                                                                                                --secondary-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --muted: 217.2 32.6% 17.5%;
+                                                                                                                                                                                                                                                                                                --muted-foreground: 215 20.2% 65.1%;
+                                                                                                                                                                                                                                                                                                --accent: 217.2 32.6% 17.5%;
+                                                                                                                                                                                                                                                                                                --accent-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --destructive: 0 62.8% 30.6%;
+                                                                                                                                                                                                                                                                                                --destructive-foreground: 210 40% 98%;
+                                                                                                                                                                                                                                                                                                --border: 217.2 32.6% 17.5%;
+                                                                                                                                                                                                                                                                                                --input: 217.2 32.6% 17.5%;
+                                                                                                                                                                                                                                                                                                --ring: 226 70% 55.5%;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                        @layer utilities {
+                                                                                                                                                                                                                                                                                            .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+                                                                                                                                                                                                                                                                                            .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+                                                                                                                                                                                                                                                                                            .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+                                                                                                                                                                                                                                                                                            select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; -webkit-appearance: none; appearance: none; }
+                                                                                                                                                                                                                                                                                             .dark select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23ccc' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); }
+                                                                                                                                                                                                                                                                                             ::-webkit-calendar-picker-indicator { width: 22px; height: 22px; cursor: pointer; padding: 4px; }
+                                                                                                                                                                                                                                                                                             .dark ::-webkit-calendar-picker-indicator { filter: invert(1); }
+                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                        @layer components {
+                                                                                                                                                                                                                                                                                            .form-input {
+                                                                                                                                                                                                                                                                                                @apply bg-background border border-input rounded text-foreground px-3 py-1.5 font-sans text-[0.83rem] outline-none transition-all w-full h-[34px] placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/15 dark:focus:ring-ring/30 transition-colors duration-300;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .filter-chip {
+                                                                                                                                                                                                                                                                                                @apply inline-flex items-center px-2.5 py-[3px] rounded-full text-[0.72rem] font-medium border border-border bg-background text-muted-foreground cursor-pointer transition-all whitespace-nowrap hover:bg-accent hover:text-foreground hover:border-muted-foreground dark:hover:border-foreground/30 transition-colors duration-300;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .filter-chip.active {
+                                                                                                                                                                                                                                                                                                @apply bg-primary text-primary-foreground border-primary;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .btn-primary-sm {
+                                                                        @apply inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-md bg-primary text-primary-foreground text-[0.85rem] font-bold border border-primary shadow-sm cursor-pointer transition-all hover:bg-primary/90 hover:shadow disabled:opacity-50 disabled:pointer-events-none;
+                                                                    }
+                                                                    .btn-secondary-sm {
+                                                                        @apply inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-md bg-secondary text-secondary-foreground text-[0.85rem] font-bold border border-border shadow-sm cursor-pointer transition-all hover:bg-accent hover:border-muted-foreground dark:hover:border-foreground/30 disabled:opacity-50;
+                                                                    }
+                                                                    .btn-outline-sm {
+                                                                        @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md bg-transparent text-foreground text-[0.8rem] font-bold border border-border hover:shadow-sm cursor-pointer transition-all hover:bg-accent dark:hover:border-foreground/30 disabled:opacity-50;
+                                                                    }
+                                                                    .btn-green-sm {
+                                                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-status-green text-white text-[0.8rem] font-medium cursor-pointer transition-all hover:bg-status-green/85;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .btn-sky-sm {
+                                                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-status-sky text-white text-[0.8rem] font-medium cursor-pointer transition-all hover:bg-status-sky/85;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .btn-amber-sm {
+                                                                                                                                                                                                                                                                                                @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-status-amber text-white text-[0.8rem] font-medium cursor-pointer transition-all hover:bg-status-amber/85;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                        }
 
 
-                    </style>
+                                                    </style>
 @endpush
 
 @section('content')
     <!-- ============================================================
-                                                                                                                                                                                                                                                         3-COLUMN POS LAYOUT
-                                                                                                                                                                                                                                                    ============================================================ -->
+                                                                                                                                                                                                                                                                                     3-COLUMN POS LAYOUT
+                                                                                                                                                                                                                                                                                ============================================================ -->
     <div id="posMainLayout"
         class="grid grid-cols-[280px_1fr_260px] h-full overflow-hidden max-lg:grid-cols-[240px_1fr_220px] max-md:flex max-md:flex-col bg-background text-foreground font-sans text-sm leading-relaxed antialiased transition-colors duration-300 max-md:pb-[60px]">
 
         <!-- ====================================================
-                                                                                                                                                                                                                                                           PANEL 1 — APPOINTMENT LIST
-                                                                                                                                                                                                                                                      ==================================================== -->
+                                                                                                                                                                                                                                                                                       PANEL 1 — APPOINTMENT LIST
+                                                                                                                                                                                                                                                                                  ==================================================== -->
         <div id="panelApptList"
             class="flex flex-col overflow-hidden bg-background border-r border-border max-md:border-r-0 max-md:flex-1 transition-colors duration-300">
 
@@ -186,9 +187,11 @@
                 <div
                     class="text-[0.7rem] font-semibold uppercase tracking-[0.7px] text-muted-foreground mb-2.5 flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <a href="{{ route('dashboard') }}" class="hover:text-foreground transition-colors p-1 -ml-1" title="{{ __('file.back_to_dashboard') ?? 'Back to Dashboard' }}">
+                        <a href="{{ route('dashboard') }}" class="hover:text-foreground transition-colors p-1 -ml-1"
+                            title="{{ __('file.back_to_dashboard') ?? 'Back to Dashboard' }}">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M15 19l-7-7 7-7" />
                             </svg>
                         </a>
                         <span>{{ __('file.appointments') }}</span>
@@ -253,8 +256,8 @@
         </div>
 
         <!-- ====================================================
-                                                                                                                                                                                                                                                           PANEL 2 — APPOINTMENT EDIT
-                                                                                                                                                                                                                                                      ==================================================== -->
+                                                                                                                                                                                                                                                                                       PANEL 2 — APPOINTMENT EDIT
+                                                                                                                                                                                                                                                                                  ==================================================== -->
         <div id="panelDetail"
             class="flex flex-col overflow-hidden bg-background border-l border-border max-md:border-l-0 max-md:border-t-0 max-md:hidden max-md:flex-1 transition-colors duration-300">
 
@@ -274,8 +277,8 @@
             <div id="editHeader"
                 class="hidden bg-background border-b border-border px-5 py-3 shrink-0 flex items-center justify-between gap-3">
                 <div>
-                    <div id="editHeaderTitle" class="text-[0.9rem] font-semibold">—</div>
-                    <div id="editHeaderSub" class="text-[0.75rem] text-muted-foreground mt-0.5">—</div>
+                    <div id="editHeaderTitle" class="text-[1.1rem] font-semibold">—</div>
+                    <div id="editHeaderSub" class="text-[0.85rem] text-muted-foreground mt-0.5">—</div>
                 </div>
                 <div id="editHeaderBadge"></div>
             </div>
@@ -287,12 +290,19 @@
                 <div class="mb-5 pb-5 border-b border-border">
                     <div class="flex items-center justify-between mb-3">
                         <div
-                            class="text-[0.73rem] font-semibold text-foreground flex items-center gap-2 after:content-[''] after:w-12 after:h-px after:bg-border">
+                            class="text-[0.85rem] font-semibold text-foreground flex items-center gap-2 after:content-[''] after:w-12 after:h-px after:bg-border">
                             {{ __('file.patient_and_visit') }}
                         </div>
-                        <a id="patientProfileLink" href="#" target="_blank"
-                            class="text-[0.7rem] text-primary hover:underline font-medium">{{ __('file.view_profile') }}
-                            ↗</a>
+                        <a id="btnTopViewDocument" href="#" onclick="openDocumentModal(event)" style="display: none;"
+                            class="text-[0.7rem] text-primary hover:underline font-medium flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            {{ __('file.view_document') ?? 'View Document' }}
+                        </a>
                     </div>
 
                     <!-- Patient Summary -->
@@ -315,22 +325,48 @@
                         </div>
                         <div class="flex flex-col gap-0.5">
                             <label
-                                class="text-[0.65rem] font-bold text-muted-foreground uppercase opacity-70">{{ __('file.dob') }}</label>
-                            <div id="dispPatientDOB" class="text-[0.8rem] text-foreground">—</div>
+                                class="text-[0.65rem] font-bold text-muted-foreground uppercase opacity-70">{{ __('file.age') }}</label>
+                            <div id="dispPatientAge" class="text-[0.8rem] text-foreground">—</div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-4 grid grid-cols-2 gap-y-3 gap-x-4 bg-muted/20 p-3 rounded border border-border/50">
+                        <div class="flex flex-col gap-0.5 col-span-2 shadow-none lg:col-span-1">
+                            <label
+                                class="text-[0.65rem] font-bold text-muted-foreground uppercase opacity-70">{{ __('file.attended_psychotherapy') ?? 'Previously attended psychotherapy?' }}</label>
+                            <div id="dispAttendedPsychotherapy" class="text-[0.8rem] font-medium text-foreground">—</div>
+                        </div>
+                        <div class="flex flex-col gap-0.5 col-span-2 shadow-none lg:col-span-1">
+                            <label
+                                class="text-[0.65rem] font-bold text-muted-foreground uppercase opacity-70">{{ __('file.preferred_session_time') ?? 'Preferred Session Time' }}</label>
+                            <div id="dispPreferredSessionTime" class="text-[0.8rem] font-medium text-foreground">—</div>
+                        </div>
+                        <div class="flex flex-col gap-0.5 col-span-2 lg:col-span-1">
+                            <label
+                                class="text-[0.65rem] font-bold text-muted-foreground uppercase opacity-70">{{ __('file.recommended_by') ?? 'Recommended By' }}</label>
+                            <div id="dispRecommendedBy" class="text-[0.8rem] font-medium text-foreground">—</div>
+                        </div>
+                    </div>
+                 <!-- Appt Details -->
+                <div class="mb-5 pb-5 border-b border-border">
+                    <div
+                        class="text-[0.85rem] font-semibold text-foreground mb-3 flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-border">
+                        {{ __('file.appointment_details') }}
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.date') }}</label>
-                            <input type="date" id="fDate" class="form-input">
+                            <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.date') }} <span
+                                    class="text-destructive">*</span></label>
+                            <input type="date" id="fDate" class="form-input" onchange="loadDoctorAttributes('f')">
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.time_slot') }}</label>
+                            <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.time_slot') }} <span
+                                    class="text-destructive">*</span></label>
                             <select id="fTime" class="form-input pr-7 cursor-pointer">
-                                <option value="">{{ __('file.select_date_doctor_first') }}</option>
+                                <!-- Options populated by JS -->
                             </select>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -341,19 +377,20 @@
                     </div>
                     <div class="grid grid-cols-1 gap-3">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.specialization') }} <span
-                                    class="text-destructive">*</span></label>
-                            <select id="fSpecialization" class="form-input pr-7 cursor-pointer" onchange="loadFilteredDoctors('f')">
-                                <option value="">{{ __('file.select_specialization') }}</option>
+                            <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.specialization') }}</label>
+                            <select id="fSpecialization" class="form-input pr-7 cursor-pointer"
+                                onchange="loadFilteredDoctors('f')">
+                                <option value="">{{ __('file.all_specializations') }}</option>
                                 @foreach($specializations as $spec)
                                     <option value="{{ $spec->id }}">{{ $spec->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.doctor') }} <span
+                            <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.doctor') }} <span
                                     class="text-destructive">*</span></label>
-                            <select id="fDoctor" class="form-input pr-7 cursor-pointer" onchange="loadDoctorAttributes('f')">
+                            <select id="fDoctor" class="form-input pr-7 cursor-pointer"
+                                onchange="loadDoctorAttributes('f')">
                                 @foreach($doctors as $doc)
                                     <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }} —
                                         {{ $doc->primarySpecialization?->name ?? 'General' }}
@@ -367,18 +404,17 @@
                 <!-- Clinical Record (Treatments & Prescriptions) -->
                 <div id="medicalRecordSection" class="hidden mb-5 pb-5 border-b border-border">
                     <div
-                        class="text-[0.73rem] font-semibold text-foreground mb-3 flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-border">
+                        class="text-[0.85rem] font-semibold text-foreground mb-3 flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-border">
                         {{ __('file.medical_record') }}
                     </div>
 
                     <!-- Treatments -->
                     <div class="mb-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <label
-                                class="text-[0.68rem] font-semibold text-muted-foreground uppercase">{{ __('file.treatments') }}</label>
-                            <button id="btnAddTreatment" onclick="openTreatmentModal()"
-                                class="text-[0.68rem] text-primary hover:underline font-medium">+
-                                {{ __('file.add_treatment') }}</button>
+                        <div class="flex items-center justify-between border-b border-border pb-1 mb-2">
+                            <label class="text-[0.85rem] font-semibold text-foreground">{{ __('file.treatments') ?? 'Treatments' }}</label>
+                            <button id="btnAddTreatment" type="button" onclick="openTreatmentModal()" class="hidden btn-outline-sm h-[22px] px-2 text-[0.65rem]">
+                                + {{ __('file.add_treatment') ?? 'Add' }}
+                            </button>
                         </div>
                         <div id="treatmentsTable" class="bg-muted/30 border border-border rounded overflow-hidden">
                             <div class="p-3 text-center text-xs text-muted-foreground italic">
@@ -390,8 +426,8 @@
                     <!-- Prescription -->
                     <div>
                         <label
-                            class="text-[0.75rem] font-semibold text-foreground border-b border-border pb-1">{{ __('file.medication_list') }}</label>
-                        <div id="prescriptionSummary" class="bg-muted/30 border border-border rounded p-3">
+                            class="text-[0.85rem] font-semibold text-foreground border-b border-border pb-1">{{ __('file.medication_list') }}</label>
+                        <div id="prescriptionSummary" class="bg-muted/30 border border-border rounded p-3 mt-1.5">
                             <!-- JS injected summary -->
                         </div>
                     </div>
@@ -400,49 +436,28 @@
                 <!-- Clinical Notes -->
                 <div class="mb-5 pb-5 border-b border-border">
                     <div
-                        class="text-[0.73rem] font-semibold text-foreground mb-3 flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-border">
+                        class="text-[0.85rem] font-semibold text-foreground mb-3 flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-border">
                         {{ __('file.clinical_notes') }}
                     </div>
                     <div class="flex flex-col gap-1.5 mb-3">
-                        <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.chief_complaint') }}</label>
+                        <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.chief_complaint') }}</label>
                         <textarea id="fComplaint" placeholder="{{ __('file.patient_complaint_placeholder') }}"
                             class="form-input min-h-[64px] resize-y py-2 h-auto"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.doctor_notes') }}</label>
+                            <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.doctor_notes') }}</label>
                             <textarea id="fDoctorNotes" placeholder="{{ __('file.medical_findings_placeholder') }}"
                                 class="form-input min-h-[56px] resize-y py-2 h-auto"></textarea>
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.admin_notes') }}</label>
+                            <label class="text-[0.85rem] font-medium text-foreground">{{ __('file.admin_notes') }}</label>
                             <textarea id="fAdminNotes" placeholder="{{ __('file.internal_remarks_placeholder') }}"
                                 class="form-input min-h-[56px] resize-y py-2 h-auto"></textarea>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 mt-3">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.age_group') }}</label>
-                            <select id="fAgeGroup" class="form-input pr-7 cursor-pointer">
-                                <option value="">{{ __('file.select_age_group') }}</option>
-                                @foreach($ageGroups as $ag)
-                                    <option value="{{ $ag->id }}">{{ $ag->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-[0.77rem] font-medium text-foreground">{{ __('file.preferred_language') }}</label>
-                            <select id="fLanguage" class="form-input pr-7 cursor-pointer">
-                                <option value="">{{ __('file.select_language') }}</option>
-                                @foreach($languages as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
                 </div>
-
 
             </div><!-- /editForm -->
 
@@ -594,8 +609,8 @@
         </div>
 
         <!-- ====================================================
-                                                                                                                                                                                                                                                           PANEL 3 — QUEUE
-                                                                                                                                                                                                                                                      ==================================================== -->
+                                                                                                                                                                                                                                                                                       PANEL 3 — QUEUE
+                                                                                                                                                                                                                                                                                  ==================================================== -->
         <div id="panelQueue"
             class="flex flex-col overflow-hidden bg-background border-l border-border max-md:border-l-0 max-md:border-t-0 max-md:hidden max-md:flex-1 transition-colors duration-300">
 
@@ -683,6 +698,44 @@
             @endforeach
         </datalist>
 
+        <!-- Document Modal -->
+        <div id="documentModal"
+            class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+            <div
+                class="bg-background border border-border rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col h-[80vh] max-h-[90vh] animate-slideIn">
+                <div class="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
+                    <h3 class="font-bold text-foreground flex items-center gap-2">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        {{ __('file.document') ?? 'Document' }}
+                    </h3>
+                    <div class="flex items-center gap-3">
+                        <a id="documentDownloadBtn" href="#" target="_blank" download
+                            class="text-[0.75rem] font-bold text-primary hover:underline flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            {{ __('file.download') ?? 'Download' }}
+                        </a>
+                        <button onclick="closeDocumentModal()"
+                            class="text-muted-foreground hover:text-foreground transition-colors p-1 bg-muted/50 rounded-full">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-hidden flex-1 bg-muted/10 relative">
+                    <iframe id="documentIframe" src="" class="w-full h-full border-0 absolute inset-0"></iframe>
+                </div>
+            </div>
+        </div>
+
     </div><!-- /pos-wrapper -->
 
     <!-- MOBILE BOTTOM TAB BAR -->
@@ -743,13 +796,13 @@
             const el = document.createElement('div');
             el.className = `flex items-start gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium backdrop-blur-sm min-w-[240px] max-w-[320px] animate-fadeIn transition-all ${colors[type] || colors.info}`;
             el.innerHTML = `
-                                <span class="shrink-0 font-bold text-base leading-none mt-0.5">${icons[type] || icons.info}</span>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-semibold truncate">${title}</div>
-                                    ${detail ? `<div class="text-[0.77rem] opacity-80 mt-0.5 line-clamp-2">${detail}</div>` : ''}
-                                </div>
-                                <button onclick="this.parentElement.remove()" class="shrink-0 opacity-70 hover:opacity-100 ml-1">✕</button>
-                            `;
+                                                            <span class="shrink-0 font-bold text-base leading-none mt-0.5">${icons[type] || icons.info}</span>
+                                                            <div class="flex-1 min-w-0">
+                                                                <div class="font-semibold truncate">${title}</div>
+                                                                ${detail ? `<div class="text-[0.77rem] opacity-80 mt-0.5 line-clamp-2">${detail}</div>` : ''}
+                                                            </div>
+                                                            <button onclick="this.parentElement.remove()" class="shrink-0 opacity-70 hover:opacity-100 ml-1">✕</button>
+                                                        `;
             container.appendChild(el);
             setTimeout(() => {
                 el.style.opacity = '0';
@@ -881,7 +934,7 @@
                 const supportedAgeGroups = data.age_groups || [];
                 const currentAgeGroup = ageGroupSelect.value;
                 ageGroupSelect.innerHTML = '<option value="">{{ __("file.select_age_group") }}</option>';
-                
+
                 // Strictly show only assigned
                 const ageGroupsToShow = ALL_AGE_GROUPS.filter(ag => supportedAgeGroups.includes(ag.id));
 
@@ -896,9 +949,9 @@
                 const supportedLanguages = data.languages || [];
                 const currentLang = languageSelect.value;
                 languageSelect.innerHTML = '<option value="">{{ __("file.select_language") }}</option>';
-                
+
                 // Strictly show only assigned
-                const langsToShow = Object.entries(ALL_LANGUAGES).filter(([id, name]) => 
+                const langsToShow = Object.entries(ALL_LANGUAGES).filter(([id, name]) =>
                     supportedLanguages.includes(parseInt(id))
                 );
 
@@ -1104,28 +1157,31 @@
             Object.keys(groups).forEach(dId => {
                 const doc = DOCTORS[dId] || { name: 'Unknown', spec: '-', dotClass: 'bg-gray-400' };
                 html += `<div class="text-[0.67rem] font-semibold uppercase tracking-[0.8px] text-muted-foreground pt-2.5 pb-1.5 flex items-center gap-1.5 after:content-[''] after:flex-1 after:h-px after:bg-border transition-colors duration-300">
-                                                                                                                                                                                                                          <span class="w-1.5 h-1.5 rounded-full ${doc.dotClass} inline-block"></span>${doc.name}
-                                                                                                                                                                                                                        </div>`;
+                                                                                                                                                                                                                                                      <span class="w-1.5 h-1.5 rounded-full ${doc.dotClass} inline-block"></span>${doc.name}
+                                                                                                                                                                                                                                                    </div>`;
                 groups[dId].sort((a, b) => a.time.localeCompare(b.time)).forEach(a => {
                     const isSelected = a.id === selectedApptId;
                     const base = isSelected
                         ? "bg-primary border-primary text-primary-foreground shadow-sm"
                         : "bg-card border-border hover:bg-accent hover:border-muted-foreground/40 dark:hover:border-foreground/30 transition-colors duration-300";
                     html += `
-                                            <div class="border rounded p-2.5 cursor-pointer mb-1.5 transition-all animate-fadeIn ${base}" id="appt-${a.id}" onclick="selectAppt(${a.id})">
-                                                <div class="flex items-start justify-between gap-2 mb-1">
-                                                    <div class="text-[0.84rem] font-semibold">${a.patient}</div>
-                                                    <div class="shrink-0">
-                                                        ${badge(a.status)}
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col gap-1.5 mt-0.5">
-                                                    <div class="text-[0.73rem] ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}">
-                                                        <span>{{ __('file.time_slot') }}: ${a.slot_label || a.time}</span>
-                                                    </div>
-                                                    ${a.paid > 0 ? `<div class="text-[0.7rem] font-medium text-emerald-600 dark:text-emerald-400">{!! $currency_code !!} ${a.paid.toLocaleString()} {{ __('file.paid') }}</div>` : ''}
-                                                </div>
-                                            </div>`;
+                                                                        <div class="border rounded p-2.5 cursor-pointer mb-1.5 transition-all animate-fadeIn ${base}" id="appt-${a.id}" onclick="selectAppt(${a.id})">
+                                                                            <div class="flex items-start justify-between gap-2 mb-1">
+                                                                                <div class="text-[0.84rem] font-semibold">${a.patient}</div>
+                                                                                <div class="shrink-0">
+                                                                                    ${badge(a.status)}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="flex flex-col gap-1.5 mt-0.5">
+                                                                                <div class="text-[0.73rem] ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}">
+                                                                                    <span>{{ __('file.time_slot') }}: ${a.slot_label || a.time}</span>
+                                                                                </div>
+                                                                                <div class="text-[0.68rem] text-muted-foreground mt-1 font-medium bg-muted/50 inline-block px-1.5 py-0.5 rounded">
+                                                                                    ${a.room && a.room !== 'Room —' ? a.room : '{{ __('file.room_not_assigned') ?? 'Room Not Assigned' }}'}
+                                                                                </div>
+                                                                                ${a.paid > 0 ? `<div class="text-[0.7rem] font-medium text-emerald-600 dark:text-emerald-400 mt-1">{!! $currency_code !!} ${a.paid.toLocaleString()} {{ __('file.paid') }}</div>` : ''}
+                                                                            </div>
+                                                                        </div>`;
                 });
             });
             list.innerHTML = html;
@@ -1148,15 +1204,30 @@
             document.getElementById("editActionBar").classList.add("flex");
 
             document.getElementById("editHeaderTitle").textContent = a.patient;
-            document.getElementById("editHeaderSub").textContent = `${doc.name} · ${a.date} · {{ __('file.time_slot') }}: ${a.slot_label || a.time}`;
+            document.getElementById("editHeaderSub").textContent = `${doc.name} · ${a.room ? a.room : '—'} · ${a.date} · {{ __('file.time_slot') }}: ${a.slot_label || a.time}`;
             document.getElementById("editHeaderBadge").innerHTML = badge(a.status);
 
             // Patient Summary & Profile Link
             document.getElementById("dispPatientName").textContent = a.patient;
             document.getElementById("dispPatientMRN").textContent = a.patient_mrn;
             document.getElementById("dispPatientPhone").textContent = a.contact || '—';
-            document.getElementById("dispPatientDOB").textContent = a.patient_dob;
-            document.getElementById("patientProfileLink").href = `../patients/${a.patient_id}`;
+            document.getElementById("dispPatientAge").textContent = a.patient_age && a.patient_age !== '—' ? `${a.patient_age} yrs` : '—';
+
+            document.getElementById("dispAttendedPsychotherapy").innerHTML = a.attended_psychotherapy ? `<span class="px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-bold text-[0.7rem]">{{ __('file.yes') ?? 'Yes' }}</span>` : `<span class="px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-bold text-[0.7rem]">{{ __('file.no') ?? 'No' }}</span>`;
+            document.getElementById("dispPreferredSessionTime").textContent = a.preferred_session_time || '—';
+            document.getElementById("dispRecommendedBy").textContent = a.recommended_by || '—';
+
+            const btnDoc = document.getElementById("btnTopViewDocument");
+            if (btnDoc) {
+                if (a.patient_document) {
+                    btnDoc.style.display = 'flex';
+                    // The document path already handles its relative nature, just prepend the base url
+                    btnDoc.dataset.url = `{{ asset('') }}${a.patient_document.startsWith('/') ? a.patient_document.slice(1) : a.patient_document}`;
+                } else {
+                    btnDoc.style.display = 'none';
+                    btnDoc.dataset.url = '';
+                }
+            }
 
             // Basic Fields
             const isRestrictedDoctor = CURRENT_USER.roles.includes('doctor') &&
@@ -1210,7 +1281,7 @@
 
             if (document.getElementById("fDuration")) document.getElementById("fDuration").value = a.duration;
             if (document.getElementById("fVisitType")) document.getElementById("fVisitType").value = a.visit_type;
-            
+
             // Set doctor and specialization
             const fDoctor = document.getElementById("fDoctor");
             if (fDoctor) {
@@ -1245,7 +1316,7 @@
 
             if (allowedStatuses.includes(a.status) || a.doctor_id) {
                 medSec.classList.remove("hidden");
-                renderTreatments(a.treatments, a.total_treatments_cost);
+                renderTreatments(a.treatments, a.total_treatments_cost, canModifyMedical);
                 renderPrescription(a.prescription, a.create_prescription_url, a.doctor_id);
 
                 const btnAddTreatment = document.getElementById("btnAddTreatment");
@@ -1261,40 +1332,44 @@
             switchMobileTab('panelDetail');
         }
 
-        function renderTreatments(treatments, total) {
+        function renderTreatments(treatments, total, canModify = false) {
             const container = document.getElementById("treatmentsTable");
             if (!treatments || treatments.length === 0) {
-                container.innerHTML = '<div class="p-3 text-center text-[0.7rem] text-muted-foreground italic">{{ __('file.no_treatments_added_yet') }}</div>';
+                container.innerHTML = `
+                                                <div class="text-center py-2">
+                                                    <p class="text-[0.7rem] text-muted-foreground mb-2 italic">{{ __('file.no_treatments_added_yet') }}</p>
+                                                    ${canModify ? `<button onclick="openTreatmentModal()" class="btn-outline-sm h-[24px] px-3">{{ __('file.add_treatment') }}</button>` : ''}
+                                                </div>`;
                 return;
             }
 
             let html = `<table class="w-full text-[0.72rem]">
-                                                                                                                                                                                                                <thead class="bg-muted border-b border-border">
-                                                                                                                                                                                                                    <tr>
-                                                                                                                                                                                                                        <th class="px-2 py-1.5 text-left font-bold opacity-70">{{ __('file.treatment') }}</th>
-                                                                                                                                                                                                                        <th class="px-2 py-1.5 text-right font-bold opacity-70">{{ __('file.total') }}</th>
-                                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                                </thead>
-                                                                                                                                                                                                                <tbody class="divide-y divide-border/50">`;
+                                                                                                                                                                                                                                            <thead class="bg-muted border-b border-border">
+                                                                                                                                                                                                                                                <tr>
+                                                                                                                                                                                                                                                    <th class="px-2 py-1.5 text-left font-bold opacity-70">{{ __('file.treatment') }}</th>
+                                                                                                                                                                                                                                                    <th class="px-2 py-1.5 text-right font-bold opacity-70">{{ __('file.total') }}</th>
+                                                                                                                                                                                                                                                </tr>
+                                                                                                                                                                                                                                            </thead>
+                                                                                                                                                                                                                                            <tbody class="divide-y divide-border/50">`;
 
             treatments.forEach(t => {
                 html += `<tr>
-                                                                                                                                                                                                                    <td class="px-2 py-2">
-                                                                                                                                                                                                                        <div class="font-bold text-foreground/90">${t.name}</div>
-                                                                                                                                                                                                                        ${t.code ? `<div class="text-[0.65rem] text-muted-foreground">${t.code} • {{ __('file.qty') }} ${t.qty}</div>` : `<div class="text-[0.65rem] text-muted-foreground">{{ __('file.qty') }} ${t.qty}</div>`}
-                                                                                                                                                                                                                    </td>
-                                                                                                                                                                                                                    <td class="px-2 py-2 text-right font-bold text-foreground/90">{!! $currency_code !!} ${t.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                                                                                                                                                                                                </tr>`;
+                                                                                                                                                                                                                                                <td class="px-2 py-2">
+                                                                                                                                                                                                                                                    <div class="font-bold text-foreground/90">${t.name}</div>
+                                                                                                                                                                                                                                                    ${t.code ? `<div class="text-[0.65rem] text-muted-foreground">${t.code} • {{ __('file.qty') }} ${t.qty}</div>` : `<div class="text-[0.65rem] text-muted-foreground">{{ __('file.qty') }} ${t.qty}</div>`}
+                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                <td class="px-2 py-2 text-right font-bold text-foreground/90">{!! $currency_code !!} ${t.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                                                                                                                                                                                                                            </tr>`;
             });
 
             html += `</tbody>
-                                                                                                                                                                                                                <tfoot class="bg-muted/30 border-t border-border">
-                                                                                                                                                                                                                    <tr>
-                                                                                                                                                                                                                        <td class="px-2 py-1.5 font-bold text-muted-foreground uppercase text-[0.65rem]">{{ __('file.total') }}</td>
-                                                                                                                                                                                                                        <td class="px-2 py-1.5 text-right font-bold text-primary">{!! $currency_code !!} ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                                </tfoot>
-                                                                                                                                                                                                            </table>`;
+                                                                                                                                                                                                                                            <tfoot class="bg-muted/30 border-t border-border">
+                                                                                                                                                                                                                                                <tr>
+                                                                                                                                                                                                                                                    <td class="px-2 py-1.5 font-bold text-muted-foreground uppercase text-[0.65rem]">{{ __('file.total') }}</td>
+                                                                                                                                                                                                                                                    <td class="px-2 py-1.5 text-right font-bold text-primary">{!! $currency_code !!} ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                                                                                                                                                                                                                                </tr>
+                                                                                                                                                                                                                                            </tfoot>
+                                                                                                                                                                                                                                        </table>`;
             container.innerHTML = html;
         }
 
@@ -1305,26 +1380,27 @@
                 (CURRENT_USER.doctor_id && String(CURRENT_USER.doctor_id) === String(apptDoctorId));
             if (!p) {
                 container.innerHTML = `
-                                        <div class="text-center py-2">
-                                            <p class="text-[0.7rem] text-muted-foreground mb-2">{{ __('file.no_medications_prescribed_yet') }}.</p>
-                                            ${canModifyMedical ? `<button onclick="openPrescriptionModal(${selectedApptId})" class="btn-outline-sm h-[24px] px-3">{{ __('file.create_prescription') }}</button>` : ''}
-                                        </div>`;
+                                                                    <div class="text-center py-2">
+                                                                        <p class="text-[0.7rem] text-muted-foreground mb-2">{{ __('file.no_medications_prescribed_yet') }}.</p>
+                                                                        ${canModifyMedical ? `<button onclick="openPrescriptionModal(${selectedApptId})" class="btn-outline-sm h-[24px] px-3">{{ __('file.create_prescription') }}</button>` : ''}
+                                                                    </div>`;
                 return;
             }
 
             container.innerHTML = `
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div class="min-w-0">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <span class="text-[0.75rem] font-bold text-foreground">#${p.id}</span>
-                                                <span class="text-[0.68rem] text-muted-foreground">${p.date}</span>
-                                            </div>
-                                            <div class="text-[0.7rem] text-foreground/80 line-clamp-2 italic leading-relaxed">${p.diagnosis || ''}</div>
-                                        </div>
-                                        <div class="flex flex-col gap-1 shrink-0">
-                                            ${canModifyMedical ? `<button onclick="openPrescriptionModal(${selectedApptId}, ${p.id})" class="btn-outline-sm h-[22px] px-2 w-full text-center">{{ __('file.edit') }}</button>` : ''}
-                                        </div>
-                                    </div>`;
+                                                                <div class="flex items-start justify-between gap-3">
+                                                                    <div class="min-w-0">
+                                                                        <div class="flex items-center gap-2 mb-1">
+                                                                            <span class="text-[0.75rem] font-bold text-foreground">#${p.id}</span>
+                                                                            <span class="text-[0.68rem] text-muted-foreground">${p.date}</span>
+                                                                        </div>
+                                                                        <div class="text-[0.7rem] text-foreground/80 line-clamp-2 italic leading-relaxed">${p.diagnosis || ''}</div>
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-1 shrink-0">
+                                                                        ${canModifyMedical ? `<button onclick="openPrescriptionModal(${selectedApptId}, ${p.id})" class="btn-outline-sm h-[22px] px-2 w-full text-center">{{ __('file.edit') }}</button>` : ''}
+                                                                        ${canModifyMedical ? `<button onclick="deletePrescription(${p.id})" class="btn-outline-sm h-[22px] px-2 w-full text-center text-destructive hover:bg-destructive/10 hover:border-destructive/30 border-destructive/20">{{ __('file.remove') ?? 'Remove' }}</button>` : ''}
+                                                                    </div>
+                                                                </div>`;
         }
 
         function updateQuickBtns(status, doctorId = null) {
@@ -1399,6 +1475,25 @@
             }
         }
 
+        /* ========== DOCUMENT MODAL ========== */
+        function openDocumentModal(e) {
+            e.preventDefault();
+            const btn = e.currentTarget;
+            const url = btn.dataset.url;
+            if (!url) return;
+
+            document.getElementById('documentIframe').src = url;
+            document.getElementById('documentDownloadBtn').href = url;
+            document.getElementById('documentModal').classList.remove('hidden');
+            document.getElementById('documentModal').classList.add('flex');
+        }
+
+        function closeDocumentModal() {
+            document.getElementById('documentModal').classList.add('hidden');
+            document.getElementById('documentModal').classList.remove('flex');
+            document.getElementById('documentIframe').src = '';
+        }
+
         /* ========== SAVE ========== */
         async function saveAppt() {
             const a = appointments.find(x => x.id === selectedApptId);
@@ -1425,8 +1520,8 @@
                     duration_minutes: document.getElementById("fDuration") ? document.getElementById("fDuration").value : (a.duration_minutes || 15),
                     appointment_type: a.appointment_type || 'specific',
                     specialization_id: document.getElementById("fSpecialization") ? document.getElementById("fSpecialization").value : (a.specialization_id || null),
-                    age_group_id: document.getElementById("fAgeGroup").value,
-                    preferred_language_id: document.getElementById("fLanguage").value,
+                    age_group_id: document.getElementById("fAgeGroup") ? document.getElementById("fAgeGroup").value : a.age_group_id,
+                    preferred_language_id: document.getElementById("fLanguage") ? document.getElementById("fLanguage").value : a.preferred_language_id,
                     _token: '{{ csrf_token() }}'
                 };
 
@@ -1497,9 +1592,9 @@
 
             if (!queue.length) {
                 list.innerHTML = `<div class="text-center py-16 text-muted-foreground">
-                                                                                                                                                                                                            <div class="text-4xl mb-3 opacity-20">📋</div>
-                                                                                                                                                                                                            <p class="text-sm font-medium">{{ __('file.queue_is_empty') }}</p>
-                                                                                                                                                                                                        </div>`;
+                                                                                                                                                                                                                                        <div class="text-4xl mb-3 opacity-20">📋</div>
+                                                                                                                                                                                                                                        <p class="text-sm font-medium">{{ __('file.queue_is_empty') }}</p>
+                                                                                                                                                                                                                                    </div>`;
                 return;
             }
 
@@ -1522,9 +1617,10 @@
                 const hasRunning = runningDocs.has(+dId);
 
                 // Render Doctor Header
-                html += `<div class="text-[0.67rem] font-semibold uppercase tracking-[0.8px] text-muted-foreground pt-2.5 pb-2 flex items-center gap-1.5 after:content-[''] after:flex-1 after:h-px after:bg-border transition-colors duration-300 mt-2 first:mt-0">
-                                        <span class="w-1.5 h-1.5 rounded-full ${doc.dotClass} inline-block"></span>Dr. ${doc.name}
-                                    </div>`;
+                html += `<div class="text-[0.67rem] font-semibold uppercase tracking-[0.8px] text-muted-foreground pt-2.5 pb-2 flex items-center justify-between gap-1.5 after:content-[''] after:flex-1 after:h-px after:bg-border transition-colors duration-300 mt-2 first:mt-0">
+                                                                    <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full ${doc.dotClass} inline-block"></span>Dr. ${doc.name}</div>
+                                                                    ${groups[dId][0].room ? `<div class="text-[0.75rem] font-bold text-foreground bg-foreground/5 px-2 py-0.5 rounded-md ml-2 border border-border shadow-sm">${groups[dId][0].room}</div>` : ''}
+                                                                </div>`;
 
                 let pos = 1;
                 html += groups[dId].map(a => {
@@ -1545,29 +1641,30 @@
                     } else if (["approved", "paid"].includes(a.status)) {
                         const disabled = hasRunning ? 'disabled opacity-50 cursor-not-allowed' : '';
                         actionHtml = `<button onclick="event.stopPropagation(); if(!this.disabled) callInPatient(${a.id})"
-                                            ${disabled}
-                                            class="inline-flex items-center justify-center h-[26px] px-3 font-semibold text-[0.65rem] uppercase tracking-wider bg-primary/10 text-primary ${hasRunning ? '' : 'hover:bg-primary/20 hover:text-primary-foreground'} transition-colors rounded">
-                                            {{ __('file.call_in') }}
-                                        </button>`;
+                                                                        ${disabled}
+                                                                        class="inline-flex items-center justify-center h-[32px] px-4 font-bold text-[0.75rem] uppercase tracking-wider bg-primary/15 text-primary ${hasRunning ? '' : 'hover:bg-primary hover:text-primary-foreground hover:shadow-md'} transition-all rounded-md shadow-sm border border-primary/20">
+                                                                        {{ __('file.call_in') }}
+                                                                    </button>`;
                     }
 
                     return `
-                                            <div class="group border rounded-xl p-3.5 mb-2.5 cursor-pointer transition-all ${borderCls}" onclick="selectAppt(${a.id})">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="text-3xl font-black ${numCls} w-12 shrink-0 font-mono tracking-tighter text-center">
-                                                        #${qNum}
-                                                    </div>
-                                                    <div class="flex-1 min-w-0 flex flex-col justify-center">
-                                                        <h4 class="text-[0.95rem] font-bold text-foreground leading-tight truncate mb-1.5">${a.patient}</h4>
-                                                        <div class="mb-2.5">
-                                                            <span class="text-[0.68rem] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/50">${a.slot_label || a.time}</span>
-                                                        </div>
-                                                        <div class="flex items-center">
-                                                            ${actionHtml}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>`;
+                                                                        <div class="group border rounded-xl p-3.5 mb-2.5 cursor-pointer transition-all ${borderCls}" onclick="selectAppt(${a.id})">
+                                                                            <div class="flex items-center gap-3">
+                                                                                <div class="text-3xl font-black ${numCls} w-12 shrink-0 font-mono tracking-tighter text-center">
+                                                                                    #${qNum}
+                                                                                </div>
+                                                                                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                                                                    <h4 class="text-[0.95rem] font-bold text-foreground leading-tight truncate mb-1.5">${a.patient}</h4>
+                                                                                    <div class="mb-2.5 flex items-center gap-2">
+                                                                                        <span class="text-[0.68rem] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/50">${a.slot_label || a.time}</span>
+                                                                                        ${a.room && a.room !== 'Room —' ? `<span class="min-w-[48px] text-center text-[0.85rem] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md border border-primary/20 shadow-sm">${a.room}</span>` : ''}
+                                                                                    </div>
+                                                                                    <div class="flex items-center">
+                                                                                        ${actionHtml}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>`;
                 }).join("");
             });
 
@@ -1786,46 +1883,46 @@
             const div = document.createElement("div");
             div.className = "med-row p-3 border border-border rounded-lg bg-card/50 relative group animate-fadeIn";
             div.innerHTML = `
-                <button onclick="this.closest('.med-row').remove()" class="absolute top-2 right-2 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.medicine_name') }}</label>
-                        <input type="text" name="meds[${idx}][name]" value="${(data && data.name) || ''}" oninput="updateMedId(this)" class="form-input text-sm" placeholder="{{ __('file.search_or_type_name') }}" list="inventory-list">
-                    </div>
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.dosage') }}</label>
-                        <input type="text" name="meds[${idx}][dosage]" value="${(data && data.dosage) || ''}" class="form-input text-sm" placeholder="{{ __('file.dosage_placeholder') }}">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3">
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.frequency') }}</label>
-                        <input type="text" name="meds[${idx}][frequency]" value="${(data && data.frequency) || ''}" class="form-input text-sm" placeholder="{{ __('file.frequency_placeholder') }}">
-                    </div>
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">Route</label>
-                        <select name="meds[${idx}][route]" class="form-input text-sm">
-                            <option value="Oral" ${(data && data.route === 'Oral') ? 'selected' : ''}>Oral</option>
-                            <option value="Injection" ${(data && data.route === 'Injection') ? 'selected' : ''}>Injection</option>
-                            <option value="Topical" ${(data && data.route === 'Topical') ? 'selected' : ''}>Topical</option>
-                            <option value="Inhalation" ${(data && data.route === 'Inhalation') ? 'selected' : ''}>Inhalation</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.per_day') }}</label>
-                        <input type="number" name="meds[${idx}][per_day]" value="${(data && data.per_day) || '1'}" step="0.5" min="0.5" class="form-input text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.days') }}</label>
-                        <input type="number" name="meds[${idx}][duration_days]" value="${(data && data.duration_days) || ''}" class="form-input text-sm" placeholder="{{ __('file.qty') }}">
-                    </div>
-                    <div>
-                        <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.instructions') }}</label>
-                        <input type="text" name="meds[${idx}][instructions]" value="${(data && data.instructions) || ''}" class="form-input text-sm" placeholder="{{ __('file.before_meal_etc') }}">
-                    </div>
-                </div>
-                <input type="hidden" name="meds[${idx}][inventory_item_id]" value="${(data && data.inventory_item_id) || ''}">
-            `;
+                                            <button onclick="this.closest('.med-row').remove()" class="absolute top-2 right-2 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.medicine_name') }}</label>
+                                                    <input type="text" name="meds[${idx}][name]" value="${(data && data.name) || ''}" oninput="updateMedId(this)" class="form-input text-sm" placeholder="{{ __('file.search_or_type_name') }}" list="inventory-list">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.dosage') }}</label>
+                                                    <input type="text" name="meds[${idx}][dosage]" value="${(data && data.dosage) || ''}" class="form-input text-sm" placeholder="{{ __('file.dosage_placeholder') }}">
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3">
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.frequency') }}</label>
+                                                    <input type="text" name="meds[${idx}][frequency]" value="${(data && data.frequency) || ''}" class="form-input text-sm" placeholder="{{ __('file.frequency_placeholder') }}">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">Route</label>
+                                                    <select name="meds[${idx}][route]" class="form-input text-sm">
+                                                        <option value="Oral" ${(data && data.route === 'Oral') ? 'selected' : ''}>Oral</option>
+                                                        <option value="Injection" ${(data && data.route === 'Injection') ? 'selected' : ''}>Injection</option>
+                                                        <option value="Topical" ${(data && data.route === 'Topical') ? 'selected' : ''}>Topical</option>
+                                                        <option value="Inhalation" ${(data && data.route === 'Inhalation') ? 'selected' : ''}>Inhalation</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.per_day') }}</label>
+                                                    <input type="number" name="meds[${idx}][per_day]" value="${(data && data.per_day) || '1'}" step="0.5" min="0.5" class="form-input text-sm">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.days') }}</label>
+                                                    <input type="number" name="meds[${idx}][duration_days]" value="${(data && data.duration_days) || ''}" class="form-input text-sm" placeholder="{{ __('file.qty') }}">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[0.65rem] font-bold uppercase text-muted-foreground mb-1">{{ __('file.instructions') }}</label>
+                                                    <input type="text" name="meds[${idx}][instructions]" value="${(data && data.instructions) || ''}" class="form-input text-sm" placeholder="{{ __('file.before_meal_etc') }}">
+                                                </div>
+                                            </div>
+                                            <input type="hidden" name="meds[${idx}][inventory_item_id]" value="${(data && data.inventory_item_id) || ''}">
+                                        `;
             container.appendChild(div);
         }
 
@@ -1914,6 +2011,32 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
+            }
+        }
+
+        async function deletePrescription(id) {
+            if (!confirm(`{{ __('file.are_you_sure_delete_prescription') ?? 'Are you sure you want to remove this prescription?' }}`)) return;
+
+            try {
+                const url = `{{ url('prescriptions') }}/${id}`;
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || "Failed to remove prescription");
+
+                toast("{{ __('file.success') ?? 'Success' }}", "success", data.message);
+                
+                await refreshData(document.getElementById("dateSelector")?.value, activeDocFilter);
+                if (selectedApptId) selectAppt(selectedApptId);
+            } catch (err) {
+                console.error(err);
+                toast("{{ __('file.error') ?? 'Error' }}", "error", err.message);
             }
         }
 

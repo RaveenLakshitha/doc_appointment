@@ -13,13 +13,34 @@
         <div class="mb-8">
             <h3 class="text-lg font-semibold mb-4 text-blue-700">Clinic Information</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-input label="Clinic Name" name="clinic_name" :value="old('clinic_name', $setting->clinic_name)" />
-                <x-input label="Clinic ID/Registration Number" name="clinic_id" :value="old('clinic_id', $setting->clinic_id)" />
-                <x-input label="Email Address" type="email" name="email" :value="old('email', $setting->email)" />
-                <x-input label="Phone Number" name="phone" :value="old('phone', $setting->phone)" />
-                <x-textarea label="Address" name="address" rows="3">{{ old('address', $setting->address) }}</x-textarea>
-                <x-input label="Website" name="website" :value="old('website', $setting->website)" />
-                <x-input label="Tax ID" name="tax_id" :value="old('tax_id', $setting->tax_id)" />
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Clinic Name</label>
+                    <input type="text" name="clinic_name" value="{{ old('clinic_name', $setting->clinic_name) }}" class="w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Clinic ID/Registration Number</label>
+                    <input type="text" name="clinic_id" value="{{ old('clinic_id', $setting->clinic_id) }}" class="w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Email Address</label>
+                    <input type="email" name="email" value="{{ old('email', $setting->email) }}" class="w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Phone Number</label>
+                    <input type="text" name="phone" value="{{ old('phone', $setting->phone) }}" class="w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Address</label>
+                    <textarea name="address" rows="3" class="w-full border-gray-300 rounded-md shadow-sm">{{ old('address', $setting->address) }}</textarea>
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Website</label>
+                    <input type="text" name="website" value="{{ old('website', $setting->website) }}" class="w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Tax ID</label>
+                    <input type="text" name="tax_id" value="{{ old('tax_id', $setting->tax_id) }}" class="w-full border-gray-300 rounded-md shadow-sm">
+                </div>
             </div>
         </div>
 
@@ -50,20 +71,36 @@
         <div class="mb-8">
             <h3 class="text-lg font-semibold mb-4 text-blue-700">Regional Settings</h3>
             <div class="grid grid-cols-2 gap-4">
-                <x-select label="Timezone" name="timezone" :options="\DateTimeZone::listIdentifiers(\DateTimeZone::ALL)" :selected="old('timezone', $setting->timezone)" />
-                <x-select label="Date Format" name="date_format">
-                    <option value="MM/DD/YYYY" {{ $setting->date_format == 'MM/DD/YYYY' ? 'selected' : '' }}>MM/DD/YYYY</option>
-                    <option value="DD/MM/YYYY" {{ $setting->date_format == 'DD/MM/YYYY' ? 'selected' : '' }}>DD/MM/YYYY</option>
-                    <option value="YYYY-MM-DD" {{ $setting->date_format == 'YYYY-MM-DD' ? 'selected' : '' }}>YYYY-MM-DD</option>
-                </x-select>
-                <x-select label="Time Format" name="time_format">
-                    <option value="12-hour" {{ $setting->time_format == '12-hour' ? 'selected' : '' }}>12-hour (AM/PM)</option>
-                    <option value="24-hour" {{ $setting->time_format == '24-hour' ? 'selected' : '' }}>24-hour</option>
-                </x-select>
-                <x-select label="First Day of Week" name="first_day_of_week">
-                    <option value="Sunday" {{ $setting->first_day_of_week == 'Sunday' ? 'selected' : '' }}>Sunday</option>
-                    <option value="Monday" {{ $setting->first_day_of_week == 'Monday' ? 'selected' : '' }}>Monday</option>
-                </x-select>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Timezone</label>
+                    <select name="timezone" class="w-full border-gray-300 rounded-md shadow-sm">
+                        @foreach(\DateTimeZone::listIdentifiers(\DateTimeZone::ALL) as $tz)
+                            <option value="{{ $tz }}" {{ old('timezone', $setting->timezone) == $tz ? 'selected' : '' }}>{{ $tz }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Date Format</label>
+                    <select name="date_format" class="w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="MM/DD/YYYY" {{ $setting->date_format == 'MM/DD/YYYY' ? 'selected' : '' }}>MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY" {{ $setting->date_format == 'DD/MM/YYYY' ? 'selected' : '' }}>DD/MM/YYYY</option>
+                        <option value="YYYY-MM-DD" {{ $setting->date_format == 'YYYY-MM-DD' ? 'selected' : '' }}>YYYY-MM-DD</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">Time Format</label>
+                    <select name="time_format" class="w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="12-hour" {{ $setting->time_format == '12-hour' ? 'selected' : '' }}>12-hour (AM/PM)</option>
+                        <option value="24-hour" {{ $setting->time_format == '24-hour' ? 'selected' : '' }}>24-hour</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium">First Day of Week</label>
+                    <select name="first_day_of_week" class="w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="Sunday" {{ $setting->first_day_of_week == 'Sunday' ? 'selected' : '' }}>Sunday</option>
+                        <option value="Monday" {{ $setting->first_day_of_week == 'Monday' ? 'selected' : '' }}>Monday</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -90,7 +127,8 @@
             </div>
 
             <div class="mt-4">
-                <x-input label="Primary Color" name="primary_color" type="color" :value="old('primary_color', $setting->primary_color)" />
+                <label class="block mb-2 text-sm font-medium">Primary Color</label>
+                <input type="color" name="primary_color" value="{{ old('primary_color', $setting->primary_color) }}" class="w-full border-gray-300 rounded-md shadow-sm h-10 p-1">
             </div>
         </div>
 

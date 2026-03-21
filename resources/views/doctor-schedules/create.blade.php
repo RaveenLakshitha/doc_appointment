@@ -45,78 +45,85 @@
                             @enderror
                         </div>
 
-                        <!-- Room Selection -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ __('file.room') }} <span class="text-red-500">*</span>
-                            </label>
-                            <select name="room_id" required
-                                class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
-                                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                                                   focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all">
-                                <option value="">{{ __('file.select_room') }}</option>
-                                @foreach($rooms as $room)
-                                    <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
-                                        {{ $room->room_number }}{{ $room->department ? ' - ' . $room->department->name : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('room_id')
-                                <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-                        </div>
+
                     </div>
 
-                    <!-- Time Range -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ __('file.start_time') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time" name="start_time" value="{{ old('start_time') }}" required
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white [color-scheme:light] dark:[color-scheme:dark] transition-shadow">
-                            @error('start_time')
-                                <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-                        </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ __('file.end_time') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time" name="end_time" value="{{ old('end_time') }}" required
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white [color-scheme:light] dark:[color-scheme:dark] transition-shadow">
-                            @error('end_time')
-                                <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
 
-                    <!-- Days of the Week -->
-                    <div>
+                    <!-- Days of the Week & Rooms -->
+                    <div x-data="{
+                        selectedDays: {{ json_encode(old('days_of_week', [])) }},
+                        toggleDay(day) {
+                            if (this.selectedDays.includes(day)) {
+                                this.selectedDays = this.selectedDays.filter(d => d !== day);
+                            } else {
+                                this.selectedDays.push(day);
+                            }
+                        }
+                    }">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            {{ __('file.days_of_week') }} <span class="text-red-500">*</span>
+                            {{ __('file.days_of_week') }} & {{ __('file.room') }} <span class="text-red-500">*</span>
                         </label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4">
+                        <div class="space-y-3">
                             @php
                                 $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                                 $oldDays = old('days_of_week', []);
                             @endphp
                             @foreach($days as $day)
-                                <label class="flex items-center space-x-3 cursor-pointer">
-                                    <input type="checkbox" name="days_of_week[]" value="{{ $day }}" {{ in_array($day, $oldDays) ? 'checked' : '' }}
-                                        class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 dark:focus:ring-gray-500 dark:bg-gray-700 dark:border-gray-600">
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                                        {{ __('file.' . $day) }}
-                                    </span>
-                                </label>
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 p-3 border rounded-lg dark:border-gray-700 transition-colors"
+                                     :class="selectedDays.includes('{{ $day }}') ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800' : 'bg-white dark:bg-gray-800'">
+                                    
+                                    <label class="flex items-center space-x-3 cursor-pointer min-w-[140px] mb-2 sm:mb-0">
+                                        <input type="checkbox" name="days_of_week[]" value="{{ $day }}" 
+                                            @change="toggleDay('{{ $day }}')"
+                                            {{ in_array($day, $oldDays) ? 'checked' : '' }}
+                                            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize"
+                                              :class="selectedDays.includes('{{ $day }}') ? 'text-blue-700 dark:text-blue-400' : ''">
+                                            {{ __('file.' . $day) }}
+                                        </span>
+                                    </label>
+                                    
+                                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" x-show="selectedDays.includes('{{ $day }}')" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
+                                        <div class="col-span-1 lg:col-span-1">
+                                            <select name="rooms[{{ $day }}]" :required="selectedDays.includes('{{ $day }}')"
+                                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all">
+                                                <option value="">{{ __('file.select_room') }}</option>
+                                                @foreach($rooms as $room)
+                                                    <option value="{{ $room->id }}" {{ old("rooms.{$day}") == $room->id ? 'selected' : '' }}>
+                                                        {{ $room->room_number }}{{ $room->department ? ' - ' . $room->department->name : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error("rooms.{$day}")
+                                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div class="col-span-1 lg:col-span-2 flex items-center space-x-3">
+                                            <div class="flex-1">
+                                                <input type="time" name="start_times[{{ $day }}]" value="{{ old("start_times.{$day}") }}" :required="selectedDays.includes('{{ $day }}')"
+                                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white [color-scheme:light] dark:[color-scheme:dark] transition-shadow">
+                                                @error("start_times.{$day}")
+                                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                            <div class="flex-shrink-0 text-gray-400">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <input type="time" name="end_times[{{ $day }}]" value="{{ old("end_times.{$day}") }}" :required="selectedDays.includes('{{ $day }}')"
+                                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white [color-scheme:light] dark:[color-scheme:dark] transition-shadow">
+                                                @error("end_times.{$day}")
+                                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
                         @error('days_of_week')
-                            <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                        @error('days_of_week.*')
-                            <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
 

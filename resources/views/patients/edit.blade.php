@@ -205,16 +205,32 @@
                                 <input type="text" name="recommended_by" value="{{ old('recommended_by', $patient->recommended_by ?? '') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.recommended_by_ph') }}">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.recommended_document') }}</label>
-                                <input type="file" name="recommended_document" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                @error('recommended_document') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Document / Image</label>
+                                <input type="file" name="document" id="document_upload" accept="image/*,.pdf,.doc,.docx" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" onchange="previewDocument(this)">
+                                @error('document') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                                 
-            @if(isset($patient) && $patient->recommended_document)
-                 <div class="mt-2 flex items-center gap-2">
-                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                     <a href="{{ asset($patient->recommended_document) }}" target="_blank" class="text-sm text-blue-600 hover:underline dark:text-blue-400 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-md">{{ __('file.view_current_document') }}</a>
-                 </div>
-            @endif
+                                <div id="document_preview_container" class="mt-3 {{ $patient->document ? '' : 'hidden' }}">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Document Preview:</p>
+                                    
+                                    @if($patient->document)
+                                        @php
+                                            $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $patient->document);
+                                        @endphp
+                                        <img id="document_image_preview" src="{{ $isImage ? asset($patient->document) : '' }}" alt="Preview" class="max-w-xs rounded-lg border border-gray-200 dark:border-gray-700 {{ $isImage ? '' : 'hidden' }}" style="max-height: 200px;">
+                                        <div id="document_file_preview" class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 {{ $isImage ? 'hidden' : '' }}">
+                                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                            <a href="{{ asset($patient->document) }}" target="_blank" id="document_file_link" class="text-sm text-blue-600 hover:underline dark:text-blue-400 truncate">{{ __('file.view_current_document') }}</a>
+                                            <span id="document_file_name" class="text-sm text-gray-700 dark:text-gray-300 truncate hidden"></span>
+                                        </div>
+                                    @else
+                                        <img id="document_image_preview" src="" alt="Preview" class="max-w-xs rounded-lg border border-gray-200 dark:border-gray-700 hidden" style="max-height: 200px;">
+                                        <div id="document_file_preview" class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hidden">
+                                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                            <a href="#" target="_blank" id="document_file_link" class="text-sm text-blue-600 hover:underline dark:text-blue-400 truncate hidden">{{ __('file.view_current_document') }}</a>
+                                            <span id="document_file_name" class="text-sm text-gray-700 dark:text-gray-300 truncate"></span>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -357,6 +373,35 @@
 </div>
 
 <script>
+function previewDocument(input) {
+    const container = document.getElementById('document_preview_container');
+    const imgPreview = document.getElementById('document_image_preview');
+    const filePreview = document.getElementById('document_file_preview');
+    const fileName = document.getElementById('document_file_name');
+    const fileLink = document.getElementById('document_file_link');
+
+    if (input.files && input.files[0]) {
+        container.classList.remove('hidden');
+        const file = input.files[0];
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imgPreview.src = e.target.result;
+                imgPreview.classList.remove('hidden');
+                filePreview.classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        } else {
+            imgPreview.classList.add('hidden');
+            fileName.textContent = file.name;
+            fileName.classList.remove('hidden');
+            if(fileLink) fileLink.classList.add('hidden');
+            filePreview.classList.remove('hidden');
+        }
+    }
+}
+
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
     document.querySelectorAll('.tab-button').forEach(b => {

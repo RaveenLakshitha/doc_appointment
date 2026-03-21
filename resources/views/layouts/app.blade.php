@@ -575,14 +575,14 @@
 
         <nav id="navbar"
             class="fixed top-0 h-16 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 z-40 flex items-center justify-between px-6 transition-all duration-300 left-0 right-0 lg:left-64">
-            <button id="mobile-menu-btn"
-                class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-
-            <div class="flex items-center space-x-4"></div>
+            <div class="flex items-center space-x-4">
+                <button id="mobile-menu-btn"
+                    class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors mr-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
 
             <div class="flex items-center space-x-4">
                 {{-- Appointment Manager Link --}}
@@ -926,11 +926,15 @@
                     sidebar.style.width = '74px';
                     mainContent.style.marginLeft = '74px';
                     navbar.style.left = '74px';
+                    document.getElementById('icon-expanded')?.classList.replace('opacity-100', 'opacity-0');
+                    document.getElementById('icon-collapsed')?.classList.replace('opacity-0', 'opacity-100');
                 } else {
                     sidebar.classList.remove('sidebar-collapsed');
                     sidebar.style.width = '16rem';
                     mainContent.style.marginLeft = '16rem';
                     navbar.style.left = '16rem';
+                    document.getElementById('icon-expanded')?.classList.replace('opacity-0', 'opacity-100');
+                    document.getElementById('icon-collapsed')?.classList.replace('opacity-100', 'opacity-0');
                 }
             } else {
                 sidebar.classList.remove('sidebar-collapsed');
@@ -947,9 +951,13 @@
             sidebar.style.width = '74px';
             mainContent.style.marginLeft = '74px';
             navbar.style.left = '74px';
+            document.getElementById('icon-expanded')?.classList.replace('opacity-100', 'opacity-0');
+            document.getElementById('icon-collapsed')?.classList.replace('opacity-0', 'opacity-100');
         } else if (isDesktop()) {
             mainContent.style.marginLeft = '16rem';
             navbar.style.left = '16rem';
+            document.getElementById('icon-expanded')?.classList.replace('opacity-0', 'opacity-100');
+            document.getElementById('icon-collapsed')?.classList.replace('opacity-100', 'opacity-0');
         }
 
         const html = document.documentElement;

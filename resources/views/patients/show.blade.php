@@ -186,37 +186,6 @@
                                 </div>
                             </div>
 
-                            @if($patient->recommended_document)
-                                <div class="mb-8">
-                                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('file.recommended_document') }}</label>
-                                    @php
-                                        $recExtension = strtolower(pathinfo($patient->recommended_document, PATHINFO_EXTENSION));
-                                        $recDocUrl = asset($patient->recommended_document);
-                                    @endphp
-                                    
-                                    @if(in_array($recExtension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp']))
-                                        <div class="mt-2 text-center bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 inline-block">
-                                            <a href="{{ $recDocUrl }}" target="_blank" title="Click to view full size">
-                                                <img src="{{ $recDocUrl }}" class="max-w-full h-auto rounded shadow-sm object-contain" alt="Recommendation Document" style="max-height: 500px;">
-                                            </a>
-                                        </div>
-                                    @elseif($recExtension === 'pdf')
-                                        <div class="mt-2 w-full">
-                                            <iframe src="{{ $recDocUrl }}" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" style="height: 600px;"></iframe>
-                                        </div>
-                                    @else
-                                        <div class="mt-2">
-                                            <a href="{{ $recDocUrl }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
-                                                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                                </svg>
-                                                {{ __('file.view_current_document') }}
-                                            </a>
-                                        </div>
-                                    @endif
-                                </div>
-                            @endif
-                            
                             @if($patient->document)
                                 <div class="mb-8">
                                     <label

@@ -179,6 +179,7 @@ class PatientController extends Controller
             'preferred_session_time' => 'nullable|string',
             'recommended_by' => 'nullable|string',
             'recommended_document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
             'blood_type' => 'nullable|string',
             'height_cm' => 'nullable|integer',
             'weight_kg' => 'nullable|integer',
@@ -248,13 +249,20 @@ class PatientController extends Controller
             $newPatient->update(['recommended_document' => 'patient_documents/' . $filename2]);
         }
 
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            $filename = time() . '_doc_' . $file->getClientOriginalName();
+            $file->move(public_path('patient_documents'), $filename);
+            $newPatient->update(['document' => 'patient_documents/' . $filename]);
+        }
+
         return redirect()->route('patients.index')
             ->with('success', __('file.patients_created_successfully'));
     }
 
     public function show(Patient $patient)
     {
-        if (!Auth::user()->can('patients.show')) {
+        if (!Auth::user()->can('patients.index')) {
             return redirect()->route('patients.index')
                 ->with('error', __('file.patients_show_denied'));
         }
@@ -296,6 +304,7 @@ class PatientController extends Controller
             'preferred_session_time' => 'nullable|string',
             'recommended_by' => 'nullable|string',
             'recommended_document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
             'blood_type' => 'nullable|string',
             'height_cm' => 'nullable|integer',
             'weight_kg' => 'nullable|integer',
@@ -359,6 +368,16 @@ class PatientController extends Controller
             $filename2 = time() . '_rec_' . $file2->getClientOriginalName();
             $file2->move(public_path('patient_documents'), $filename2);
             $patient->update(['recommended_document' => 'patient_documents/' . $filename2]);
+        }
+
+        if ($request->hasFile('document')) {
+            if ($patient->document && file_exists(public_path($patient->document))) {
+                unlink(public_path($patient->document));
+            }
+            $file = $request->file('document');
+            $filename = time() . '_doc_' . $file->getClientOriginalName();
+            $file->move(public_path('patient_documents'), $filename);
+            $patient->update(['document' => 'patient_documents/' . $filename]);
         }
 
         return redirect()->route('patients.index')

@@ -19,7 +19,7 @@ class PrescriptionController extends Controller
         $this->middleware('permission:prescriptions.index', ['only' => ['index', 'show', 'datatable', 'print']]);
         $this->middleware('permission:prescriptions.create', ['only' => ['create', 'store']]);
         $this->middleware('permission:prescriptions.edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:prescriptions.delete', ['only' => ['destroy', 'bulkDelete']]);
+        $this->middleware('permission:prescriptions.delete', ['only' => ['bulkDelete']]);
     }
     public function index(Request $request)
     {
@@ -422,14 +422,21 @@ class PrescriptionController extends Controller
         $user = auth()->user();
         $doctor = $user->doctor;
 
+        $hasPermission = $user->can('prescriptions.delete');
+        $isAssignedDoctor = false;
+
         if ($prescription->appointment_id) {
             $appointment = \App\Models\Appointment::find($prescription->appointment_id);
-            if ($appointment && $appointment->doctor_id && (!$doctor || $appointment->doctor_id !== $doctor->id)) {
-                if (request()->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Only the assigned doctor can delete this prescription.'], 403);
-                }
-                return back()->with('error', 'Only the assigned doctor can delete this prescription.');
+            if ($appointment && $appointment->doctor_id && $doctor && $appointment->doctor_id === $doctor->id) {
+                $isAssignedDoctor = true;
             }
+        }
+
+        if (!$hasPermission && !$isAssignedDoctor) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Only the assigned doctor or admin can delete this prescription.'], 403);
+            }
+            return back()->with('error', 'Only the assigned doctor or admin can delete this prescription.');
         }
 
         $prescription->delete(); // now soft-deletes

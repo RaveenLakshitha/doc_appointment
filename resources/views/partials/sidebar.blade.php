@@ -2,20 +2,21 @@
 <aside id="sidebar" class="fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 shadow-lg border-r dark:border-gray-700 transition-all duration-300 z-50 flex flex-col lg:translate-x-0 -translate-x-full"
 style="width: 16rem; max-height: 100vh;">
 
-    <!-- Logo -->
+    <!-- Header & Toggle Button -->
     <div class="h-16 flex items-center justify-between px-4 border-b dark:border-gray-700 flex-shrink-0">
-        <a href="{{ route('dashboard') }}" class="flex items-center space-x-3">
-            @if($clinic_logo)
-                <img src="{{ $clinic_logo }}" alt="Clinic Logo" class="sidebar-text h-9 w-9 rounded-lg object-cover ring-2 ring-green-500/20">
+        <!-- Clinic Logo & Name -->
+        <a href="{{ route('dashboard') }}" class="flex items-center space-x-2 overflow-hidden sidebar-text">
+            @if(!empty($clinic_logo))
+                <img src="{{ $clinic_logo }}" alt="Clinic Logo" class="h-8 w-8 rounded-lg object-cover ring-2 ring-green-500/20 flex-shrink-0">
             @else
-                <div class="sidebar-text h-9 w-9 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h-4m-6 0H5"/>
                     </svg>
                 </div>
             @endif
-            <span class="text-xl font-bold sidebar-text truncate" style="color: {{ $primary_color }} !important;">
-                {{ $clinic_name }}
+            <span class="text-lg font-bold truncate dark:text-white" style="color: {{ $primary_color ?? '#111827' }} !important;">
+                {{ $clinic_name ?? 'Clinic Name' }}
             </span>
         </a>
         <button id="toggle-sidebar" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0" aria-label="Toggle sidebar">
@@ -354,19 +355,6 @@ style="width: 16rem; max-height: 100vh;">
         </div>{{-- end main nav --}}
         @endif
 
-        {{-- ── LOGOUT ──────────────────────────────────────────────────────────── --}}
-        <div class="pt-4 mt-auto border-t dark:border-gray-700 p-4">
-            <a href="{{ route('logout') }}"
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-               class="group flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300">
-                <svg class="h-5 w-5 flex-shrink-0 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                </svg>
-                <span class="ml-3 sidebar-text">{{ __('file.logout') }}</span>
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
-        </div>
-
         @else
             <a href="{{ route('login') }}"
                class="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-800 hover:text-green-600 dark:hover:text-green-400">
@@ -377,4 +365,28 @@ style="width: 16rem; max-height: 100vh;">
             </a>
         @endauth
     </nav>
+
+    @auth
+    <!-- Docked User Footer -->
+    <div class="py-4 flex-shrink-0 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div class="flex items-center px-4 space-x-3" title="{{ auth()->user()?->name }} ({{ auth()->user()?->email }})">
+            <img class="h-10 w-10 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700 flex-shrink-0"
+                 src="{{ auth()->user()?->avatar ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()?->name) . '&background=6366f1&color=fff' }}"
+                 alt="{{ auth()->user()?->name }}">
+            <div class="flex flex-col overflow-hidden sidebar-text w-full">
+                <span class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ auth()->user()?->name }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ auth()->user()?->email }}</span>
+            </div>
+            
+            <form method="POST" action="{{ route('logout') }}" class="ml-auto sidebar-text">
+                @csrf
+                <button type="submit" class="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="{{ __('Log Out') }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    @endauth
 </aside>

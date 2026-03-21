@@ -10,6 +10,11 @@ return [
     'back' => 'Back',
     'doctor_has_running_appointment' => 'Therapist already has a running appointment',
     'actions' => 'Actions',
+    'age' => 'Age',
+    'Age' => 'Age',
+    'yrs' => 'yrs',
+    'years' => 'years',
+    'not_specified' => 'Not specified',
     'age_group' => 'Age Group',
     'any' => 'Any Therapist',
     'any_doctor' => 'Any Therapist',
@@ -1964,6 +1969,7 @@ The queue for this session will be automatically renumbered.',
     'no_medications_prescribed_yet' => 'No medications prescribed yet',
     'are_you_sure_change_status' => 'Are you sure you want to change status to',
     'are_you_sure_save_changes_appointment' => 'Are you sure you want to save changes to this appointment?',
+    'are_you_sure_delete_prescription' => 'Are you sure you want to remove this prescription?',
     'updated_successfully' => 'updated successfully',
 
     // Print Views
@@ -2039,6 +2045,9 @@ The queue for this session will be automatically renumbered.',
     'recommended_document' => 'Recommendation Document',
     'view_current_document' => 'View Current Document',
     'psychotherapy_info' => 'Psychotherapy Information',
+    'document' => 'Document',
+    'view_document' => 'View Document',
+    'download' => 'Download',
 ];
 
 

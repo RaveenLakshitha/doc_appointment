@@ -213,7 +213,7 @@
             <div class="info-box">
                 <h3>{{ __('file.patient_details') }}</h3>
                 <strong>{{ $prescription->patient->getFullNameAttribute() ?? '—' }}</strong><br>
-                {{ __('file.Age') }}: {{ $prescription->patient->date_of_birth ? $prescription->patient->date_of_birth->age . ' ' . __('file.yrs') : '—' }} | {{ __('file.gender') }}: {{ $prescription->patient->gender ? __('file.' . strtolower($prescription->patient->gender)) : '—' }}<br>
+                {{ __('file.Age') }}: @if($prescription->patient->date_of_birth) <span style="background-color: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">{{ $prescription->patient->date_of_birth->age }} {{ __('file.yrs') }}</span> @else — @endif | {{ __('file.gender') }}: {{ $prescription->patient->gender ? __('file.' . strtolower($prescription->patient->gender)) : '—' }}<br>
                 {{ $prescription->patient->phone ?? '' }}<br>
                 {{ __('file.medical_record_number') }}: {{ $prescription->patient->medical_record_number ?? '—' }}
             </div>

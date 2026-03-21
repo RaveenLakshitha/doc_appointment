@@ -13,13 +13,10 @@ class DoctorSchedule extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'doctor_id', 'room_id', 'start_time', 'end_time',
-        'valid_from', 'valid_until', 'is_active'
+        'doctor_id', 'valid_from', 'valid_until', 'is_active'
     ];
 
     protected $casts = [
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
         'valid_from' => 'date',
         'valid_until' => 'date',
         'is_active' => 'boolean',
@@ -28,11 +25,6 @@ class DoctorSchedule extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
-    }
-
-    public function room(): BelongsTo
-    {
-        return $this->belongsTo(Room::class);
     }
 
     public function days(): HasMany

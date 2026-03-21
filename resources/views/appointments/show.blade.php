@@ -130,13 +130,25 @@
                             @endif
                         </div>
                         <div class="text-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg col-span-2">
-                            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.time_slot') }}</div>
-                            @if($appointment->scheduled_start)
-                                <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $appointment->scheduled_start->format('g:i A') }} – {{ $appointment->scheduled_end?->format('g:i A') }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('file.scheduled_time') }}</div>
-                            @else
-                                <div class="text-sm text-gray-400 dark:text-gray-500">—</div>
-                            @endif
+                            <div class="flex items-center justify-center gap-6">
+                                <div>
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.time_slot') }}</div>
+                                    @if($appointment->scheduled_start)
+                                        <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $appointment->scheduled_start->format('g:i A') }} – {{ $appointment->scheduled_end?->format('g:i A') }}</div>
+                                    @else
+                                        <div class="text-sm text-gray-400 dark:text-gray-500">—</div>
+                                    @endif
+                                </div>
+                                <div class="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                                <div>
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.room') ?? 'Room' }}</div>
+                                    @if($appointment->room)
+                                        <div class="text-base font-semibold text-indigo-600 dark:text-indigo-400">{{ $appointment->room->room_number }}</div>
+                                    @else
+                                        <div class="text-sm text-gray-400 dark:text-gray-500 italic">{{ __('file.not_assigned') ?? 'Not Assigned' }}</div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -307,8 +319,13 @@
                     </div>
                     @if($appointment->patient?->date_of_birth)
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.date_of_birth') }}</label>
-                        <p class="text-sm text-gray-900 dark:text-white">{{ $appointment->patient->date_of_birth->format('d M Y') }}</p>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.date_of_birth') }} / {{ __('file.age') }}</label>
+                        <p class="text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                            {{ $appointment->patient->date_of_birth->format('d M Y') }}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                {{ $appointment->patient->date_of_birth->age }} {{ strtolower(__('file.years') ?? 'years') }}
+                            </span>
+                        </p>
                     </div>
                     @endif
                     @if($appointment->patient?->phone)
@@ -610,14 +627,16 @@
                         <input type="date" name="date" id="modal_date" value="{{ date('Y-m-d') }}" min="{{ date('Y-m-d') }}" class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
                     </div>
 
-                    @if($appointment->preferred_time)
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.patient_preferred_time') }}</label>
                         <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-                            {{ \App\Models\Appointment::getPreferredTimeOptions()[$appointment->preferred_time] ?? $appointment->preferred_time }}
+                            @if($appointment->preferred_time)
+                                {{ \App\Models\Appointment::getPreferredTimeOptions()[$appointment->preferred_time] ?? $appointment->preferred_time }}
+                            @else
+                                {{ __('file.not_specified') ?? 'Not specified' }}
+                            @endif
                         </p>
                     </div>
-                    @endif
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.time_slot') }}</label>
@@ -703,6 +722,7 @@
         modalDoctorSelect.classList.remove('hidden');
 
         if (appointmentType === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}') {
+            modalSpecSelect.value = '{{ $appointment->doctor?->primary_specialization_id ?? $appointment->specialization_id ?? "" }}';
             modalSpecSelect.classList.add('hidden');
             modalSpecText.textContent = '{{ $appointment->doctor?->primarySpecialization?->name ?? '' }}' || (modalSpecSelect.options[modalSpecSelect.selectedIndex]?.text || '');
             modalSpecText.classList.remove('hidden');

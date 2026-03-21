@@ -244,13 +244,18 @@ class AppointmentController extends Controller
 
             if ($appt->scheduled_start) {
                 $start = Carbon::parse($appt->scheduled_start);
-                $scheduledDisplay = $start->format('M d, Y');
+                $timeDisplay = $start->format('h:i A');
 
                 if ($appt->scheduled_end) {
                     $end = Carbon::parse($appt->scheduled_end);
                     if ($end->greaterThan($start)) {
-                        $scheduledDisplay .= ' – ' . $end->format('h:i A');
+                        $timeDisplay .= ' – ' . $end->format('h:i A');
                     }
+                }
+
+                $scheduledDisplay = $start->format('M d, Y') . '<br><span class="text-xs text-gray-500">' . $timeDisplay . '</span>';
+                if ($appt->room) {
+                    $scheduledDisplay .= '<br><span class="text-xs font-medium text-indigo-600">Room ' . $appt->room->room_number . '</span>';
                 }
 
                 $scheduledClass = '';
@@ -275,6 +280,7 @@ class AppointmentController extends Controller
                 'patient_name' => $appt->patient?->getFullNameAttribute() ?? '-',
                 'doctor_name' => $appt->doctor?->getFullNameAttribute() ?? '(Any Doctor)',
                 'scheduled_datetime' => $scheduledDisplay,
+                'room_number' => $appt->room?->room_number ?? '—',
                 'scheduled_class' => $scheduledClass,
                 'status' => $appt->status,
                 'status_badge' => $statusBadge,
@@ -361,9 +367,16 @@ class AppointmentController extends Controller
         if (!empty($validated['scheduled_start'])) {
             $start = Carbon::parse($validated['scheduled_start']);
             $end = $start->copy()->addMinutes(30);
+
+            $roomId = null;
+            if (isset($validated['doctor_id'])) {
+                $roomId = $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+            }
+
             $appointment->update([
                 'scheduled_start' => $start,
                 'scheduled_end' => $end,
+                'room_id' => $roomId,
             ]);
         }
 
@@ -415,7 +428,7 @@ class AppointmentController extends Controller
                 'last_name',
                 'primary_specialization_id'
             ])->with('primarySpecialization:id,name'),
-            'room:id,name,location',
+            'room:id,name,room_number',
             'canceller:id,name',
             'specialization:id,name',
             'ageGroup:id,name',
@@ -553,19 +566,25 @@ class AppointmentController extends Controller
 
         $checkDate = $start ? $start->format('Y-m-d') : null;
         if ($checkDate && \App\Models\Holiday::isHoliday($checkDate)) {
-             if ($request->ajax() || $request->wantsJson()) {
-                 return response()->json(['success' => false, 'message' => __('file.cannot_schedule_on_holiday') ?? 'Cannot assign/approve appointment on a holiday.'], 422);
-             }
-             return back()->withErrors(['date' => __('file.cannot_schedule_on_holiday') ?? 'Cannot assign/approve appointment on a holiday.'])->withInput();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.cannot_schedule_on_holiday') ?? 'Cannot assign/approve appointment on a holiday.'], 422);
+            }
+            return back()->withErrors(['date' => __('file.cannot_schedule_on_holiday') ?? 'Cannot assign/approve appointment on a holiday.'])->withInput();
         }
 
         $oldStatus = $appointment->status;
+
+        $roomId = $appointment->room_id;
+        if (isset($validated['doctor_id']) && $start) {
+            $roomId = $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+        }
 
         $appointment->update([
             'specialization_id' => $validated['specialization_id'],
             'doctor_id' => $validated['doctor_id'],
             'scheduled_start' => $start,
             'scheduled_end' => $end,
+            'room_id' => $roomId,
             'appointment_type' => $validated['appointment_type'] ?? $appointment->appointment_type,
             'reason_for_visit' => $validated['reason_for_visit'] ?? $appointment->reason_for_visit,
             'patient_notes' => $validated['patient_notes'] ?? $appointment->patient_notes,
@@ -905,8 +924,10 @@ class AppointmentController extends Controller
 
             $hasSchedule = false;
             foreach ($schedules as $schedule) {
-                if ($schedule->valid_from && $date->lt(Carbon::parse($schedule->valid_from)->startOfDay())) continue;
-                if ($schedule->valid_until && $date->gt(Carbon::parse($schedule->valid_until)->endOfDay())) continue;
+                if ($schedule->valid_from && $date->lt(Carbon::parse($schedule->valid_from)->startOfDay()))
+                    continue;
+                if ($schedule->valid_until && $date->gt(Carbon::parse($schedule->valid_until)->endOfDay()))
+                    continue;
 
                 if ($schedule->days->contains('day_of_week', $dayName)) {
                     $hasSchedule = true;
@@ -920,7 +941,8 @@ class AppointmentController extends Controller
                     'label' => $date->isToday() ? __('file.today') . ' (' . $date->translatedFormat('d M') . ')' : $date->translatedFormat('D, d M')
                 ];
                 $daysFound++;
-                if ($daysFound >= 5) break;
+                if ($daysFound >= 5)
+                    break;
             }
         }
 
@@ -936,7 +958,7 @@ class AppointmentController extends Controller
         ]);
 
         $date = Carbon::parse($request->date);
-        $dayName = $date->format('l');
+        $dayName = strtolower($date->format('l'));
 
         $employee = \App\Models\Employee::where('user_id', $doctor->user_id)->first();
         if ($employee) {
@@ -977,8 +999,12 @@ class AppointmentController extends Controller
         $slots = [];
 
         foreach ($schedules as $schedule) {
-            $start = $date->copy()->setTimeFromTimeString($schedule->start_time->format('H:i'));
-            $end = $date->copy()->setTimeFromTimeString($schedule->end_time->format('H:i'));
+            $daySchedule = $schedule->days->where('day_of_week', $dayName)->first();
+            if (!$daySchedule || !$daySchedule->start_time || !$daySchedule->end_time)
+                continue;
+
+            $start = $date->copy()->setTimeFromTimeString($daySchedule->start_time->format('H:i'));
+            $end = $date->copy()->setTimeFromTimeString($daySchedule->end_time->format('H:i'));
 
             $slots[] = [
                 'start' => $start->format('H:i'),
@@ -1083,11 +1109,14 @@ class AppointmentController extends Controller
 
         DB::beginTransaction();
         try {
+            $roomId = $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+
             $updateData = [
                 'doctor_id' => $validated['doctor_id'],
                 'specialization_id' => $validated['specialization_id'],
                 'scheduled_start' => $start,
                 'scheduled_end' => $end,
+                'room_id' => $roomId,
             ];
 
             if (isset($validated['age_group_id'])) {
@@ -1381,6 +1410,33 @@ class AppointmentController extends Controller
         return $lastName . '-' . $dayShort . '-' . str_pad($sessionOrder, 2, '0', STR_PAD_LEFT);
     }
 
+    private function getRoomIdForAppointment(int $doctorId, Carbon $start): ?int
+    {
+        $apptDate = $start->clone()->startOfDay();
+        $apptDay = $start->englishDayOfWeek;
+
+        $schedule = \App\Models\DoctorSchedule::where('doctor_id', $doctorId)
+            ->where('is_active', true)
+            ->where(function ($q) use ($apptDate) {
+                $q->whereDate('valid_from', '<=', $apptDate)->orWhereNull('valid_from');
+            })
+            ->where(function ($q) use ($apptDate) {
+                $q->whereDate('valid_until', '>=', $apptDate)->orWhereNull('valid_until');
+            })
+            ->with([
+                'days' => function ($q) use ($apptDay) {
+                    $q->where('day_of_week', $apptDay);
+                }
+            ])
+            ->first();
+
+        if ($schedule && $schedule->days->isNotEmpty()) {
+            return $schedule->days->first()->room_id;
+        }
+
+        return null;
+    }
+
     private function getSessionOrderForTime(Appointment $appointment): ?int
     {
         $apptTime = $appointment->scheduled_start->format('H:i:s');
@@ -1405,12 +1461,19 @@ class AppointmentController extends Controller
             return null;
         }
 
-        $sorted = $schedules->sortBy(fn($s) => $s->start_time->format('H:i:s'));
+        $sorted = $schedules->sortBy(function ($s) use ($apptDay) {
+            $day = $s->days->where('day_of_week', strtolower($apptDay))->first();
+            return $day && $day->start_time ? $day->start_time->format('H:i:s') : '23:59:59';
+        });
 
         $index = 0;
         foreach ($sorted as $schedule) {
-            $startTime = $schedule->start_time->format('H:i:s');
-            $endTime = $schedule->end_time->format('H:i:s');
+            $day = $schedule->days->where('day_of_week', strtolower($apptDay))->first();
+            if (!$day || !$day->start_time || !$day->end_time)
+                continue;
+
+            $startTime = $day->start_time->format('H:i:s');
+            $endTime = $day->end_time->format('H:i:s');
 
             if ($apptTime >= $startTime && $apptTime <= $endTime) {
                 return $index + 1;
@@ -1445,6 +1508,7 @@ class AppointmentController extends Controller
             'patient_id' => $appt->patient_id,
             'patient_mrn' => $patient?->medical_record_number ?? '—',
             'patient_dob' => $patient?->date_of_birth ? Carbon::parse($patient->date_of_birth)->format('d M Y') : '—',
+            'patient_age' => $patient?->date_of_birth ? Carbon::parse($patient->date_of_birth)->age : '—',
             'contact' => $patient?->phone ?? '',
             'date' => $appt->scheduled_start?->toDateString() ?? '',
             'time' => $appt->scheduled_start?->format('H:i') ?? '',
@@ -1452,12 +1516,17 @@ class AppointmentController extends Controller
             'end_time' => $appt->scheduled_end?->format('H:i') ?? '',
             'slot_val' => $appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->format('H:i') . '|' . $appt->scheduled_end->format('H:i') : '',
             'slot_label' => $appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->format('g:i A') . ' – ' . $appt->scheduled_end->format('g:i A') : ($appt->scheduled_start?->format('g:i A') ?? '—'),
+            'attended_psychotherapy' => (bool) $patient?->attended_psychotherapy,
+            'preferred_session_time' => $patient?->preferred_session_time,
+            'recommended_by' => $patient?->recommended_by,
+            'patient_document' => $patient?->document,
             'duration' => $appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->diffInMinutes($appt->scheduled_end) : 30,
             'doctor_id' => $appt->doctor_id,
             'doctor_name' => $doctor ? 'Dr. ' . $doctor->full_name : 'Not Assigned',
             'doctor_email' => $appt->doctor?->email ?? '—',
             'doctor_spec' => $appt->doctor?->primarySpecialization?->name ?? '—',
-            'room' => $appt->room?->name ?? 'Room —',
+            'room' => $appt->room?->room_number ? 'Room ' . $appt->room->room_number : 'Room —',
+            'room_id' => $appt->room_id,
             'visit_type' => $appt->appointment_type ?? 'specific',
             'complaint' => $appt->reason_for_visit ?? '',
             'doctor_notes' => $appt->doctor_notes ?? '',

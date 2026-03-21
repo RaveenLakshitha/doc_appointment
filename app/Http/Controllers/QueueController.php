@@ -11,6 +11,7 @@ use App\Models\NotificationSetting;
 use App\Notifications\AppointmentCompleted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Room;
 
 class QueueController extends Controller
 {
@@ -44,19 +45,25 @@ class QueueController extends Controller
             : today();
 
         $selectedDoctor = $request->query('doctor_id');
+        $selectedRoom = $request->query('room_id');
 
         $doctors = Doctor::orderBy('first_name')->get();
+        $rooms = Room::orderBy('room_number')->get();
 
         $query = Appointment::query()
             ->whereDate('scheduled_start', $date)
             ->whereIn('status', [Appointment::STATUS_APPROVED, Appointment::STATUS_RUNNING, Appointment::STATUS_PAID])
-            ->with(['patient' => fn($q) => $q->select('id', 'first_name', 'middle_name', 'last_name')])
+            ->with(['patient' => fn($q) => $q->select('id', 'first_name', 'middle_name', 'last_name'), 'room' => fn($q) => $q->select('id', 'room_number', 'name')])
             ->orderBy('session_key')
             ->orderByRaw("CASE WHEN status = 'running' THEN 0 ELSE 1 END")
             ->orderBy('queue_number');
 
         if ($selectedDoctor) {
             $query->where('doctor_id', $selectedDoctor);
+        }
+
+        if ($selectedRoom) {
+            $query->where('room_id', $selectedRoom);
         }
 
         $appointments = $query->get();
@@ -67,6 +74,7 @@ class QueueController extends Controller
             return [
                 'session_key' => $group->first()->session_key,
                 'doctor_name' => $group->first()->doctor?->getFullNameAttribute() ?? 'Unknown',
+                'room_name' => $group->first()->room?->room_number,
                 'patients' => $group->map(fn($appt) => [
                     'queue_number' => $appt->queue_number,
                     'patient_name' => $appt->patient?->getFullNameAttribute() ?? '-',
@@ -78,7 +86,7 @@ class QueueController extends Controller
             ];
         });
 
-        return view('queues.daily-overview', compact('queues', 'date', 'doctors', 'selectedDoctor', 'runningDoctorIds'));
+        return view('queues.daily-overview', compact('queues', 'date', 'doctors', 'selectedDoctor', 'runningDoctorIds', 'rooms', 'selectedRoom'));
     }
 
     public function start(Appointment $appointment)

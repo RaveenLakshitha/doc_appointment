@@ -205,10 +205,18 @@
                                 <input type="text" name="recommended_by" value="{{ old('recommended_by') }}" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" placeholder="{{ __('file.recommended_by_ph') }}">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.recommended_document') }}</label>
-                                <input type="file" name="recommended_document" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                @error('recommended_document') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Document / Image</label>
+                                <input type="file" name="document" id="document_upload" accept="image/*,.pdf,.doc,.docx" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" onchange="previewDocument(this)">
+                                @error('document') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                                 
+                                <div id="document_preview_container" class="mt-3 hidden">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Selected File Preview:</p>
+                                    <img id="document_image_preview" src="" alt="Preview" class="max-w-xs rounded-lg border border-gray-200 dark:border-gray-700 hidden" style="max-height: 200px;">
+                                    <div id="document_file_preview" class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hidden">
+                                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                        <span id="document_file_name" class="text-sm text-gray-700 dark:text-gray-300 truncate"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -341,6 +349,36 @@
 </div>
 
 <script>
+function previewDocument(input) {
+    const container = document.getElementById('document_preview_container');
+    const imgPreview = document.getElementById('document_image_preview');
+    const filePreview = document.getElementById('document_file_preview');
+    const fileName = document.getElementById('document_file_name');
+
+    if (input.files && input.files[0]) {
+        container.classList.remove('hidden');
+        const file = input.files[0];
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imgPreview.src = e.target.result;
+                imgPreview.classList.remove('hidden');
+                filePreview.classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        } else {
+            imgPreview.classList.add('hidden');
+            fileName.textContent = file.name;
+            filePreview.classList.remove('hidden');
+        }
+    } else {
+        container.classList.add('hidden');
+        imgPreview.classList.add('hidden');
+        filePreview.classList.add('hidden');
+    }
+}
+
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
     document.querySelectorAll('.tab-button').forEach(b => {

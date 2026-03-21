@@ -79,9 +79,14 @@
                                     <dd class="text-gray-900 dark:text-white">{{ $prescription->patient?->medical_record_number ?? 'N/A' }}</dd>
                                 </div>
                                 @if($prescription->patient?->date_of_birth)
-                                    <div class="flex justify-between">
-                                        <dt class="font-medium text-gray-600 dark:text-gray-400">{{ __('file.date_of_birth') }}</dt>
-                                        <dd class="text-gray-900 dark:text-white">{{ $prescription->patient->date_of_birth->format('M d, Y') }}</dd>
+                                    <div class="flex justify-between items-center">
+                                        <dt class="font-medium text-gray-600 dark:text-gray-400">{{ __('file.date_of_birth') }} / {{ __('file.age') }}</dt>
+                                        <dd class="text-gray-900 dark:text-white flex items-center gap-2">
+                                            {{ $prescription->patient->date_of_birth->format('M d, Y') }}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                                {{ $prescription->patient->date_of_birth->age }} {{ strtolower(__('file.years') ?? 'years') }}
+                                            </span>
+                                        </dd>
                                     </div>
                                 @endif
                             </dl>

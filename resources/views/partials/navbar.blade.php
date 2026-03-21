@@ -32,9 +32,9 @@
             @can('invoices.index')
                 {{-- POS Link --}}
                 <a href="{{ route('invoices.pos') }}" title="{{ __('file.pos') ?? 'POS' }}" class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100
-                               dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700
-                               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                               dark:focus:ring-offset-gray-800 transition">
+                                                   dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700
+                                                   focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+                                                   dark:focus:ring-offset-gray-800 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -113,10 +113,11 @@
             {{-- ── NOTIFICATIONS BELL ─────────────────────────────────────────── --}}
             @auth
                 <div class="relative" x-data="{ open: false }" x-init="open = false">
-                    <button @click="open = !open" id="notif-btn" aria-label="Notifications" class="relative p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100
-                                                               dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700
-                                                               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                                                               dark:focus:ring-offset-gray-800 transition">
+                    <button @click="open = !open" id="notif-btn" aria-label="Notifications"
+                        class="relative p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100
+                                                                                   dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700
+                                                                                   focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+                                                                                   dark:focus:ring-offset-gray-800 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -137,10 +138,10 @@
                         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="fixed sm:absolute top-16 sm:top-auto sm:mt-2 left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0
-                                                            w-[calc(100vw-1rem)] sm:w-96 max-w-sm
-                                                            origin-top-right bg-white dark:bg-gray-800
-                                                            rounded-xl shadow-xl ring-1 ring-black ring-opacity-10
-                                                            dark:ring-gray-700 z-50 overflow-hidden">
+                                                                                w-[calc(100vw-1rem)] sm:w-96 max-w-sm
+                                                                                origin-top-right bg-white dark:bg-gray-800
+                                                                                rounded-xl shadow-xl ring-1 ring-black ring-opacity-10
+                                                                                dark:ring-gray-700 z-50 overflow-hidden">
 
                         {{-- Header --}}
                         <div
