@@ -117,7 +117,9 @@
                                 class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
                                 <option value="">{{ __('file.all_roles') }}</option>
                                 @foreach(\Spatie\Permission\Models\Role::all() as $role)
-                                    <option value="{{ $role->name }}">{{ ucfirst($role->name) }}</option>
+                                    <option value="{{ $role->name }}">
+                                        {{ \Illuminate\Support\Facades\Lang::has('file.role_' . \Str::slug($role->name, '_')) ? __('file.role_' . \Str::slug($role->name, '_')) : ucfirst($role->name) }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -240,7 +242,14 @@
                         { data: 'phone', render: data => data || '-' },
                         {
                             data: 'roles',
-                            render: data => data.map(r => `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 mr-1">${r}</span>`).join('') || '-'
+                            render: data => data.map(r => {
+                                let translated = {
+                                    @foreach(\Spatie\Permission\Models\Role::all() as $r)
+                                        '{{ ucfirst($r->name) }}': '{{ \Illuminate\Support\Facades\Lang::has('file.role_' . \Str::slug($r->name, '_')) ? __('file.role_' . \Str::slug($r->name, '_')) : ucfirst($r->name) }}',
+                                    @endforeach
+                                }[r] || r;
+                                return `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 mr-1">${translated}</span>`;
+                            }).join('') || '-'
                         },
                         { data: 'status_html' },
                         { data: 'created_at' },

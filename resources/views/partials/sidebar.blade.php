@@ -375,6 +375,13 @@ style="width: 16rem; max-height: 100vh;">
                  alt="{{ auth()->user()?->name }}">
             <div class="flex flex-col overflow-hidden sidebar-text w-full">
                 <span class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ auth()->user()?->name }}</span>
+                @php
+                    $roleName = auth()->user()?->roles->first()?->name;
+                    $displayRole = $roleName ? (\Illuminate\Support\Facades\Lang::has('file.role_' . \Str::slug($roleName, '_')) ? __('file.role_' . \Str::slug($roleName, '_')) : ucfirst($roleName)) : '';
+                @endphp
+                @if($displayRole)
+                    <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 truncate">{{ $displayRole }}</span>
+                @endif
                 <span class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ auth()->user()?->email }}</span>
             </div>
             
