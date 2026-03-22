@@ -36,7 +36,10 @@
                                 class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium {{ $patient->is_active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' }}">
                                 {{ $patient->is_active ? __('file.active') : __('file.inactive') }}
                             </span>
-                            @if($patient->allergies && count($patient->allergies))
+                            @php
+                                $allergiesList = is_string($patient->allergies) ? [$patient->allergies] : (is_array($patient->allergies) ? $patient->allergies : []);
+                            @endphp
+                            @if(count($allergiesList) > 0)
                                 <span
                                     class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
                                     {{ __('file.allergies') }}
@@ -219,18 +222,80 @@
                                 </div>
                             @endif
 
-                            @if($patient->allergies && count($patient->allergies))
-                                <div class="mb-8">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                                        {{ __('file.allergies') }}
+                            @php
+                                $allergiesList = is_string($patient->allergies) ? [$patient->allergies] : (is_array($patient->allergies) ? $patient->allergies : []);
+                                $medicationsList = is_string($patient->current_medications) ? [$patient->current_medications] : (is_array($patient->current_medications) ? $patient->current_medications : []);
+                                $conditionsList = is_string($patient->chronic_conditions) ? [$patient->chronic_conditions] : (is_array($patient->chronic_conditions) ? $patient->chronic_conditions : []);
+                                $surgeriesList = is_string($patient->past_surgeries) ? [$patient->past_surgeries] : (is_array($patient->past_surgeries) ? $patient->past_surgeries : []);
+                                $hospitalizationsList = is_string($patient->previous_hospitalizations) ? [$patient->previous_hospitalizations] : (is_array($patient->previous_hospitalizations) ? $patient->previous_hospitalizations : []);
+                            @endphp
+                            @if(count($allergiesList) > 0 || count($medicationsList) > 0 || count($conditionsList) > 0 || count($surgeriesList) > 0 || count($hospitalizationsList) > 0)
+                                <div class="mb-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        {{ __('file.medical_information') ?? 'Medical Information' }}
                                     </h3>
-                                    <div class="flex flex-wrap gap-2">
-                                        @foreach($patient->allergies as $allergy)
-                                            <span
-                                                class="px-3 py-1 bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 text-xs font-medium rounded-full">
-                                                {{ $allergy }}
-                                            </span>
-                                        @endforeach
+                                    
+                                    <div class="space-y-6">
+                                        @if(count($allergiesList) > 0)
+                                            <div>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.allergies') }}</h4>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($allergiesList as $allergy)
+                                                        <span class="px-3 py-1 bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 text-xs font-medium rounded-full">
+                                                            {{ $allergy }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if(count($medicationsList) > 0)
+                                            <div>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.current_medications') ?? 'Current Medications' }}</h4>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($medicationsList as $medication)
+                                                        <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full">
+                                                            {{ $medication }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if(count($conditionsList) > 0)
+                                            <div>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.chronic_conditions') ?? 'Chronic Conditions' }}</h4>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($conditionsList as $condition)
+                                                        <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 text-xs font-medium rounded-full">
+                                                            {{ $condition }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if(count($surgeriesList) > 0)
+                                            <div>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.past_surgeries') ?? 'Past Surgeries' }}</h4>
+                                                <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                                    @foreach($surgeriesList as $surgery)
+                                                        <li>{{ $surgery }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
+
+                                        @if(count($hospitalizationsList) > 0)
+                                            <div>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.previous_hospitalizations') ?? 'Previous Hospitalizations' }}</h4>
+                                                <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                                    @foreach($hospitalizationsList as $hospitalization)
+                                                        <li>{{ $hospitalization }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             @endif

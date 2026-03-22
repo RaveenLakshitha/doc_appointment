@@ -167,7 +167,7 @@ class PatientController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:male,female,other',
-            'phone' => 'nullable|string|regex:/^\+?[0-9]{10,15}$/|unique:patients,phone',
+            'phone' => 'nullable|string|regex:/^\+?[0-9]{10,15}$/',
             'middle_name' => 'nullable|string|max:255',
             'marital_status' => 'nullable|string',
             'address' => 'nullable|string',
@@ -203,7 +203,7 @@ class PatientController extends Controller
         $nextNumber = $lastPatient ? $lastPatient->id + 1 : 1;
         $medicalRecordNumber = 'MRN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-        $newPatient = Patient::create($request->only([
+        $data = $request->only([
             'first_name',
             'middle_name',
             'last_name',
@@ -236,7 +236,27 @@ class PatientController extends Controller
             'emergency_contact_relationship',
             'emergency_contact_phone',
             'emergency_contact_email',
-        ]) + [
+        ]);
+
+        $commaSeparated = ['allergies', 'current_medications', 'chronic_conditions'];
+        foreach ($commaSeparated as $field) {
+            if (!empty($data[$field]) && is_string($data[$field])) {
+                $data[$field] = array_filter(array_map('trim', explode(',', $data[$field])));
+            } elseif (empty($data[$field])) {
+                $data[$field] = null;
+            }
+        }
+
+        $newlineSeparated = ['past_surgeries', 'previous_hospitalizations'];
+        foreach ($newlineSeparated as $field) {
+            if (!empty($data[$field]) && is_string($data[$field])) {
+                $data[$field] = array_filter(array_map('trim', explode("\n", $data[$field])));
+            } elseif (empty($data[$field])) {
+                $data[$field] = null;
+            }
+        }
+
+        $newPatient = Patient::create($data + [
             'medical_record_number' => $medicalRecordNumber,
             'is_active' => true,
             'is_deleted' => false,
@@ -292,7 +312,7 @@ class PatientController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:male,female,other',
-            'phone' => 'nullable|string|regex:/^\+?[0-9]{10,15}$/|unique:patients,phone,' . $patient->id,
+            'phone' => 'nullable|string|regex:/^\+?[0-9]{10,15}$/',
             'middle_name' => 'nullable|string|max:255',
             'marital_status' => 'nullable|string',
             'address' => 'nullable|string',
@@ -324,7 +344,7 @@ class PatientController extends Controller
             'emergency_contact_email' => 'nullable|email',
         ]);
 
-        $patient->update($request->only([
+        $data = $request->only([
             'first_name',
             'middle_name',
             'last_name',
@@ -357,7 +377,27 @@ class PatientController extends Controller
             'emergency_contact_relationship',
             'emergency_contact_phone',
             'emergency_contact_email',
-        ]));
+        ]);
+
+        $commaSeparated = ['allergies', 'current_medications', 'chronic_conditions'];
+        foreach ($commaSeparated as $field) {
+            if (!empty($data[$field]) && is_string($data[$field])) {
+                $data[$field] = array_filter(array_map('trim', explode(',', $data[$field])));
+            } elseif (empty($data[$field])) {
+                $data[$field] = null;
+            }
+        }
+
+        $newlineSeparated = ['past_surgeries', 'previous_hospitalizations'];
+        foreach ($newlineSeparated as $field) {
+            if (!empty($data[$field]) && is_string($data[$field])) {
+                $data[$field] = array_filter(array_map('trim', explode("\n", $data[$field])));
+            } elseif (empty($data[$field])) {
+                $data[$field] = null;
+            }
+        }
+
+        $patient->update($data);
 
 
         if ($request->hasFile('recommended_document')) {

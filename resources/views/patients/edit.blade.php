@@ -270,7 +270,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.allergies') }}</label>
                             <textarea name="allergies" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.allergies_ph') }}">
-{{ old('allergies', $patient->allergies ? implode(', ', $patient->allergies) : '') }}
+{{ old('allergies', is_array($patient->allergies) ? implode(', ', $patient->allergies) : $patient->allergies ?? '') }}
                             </textarea>
                             @error('allergies') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
@@ -278,7 +278,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.current_medications') }}</label>
                             <textarea name="current_medications" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.medications_ph') }}">
-{{ old('current_medications', $patient->current_medications ? implode(', ', $patient->current_medications) : '') }}
+{{ old('current_medications', is_array($patient->current_medications) ? implode(', ', $patient->current_medications) : $patient->current_medications ?? '') }}
                             </textarea>
                             @error('current_medications') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
@@ -286,7 +286,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.chronic_conditions') }}</label>
                             <textarea name="chronic_conditions" rows="3" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.conditions_ph') }}">
-{{ old('chronic_conditions', $patient->chronic_conditions ? implode(', ', $patient->chronic_conditions) : '') }}
+{{ old('chronic_conditions', is_array($patient->chronic_conditions) ? implode(', ', $patient->chronic_conditions) : $patient->chronic_conditions ?? '') }}
                             </textarea>
                             @error('chronic_conditions') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
@@ -294,7 +294,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.past_surgeries') }}</label>
                             <textarea name="past_surgeries" rows="4" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.surgeries_ph') }}">
-{{ old('past_surgeries', $patient->past_surgeries ? implode("\n", $patient->past_surgeries) : '') }}
+{{ old('past_surgeries', is_array($patient->past_surgeries) ? implode("\n", $patient->past_surgeries) : $patient->past_surgeries ?? '') }}
                             </textarea>
                             @error('past_surgeries') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
@@ -302,7 +302,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.previous_hospitalizations') }}</label>
                             <textarea name="previous_hospitalizations" rows="4" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none" placeholder="{{ __('file.hospitalizations_ph') }}">
-{{ old('previous_hospitalizations', $patient->previous_hospitalizations ? implode("\n", $patient->previous_hospitalizations) : '') }}
+{{ old('previous_hospitalizations', is_array($patient->previous_hospitalizations) ? implode("\n", $patient->previous_hospitalizations) : $patient->previous_hospitalizations ?? '') }}
                             </textarea>
                             @error('previous_hospitalizations') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>

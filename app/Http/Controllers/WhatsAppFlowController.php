@@ -48,7 +48,7 @@ class WhatsAppFlowController extends Controller
 
         $action = $payload['action'] ?? 'INIT';
         $screen = $payload['screen'] ?? 'TYPE';
-        $data   = $payload['data'] ?? [];
+        $data = $payload['data'] ?? [];
         $flowToken = $payload['flow_token'] ?? null;
 
         $response = $this->processFlow($action, $screen, $data, $flowToken);
@@ -64,8 +64,8 @@ class WhatsAppFlowController extends Controller
     {
         try {
             $encryptedAesKey = base64_decode($body['encrypted_aes_key'] ?? '');
-            $encryptedData   = base64_decode($body['encrypted_flow_data'] ?? '');
-            $iv              = base64_decode($body['initial_vector'] ?? '');
+            $encryptedData = base64_decode($body['encrypted_flow_data'] ?? '');
+            $iv = base64_decode($body['initial_vector'] ?? '');
 
             $rsa = RSA::load($this->privateKey)
                 ->withPadding(RSA::ENCRYPTION_OAEP)
@@ -73,25 +73,27 @@ class WhatsAppFlowController extends Controller
                 ->withMGFHash('sha256');
 
             $aesKey = $rsa->decrypt($encryptedAesKey);
-            if (!$aesKey) throw new \Exception('AES key decryption failed');
+            if (!$aesKey)
+                throw new \Exception('AES key decryption failed');
 
             $aes = new AES('gcm');
             $aes->setKey($aesKey);
             $aes->setNonce($iv);
 
-            $tagLength   = 16;
-            $ciphertext  = substr($encryptedData, 0, -$tagLength);
-            $tag         = substr($encryptedData, -$tagLength);
+            $tagLength = 16;
+            $ciphertext = substr($encryptedData, 0, -$tagLength);
+            $tag = substr($encryptedData, -$tagLength);
 
             $aes->setTag($tag);
-            $decrypted   = $aes->decrypt($ciphertext);
+            $decrypted = $aes->decrypt($ciphertext);
 
-            if (!$decrypted) throw new \Exception('Flow data decryption failed');
+            if (!$decrypted)
+                throw new \Exception('Flow data decryption failed');
 
             return [
                 'decryptedBody' => $decrypted,
-                'aesKey'        => $aesKey,
-                'iv'            => $iv,
+                'aesKey' => $aesKey,
+                'iv' => $iv,
             ];
         } catch (\Exception $e) {
             Log::error('Flow decryption error: ' . $e->getMessage());
@@ -133,8 +135,8 @@ class WhatsAppFlowController extends Controller
 
         $response = [
             'version' => '3.0',
-            'screen'  => $screen,
-            'data'    => [
+            'screen' => $screen,
+            'data' => [
                 'error_message' => '',
             ],
         ];
@@ -144,9 +146,6 @@ class WhatsAppFlowController extends Controller
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // TYPE screen
-        // ────────────────────────────────────────────────
         if ($screen === 'TYPE' && $action === 'data_exchange') {
             $type = $data['appointment_type'] ?? null;
 
@@ -165,21 +164,18 @@ class WhatsAppFlowController extends Controller
                     ->orderBy('first_name')
                     ->orderBy('last_name')
                     ->get()
-                    ->map(fn($d) => ['id' => (string)$d->id, 'title' => $d->getFullNameAttribute()])
+                    ->map(fn($d) => ['id' => (string) $d->id, 'title' => $d->getFullNameAttribute()])
                     ->toArray();
             } else {
                 $response['data']['specializations'] = Specialization::orderBy('name')
                     ->get()
-                    ->map(fn($s) => ['id' => (string)$s->id, 'title' => $s->name])
+                    ->map(fn($s) => ['id' => (string) $s->id, 'title' => $s->name])
                     ->toArray();
             }
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // SPECIALIZATION screen
-        // ────────────────────────────────────────────────
         if ($screen === 'SPECIALIZATION' && $action === 'data_exchange') {
             if (($data['trigger'] ?? '') === 'specialization_selected') {
                 $specId = $this->normalizeId($data['specialization'] ?? null);
@@ -194,11 +190,11 @@ class WhatsAppFlowController extends Controller
                     ->orderBy('first_name')
                     ->orderBy('last_name')
                     ->get()
-                    ->map(fn($d) => ['id' => (string)$d->id, 'title' => $d->getFullNameAttribute()])
+                    ->map(fn($d) => ['id' => (string) $d->id, 'title' => $d->getFullNameAttribute()])
                     ->toArray();
 
                 $response['data']['doctors'] = $doctors;
-                $response['data']['specialization'] = (string)$specId;
+                $response['data']['specialization'] = (string) $specId;
                 $response['data']['age_groups'] = $this->getAgeGroupsArray();
                 $response['data']['error_message'] = empty($doctors) ? 'No doctors available for this specialization' : '';
 
@@ -207,15 +203,12 @@ class WhatsAppFlowController extends Controller
 
             $response['screen'] = 'AGE_GROUP';
             $response['data']['appointment_type'] = $data['appointment_type'] ?? 'any';
-            $response['data']['specialization'] = $data['specialization'] ? (string)$this->normalizeId($data['specialization']) : '';
+            $response['data']['specialization'] = $data['specialization'] ? (string) $this->normalizeId($data['specialization']) : '';
             $response['data']['age_groups'] = $this->getAgeGroupsArray();
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // DOCTOR_SELECT screen
-        // ────────────────────────────────────────────────
         if ($screen === 'DOCTOR_SELECT' && $action === 'data_exchange') {
             $doctorId = $this->normalizeId($data['doctor'] ?? null);
 
@@ -229,8 +222,8 @@ class WhatsAppFlowController extends Controller
 
             $response['screen'] = 'AGE_GROUP';
             $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
-            $response['data']['doctor'] = (string)$doctorId;
-            $response['data']['specialization'] = $specializationId ? (string)$specializationId : '';
+            $response['data']['doctor'] = (string) $doctorId;
+            $response['data']['specialization'] = $specializationId ? (string) $specializationId : '';
             $response['data']['age_groups'] = $this->getAgeGroupsArray();
             $response['data']['age_group'] = '';
             $response['data']['preferred_language'] = $data['preferred_language'] ?? '';
@@ -239,9 +232,6 @@ class WhatsAppFlowController extends Controller
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // AGE_GROUP screen (both paths merge here)
-        // ────────────────────────────────────────────────
         if ($screen === 'AGE_GROUP' && $action === 'data_exchange') {
             $ageGroupId = $this->normalizeId($data['age_group'] ?? null);
 
@@ -254,19 +244,16 @@ class WhatsAppFlowController extends Controller
             $nextScreen = ($appointmentType === 'specific') ? 'VISIT_TYPE' : 'PREFERRED_LANGUAGE';
 
             $response['screen'] = $nextScreen;
-            $response['data']['appointment_type']   = $appointmentType;
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = (string)$ageGroupId;
+            $response['data']['appointment_type'] = $appointmentType;
+            $response['data']['doctor'] = $data['doctor'] ?? '';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = (string) $ageGroupId;
             $response['data']['preferred_language'] = $data['preferred_language'] ?? '';
-            $response['data']['visit_type']         = '';
+            $response['data']['visit_type'] = '';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // PREFERRED_LANGUAGE screen
-        // ────────────────────────────────────────────────
         if ($screen === 'PREFERRED_LANGUAGE' && $action === 'data_exchange') {
             $lang = $data['preferred_language'] ?? null;
 
@@ -276,18 +263,15 @@ class WhatsAppFlowController extends Controller
             }
 
             $response['screen'] = 'VISIT_TYPE';
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'any';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
+            $response['data']['appointment_type'] = $data['appointment_type'] ?? 'any';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = $data['age_group'] ?? '';
             $response['data']['preferred_language'] = $lang;
-            $response['data']['doctor']             = $data['doctor'] ?? '';
+            $response['data']['doctor'] = $data['doctor'] ?? '';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // VISIT_TYPE screen
-        // ────────────────────────────────────────────────
         if ($screen === 'VISIT_TYPE' && $action === 'data_exchange') {
             $visitType = $data['visit_type'] ?? null;
 
@@ -299,19 +283,16 @@ class WhatsAppFlowController extends Controller
             $nextScreen = ($visitType === 'first') ? 'PATIENT_NEW' : 'PHONE_LOOKUP';
 
             $response['screen'] = $nextScreen;
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-            $response['data']['visit_type']         = $visitType;
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
+            $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
+            $response['data']['visit_type'] = $visitType;
+            $response['data']['doctor'] = $data['doctor'] ?? '';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = $data['age_group'] ?? '';
             $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // PHONE_LOOKUP → lookup patient
-        // ────────────────────────────────────────────────
         if ($screen === 'PHONE_LOOKUP' && $action === 'data_exchange' && ($data['trigger'] ?? '') === 'lookup_patient_by_phone') {
             $phone = trim($data['phone'] ?? '');
 
@@ -336,12 +317,12 @@ class WhatsAppFlowController extends Controller
             if ($patients->count() === 1) {
                 $patient = $patients->first();
                 $response['screen'] = 'PREFERRED_TIME';
-                $response['data']['patient'] = (string)$patient->id;
-                $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-                $response['data']['visit_type']         = 'followup';
-                $response['data']['doctor']             = $data['doctor'] ?? '';
-                $response['data']['specialization']     = $data['specialization'] ?? '';
-                $response['data']['age_group']          = $data['age_group'] ?? '';
+                $response['data']['patient'] = (string) $patient->id;
+                $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
+                $response['data']['visit_type'] = 'followup';
+                $response['data']['doctor'] = $data['doctor'] ?? '';
+                $response['data']['specialization'] = $data['specialization'] ?? '';
+                $response['data']['age_group'] = $data['age_group'] ?? '';
                 $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
                 return $response;
             }
@@ -349,10 +330,12 @@ class WhatsAppFlowController extends Controller
             $patientList = $patients->map(function ($p) {
                 $age = $p->date_of_birth ? Carbon::parse($p->date_of_birth)->age : null;
                 $display = trim("{$p->first_name} {$p->last_name}");
-                if ($age !== null) $display .= " ({$age} yrs)";
-                if ($p->gender) $display .= " • " . ucfirst($p->gender);
+                if ($age !== null)
+                    $display .= " ({$age} yrs)";
+                if ($p->gender)
+                    $display .= " • " . ucfirst($p->gender);
                 return [
-                    'id' => (string)$p->id,
+                    'id' => (string) $p->id,
                     'title' => $display,
                 ];
             })->toArray();
@@ -360,19 +343,16 @@ class WhatsAppFlowController extends Controller
             $response['screen'] = 'PATIENT_SELECT';
             $response['data']['patients'] = $patientList;
             $response['data']['phone'] = $phone;
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-            $response['data']['visit_type']         = 'followup';
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
+            $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
+            $response['data']['visit_type'] = 'followup';
+            $response['data']['doctor'] = $data['doctor'] ?? '';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = $data['age_group'] ?? '';
             $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // PATIENT_SELECT
-        // ────────────────────────────────────────────────
         if ($screen === 'PATIENT_SELECT' && $action === 'data_exchange' && ($data['trigger'] ?? '') === 'select_patient') {
             $selectedId = $this->normalizeId($data['selected_patient'] ?? null);
 
@@ -392,29 +372,29 @@ class WhatsAppFlowController extends Controller
             }
 
             $response['screen'] = 'PREFERRED_TIME';
-            $response['data']['patient'] = (string)$patient->id;
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-            $response['data']['visit_type']         = 'followup';
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
+            $response['data']['patient'] = (string) $patient->id;
+            $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
+            $response['data']['visit_type'] = 'followup';
+            $response['data']['doctor'] = $data['doctor'] ?? '';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = $data['age_group'] ?? '';
             $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // PATIENT_NEW – create new patient
-        // ────────────────────────────────────────────────
         if ($screen === 'PATIENT_NEW' && $action === 'data_exchange' && ($data['trigger'] ?? '') === 'create_patient') {
             $validator = \Validator::make($data, [
                 'first_name' => 'required|string|max:255',
-                'last_name'  => 'required|string|max:255',
-                'phone'      => 'required|string|regex:/^\+?[0-9]{9,15}$/',
-                'email'      => 'nullable|email',
-                'age'        => 'required|integer|min:0|max:120',
-                'gender'     => 'required|in:male,female,other',
-                'address'    => 'nullable|string|max:500',
+                'last_name' => 'required|string|max:255',
+                'phone' => 'required|string|regex:/^\+?[0-9]{9,15}$/',
+                'email' => 'nullable|email',
+                'age' => 'required|integer|min:0|max:120',
+                'gender' => 'required|in:male,female,other',
+                'address' => 'nullable|string|max:500',
+                'previous_psychotherapy' => 'nullable|in:yes,no',
+                'preferred_session_time' => 'nullable|string|max:255',
+                'referred_by' => 'nullable|string|max:255',
             ]);
 
             if ($validator->fails()) {
@@ -427,33 +407,33 @@ class WhatsAppFlowController extends Controller
             $mrn = 'MRN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
             $patient = Patient::create([
-                'first_name'            => $data['first_name'],
-                'last_name'             => $data['last_name'],
-                'phone'                 => $data['phone'],
-                'email'                 => $data['email'] ?? null,
-                'age'                   => (int)$data['age'],
-                'gender'                => $data['gender'],
-                'address'               => $data['address'] ?? null,
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'phone' => $data['phone'],
+                'email' => $data['email'] ?? null,
+                'age' => (int) $data['age'],
+                'gender' => $data['gender'],
+                'address' => $data['address'] ?? null,
+                'attended_psychotherapy' => ($data['previous_psychotherapy'] ?? '') === 'yes',
+                'preferred_session_time' => $data['preferred_session_time'] ?? null,
+                'recommended_by' => $data['referred_by'] ?? null,
                 'medical_record_number' => $mrn,
-                'is_active'             => true,
-                'is_deleted'            => false,
+                'is_active' => true,
+                'is_deleted' => false,
             ]);
 
             $response['screen'] = 'PREFERRED_TIME';
-            $response['data']['patient'] = (string)$patient->id;
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-            $response['data']['visit_type']         = 'first';
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
+            $response['data']['patient'] = (string) $patient->id;
+            $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
+            $response['data']['visit_type'] = 'first';
+            $response['data']['doctor'] = $data['doctor'] ?? '';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = $data['age_group'] ?? '';
             $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // PREFERRED_TIME
-        // ────────────────────────────────────────────────
         if ($screen === 'PREFERRED_TIME' && $action === 'data_exchange') {
             $pref = $data['preferred_time'] ?? null;
 
@@ -463,25 +443,22 @@ class WhatsAppFlowController extends Controller
             }
 
             $response['screen'] = 'REASON';
-            $response['data']['patient']            = $data['patient'] ?? '';
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-            $response['data']['visit_type']         = $data['visit_type'] ?? 'first';
-            $response['data']['preferred_time']     = $pref;
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
+            $response['data']['patient'] = $data['patient'] ?? '';
+            $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
+            $response['data']['visit_type'] = $data['visit_type'] ?? 'first';
+            $response['data']['preferred_time'] = $pref;
+            $response['data']['doctor'] = $data['doctor'] ?? '';
+            $response['data']['specialization'] = $data['specialization'] ?? '';
+            $response['data']['age_group'] = $data['age_group'] ?? '';
             $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // REASON
-        // ────────────────────────────────────────────────
-        if ($screen === 'REASON' && $action === 'data_exchange') {
+        if ($screen === 'REASON' && $action === 'data_exchange' && ($data['trigger'] ?? '') === 'review_appointment') {
             $validator = \Validator::make($data, [
                 'reason' => 'required|string|max:1000',
-                'notes'  => 'nullable|string|max:2000',
+                'notes' => 'nullable|string|max:2000',
             ]);
 
             if ($validator->fails()) {
@@ -489,60 +466,61 @@ class WhatsAppFlowController extends Controller
                 return $response;
             }
 
-            $response['screen'] = 'SUMMARY';
-            $response['data']['patient']            = $data['patient'] ?? '';
-            $response['data']['doctor']             = $data['doctor'] ?? '';
-            $response['data']['specialization']     = $data['specialization'] ?? '';
-            $response['data']['appointment_type']   = $data['appointment_type'] ?? 'specific';
-            $response['data']['visit_type']         = $data['visit_type'] ?? 'first';
-            $response['data']['preferred_time']     = $data['preferred_time'] ?? 'next';
-            $response['data']['reason']             = $data['reason'] ?? '';
-            $response['data']['notes']              = $data['notes'] ?? '';
-            $response['data']['age_group']          = $data['age_group'] ?? '';
-            $response['data']['preferred_language'] = $data['preferred_language'] ?? 'en';
-            $response['data']['details_text']       = "Patient ID: {$data['patient']}\nType: {$data['appointment_type']}\nVisit: {$data['visit_type']}\nTime preference: {$data['preferred_time']}\nReason: {$data['reason']}";
+            $summary = [];
+            
+            if (($data['appointment_type'] ?? '') === 'specific' && !empty($data['doctor'])) {
+                $doc = \App\Models\Doctor::find($this->normalizeId($data['doctor']));
+                if ($doc) $summary[] = "🧑‍⚕️ Doctor: " . $doc->full_name;
+            } elseif (($data['appointment_type'] ?? '') === 'any' && !empty($data['specialization'])) {
+                $spec = \App\Models\Specialization::find($this->normalizeId($data['specialization']));
+                if ($spec) $summary[] = "🏥 Department: " . $spec->name;
+            }
+
+            $prefTimeMap = [
+                'next' => 'Next available slot',
+                '7days' => 'Within next 7 days',
+                '15days' => 'Within next 15 days',
+            ];
+            $prefTime = $prefTimeMap[$data['preferred_time'] ?? ''] ?? 'Next available slot';
+            $summary[] = "🕒 Preferred Time: " . $prefTime;
+            
+            $summary[] = "📝 Reason: " . $data['reason'];
+
+            if (!empty($data['notes'])) {
+                $summary[] = "📌 Notes: " . $data['notes'];
+            }
+
+            $response['screen'] = 'APPOINTMENT_SUMMARY';
+            
+            $response['data'] = $data;
+            $response['data']['summary_text'] = implode("\n", $summary);
+            $response['data']['error_message'] = '';
 
             return $response;
         }
 
-        // ────────────────────────────────────────────────
-        // SUMMARY – final confirmation
-        // ────────────────────────────────────────────────
-        if ($screen === 'SUMMARY' && $action === 'data_exchange' && !empty($data['complete'])) {
-            $doctorId = $this->normalizeId($data['doctor'] ?? '');
-            $specializationId = $this->normalizeId($data['specialization'] ?? '');
-
+        if ($screen === 'APPOINTMENT_SUMMARY' && $action === 'data_exchange' && !empty($data['complete'])) {
             $validator = \Validator::make($data, [
-                'patient'         => 'required|exists:patients,id',
-                'appointment_type'=> ['required', Rule::in(['specific', 'any'])],
-                'reason'          => 'required|string|max:1000',
-                'notes'           => 'nullable|string|max:2000',
+                'reason' => 'required|string|max:1000',
+                'notes' => 'nullable|string|max:2000',
+                'patient' => 'required|exists:patients,id',
             ]);
-
-            if ($data['appointment_type'] === 'specific') {
-                if ($doctorId === null) {
-                    $response['data']['error_message'] = 'Doctor is required for specific appointments';
-                    return $response;
-                }
-                $validator->after(function ($validator) use ($doctorId) {
-                    if (!Doctor::where('id', $doctorId)->active()->exists()) {
-                        $validator->errors()->add('doctor', 'Selected doctor is not valid or not active');
-                    }
-                });
-            } else {
-                if ($specializationId === null) {
-                    $response['data']['error_message'] = 'Specialization is required when choosing any doctor';
-                    return $response;
-                }
-                $validator->after(function ($validator) use ($specializationId) {
-                    if (!Specialization::where('id', $specializationId)->exists()) {
-                        $validator->errors()->add('specialization', 'Selected specialization is not valid');
-                    }
-                });
-            }
 
             if ($validator->fails()) {
                 $response['data']['error_message'] = implode(', ', $validator->errors()->all());
+                return $response;
+            }
+
+            $doctorId = $this->normalizeId($data['doctor'] ?? '');
+            $specializationId = $this->normalizeId($data['specialization'] ?? '');
+            $ageGroupId = $this->normalizeId($data['age_group'] ?? '');
+
+            if ($data['appointment_type'] === 'specific' && $doctorId === null) {
+                $response['data']['error_message'] = 'Doctor is required';
+                return $response;
+            }
+            if ($data['appointment_type'] === 'any' && $specializationId === null) {
+                $response['data']['error_message'] = 'Specialization is required';
                 return $response;
             }
 
@@ -550,24 +528,31 @@ class WhatsAppFlowController extends Controller
             $langOption = \App\Models\OptionList::where('type', 'language')->where('slug', $langSlug)->first();
 
             $appointment = Appointment::create([
-                'patient_id'            => $data['patient'],
-                'appointment_type'      => $data['appointment_type'],
-                'reason_for_visit'      => $data['reason'],
-                'patient_notes'         => $data['notes'] ?? null,
-                'status'                => Appointment::STATUS_PENDING,
-                'doctor_id'             => $doctorId,
-                'specialization_id'     => $specializationId,
-                'age_group_id'          => $data['age_group'] ?? null,
+                'patient_id' => $data['patient'],
+                'appointment_type' => $data['appointment_type'],
+                'reason_for_visit' => $data['reason'],
+                'patient_notes' => $data['notes'] ?? null,
+                'status' => Appointment::STATUS_PENDING,
+                'doctor_id' => $doctorId,
+                'specialization_id' => $specializationId,
+                'age_group_id' => $ageGroupId,
                 'preferred_language_id' => $langOption ? $langOption->id : null,
-                'preferred_time'        => $data['preferred_time'] ?? null,
+                'preferred_time' => $data['preferred_time'] ?? null,
             ]);
 
             $recipients = User::role(['admin', 'receptionist'])->get();
             Notification::send($recipients, new NewAppointmentCreated($appointment));
 
-            $response['data']['success_message'] = 'Appointment request submitted successfully!';
-            $response['data']['appointment_id']  = (string)$appointment->id;
-            $response['data']['error_message']   = '';
+            $response['screen'] = 'SUCCESS';
+            $response['data'] = [
+                'appointment_id' => (string) $appointment->id,
+                'success_message' => 'Your appointment request has been submitted successfully! Our team will contact you soon.',
+                'details_text' => "Reason: " . ($data['reason'] ?? 'Not specified')
+                    . "\nPreferred Time: " . ucfirst($data['preferred_time'] ?? 'Next available')
+                    . "\nPatient ID: " . $data['patient']
+                    . ($data['notes'] ? "\nNotes: " . $data['notes'] : ''),
+                'error_message' => '',
+            ];
 
             return $response;
         }
@@ -587,7 +572,7 @@ class WhatsAppFlowController extends Controller
                     $title .= " ({$ag->description})";
                 }
                 return [
-                    'id'    => (string)$ag->id,
+                    'id' => (string) $ag->id,
                     'title' => $title,
                 ];
             })

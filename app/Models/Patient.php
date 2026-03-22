@@ -29,6 +29,10 @@ class Patient extends Model
         'alternative_phone',
         'email',
         'preferred_contact_method', // phone, email, sms
+        'attended_psychotherapy',
+        'preferred_session_time',
+        'recommended_by',
+        'recommended_document',
 
         // === Emergency Contact ===
         'emergency_contact_name',
@@ -107,6 +111,7 @@ class Patient extends Model
         'family_history_asthma' => 'boolean',
         'family_history_mental_health' => 'boolean',
         'age' => 'integer',
+        'attended_psychotherapy' => 'boolean',
     ];
 
     // === Relationships ===
