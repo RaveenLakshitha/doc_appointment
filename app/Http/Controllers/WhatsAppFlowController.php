@@ -241,7 +241,7 @@ class WhatsAppFlowController extends Controller
             }
 
             $appointmentType = $data['appointment_type'] ?? 'any';
-            $nextScreen = ($appointmentType === 'specific') ? 'VISIT_TYPE' : 'PREFERRED_LANGUAGE';
+            $nextScreen = 'PREFERRED_LANGUAGE';
 
             $response['screen'] = $nextScreen;
             $response['data']['appointment_type'] = $appointmentType;
@@ -318,6 +318,7 @@ class WhatsAppFlowController extends Controller
                 $patient = $patients->first();
                 $response['screen'] = 'PREFERRED_TIME';
                 $response['data']['patient'] = (string) $patient->id;
+                $response['data']['patient_details'] = "Patient: {$patient->first_name} {$patient->last_name}\nPhone: {$patient->phone}\nGender: " . ucfirst($patient->gender);
                 $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
                 $response['data']['visit_type'] = 'followup';
                 $response['data']['doctor'] = $data['doctor'] ?? '';
@@ -373,6 +374,7 @@ class WhatsAppFlowController extends Controller
 
             $response['screen'] = 'PREFERRED_TIME';
             $response['data']['patient'] = (string) $patient->id;
+            $response['data']['patient_details'] = "Patient: {$patient->first_name} {$patient->last_name}\nPhone: {$patient->phone}\nGender: " . ucfirst($patient->gender);
             $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
             $response['data']['visit_type'] = 'followup';
             $response['data']['doctor'] = $data['doctor'] ?? '';
@@ -424,6 +426,7 @@ class WhatsAppFlowController extends Controller
 
             $response['screen'] = 'PREFERRED_TIME';
             $response['data']['patient'] = (string) $patient->id;
+            $response['data']['patient_details'] = "Patient: {$patient->first_name} {$patient->last_name}\nPhone: {$patient->phone}\nGender: " . ucfirst($patient->gender);
             $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
             $response['data']['visit_type'] = 'first';
             $response['data']['doctor'] = $data['doctor'] ?? '';
@@ -467,13 +470,21 @@ class WhatsAppFlowController extends Controller
             }
 
             $summary = [];
-            
+
+            $patient = \App\Models\Patient::find($this->normalizeId($data['patient'] ?? null));
+            if ($patient) {
+                $summary[] = "👤 Patient: " . $patient->first_name . " " . $patient->last_name;
+                $summary[] = "📱 Phone: " . $patient->phone;
+            }
+
             if (($data['appointment_type'] ?? '') === 'specific' && !empty($data['doctor'])) {
                 $doc = \App\Models\Doctor::find($this->normalizeId($data['doctor']));
-                if ($doc) $summary[] = "🧑‍⚕️ Doctor: " . $doc->full_name;
+                if ($doc)
+                    $summary[] = "🧑‍⚕️ Doctor: " . $doc->full_name;
             } elseif (($data['appointment_type'] ?? '') === 'any' && !empty($data['specialization'])) {
                 $spec = \App\Models\Specialization::find($this->normalizeId($data['specialization']));
-                if ($spec) $summary[] = "🏥 Department: " . $spec->name;
+                if ($spec)
+                    $summary[] = "🏥 Department: " . $spec->name;
             }
 
             $prefTimeMap = [
@@ -483,7 +494,7 @@ class WhatsAppFlowController extends Controller
             ];
             $prefTime = $prefTimeMap[$data['preferred_time'] ?? ''] ?? 'Next available slot';
             $summary[] = "🕒 Preferred Time: " . $prefTime;
-            
+
             $summary[] = "📝 Reason: " . $data['reason'];
 
             if (!empty($data['notes'])) {
@@ -491,7 +502,7 @@ class WhatsAppFlowController extends Controller
             }
 
             $response['screen'] = 'APPOINTMENT_SUMMARY';
-            
+
             $response['data'] = $data;
             $response['data']['summary_text'] = implode("\n", $summary);
             $response['data']['error_message'] = '';

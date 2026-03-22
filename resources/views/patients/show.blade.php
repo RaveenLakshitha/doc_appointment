@@ -314,7 +314,7 @@
                                     </div>
                                     <div>
                                         <label
-                                            class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('file.relationship') }}</label>
+                                            class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('file.emergency_relationship') }}</label>
                                         <p class="mt-1 text-gray-900 dark:text-white">
                                             {{ $patient->emergency_contact_relationship ?? '—' }}
                                         </p>

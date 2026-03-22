@@ -110,7 +110,7 @@ class PatientController extends Controller
                 ? \Carbon\Carbon::parse($p->last_appointment_date)->format('M d, Y')
                 : null;
 
-            $age = $p->date_of_birth ? $p->date_of_birth->diffInYears($now) : null;
+            $age = $p->date_of_birth ? $p->date_of_birth->diffInYears($now) : $p->age;
 
             $genderBadge = match (strtolower($p->gender ?? '')) {
                 'male' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Male</span>',
