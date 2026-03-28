@@ -11,7 +11,7 @@
                     Doctor Schedule Calendar
                 </h1>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    View recurring doctor availability and assigned rooms
+                    View recurring doctor availability
                 </p>
             </div>
 
@@ -281,7 +281,6 @@
                                                                     <div class="fc-event-title fc-sticky text-xs leading-tight p-1">
                                                                         <div class="font-semibold text-xs opacity-90">${p.time || ''}</div>
                                                                         <div class="font-medium truncate">Dr. ${p.doctor}</div>
-                                                                        <div class="text-xs opacity-80">Room: ${p.room}</div>
                                                                     </div>
                                                                 `};
                     }
@@ -292,14 +291,13 @@
                                                                 <div class="text-white text-xs leading-tight px-2 py-1.5">
                                                                     <div class="font-semibold">${p.time}</div>
                                                                     <div class="opacity-90 text-xs">Dr. ${p.doctor}</div>
-                                                                    <div class="text-xs">Room: ${p.room}</div>
                                                                 </div>
                                                             `};
                 },
 
                 eventDidMount: function (info) {
                     const p = info.event.extendedProps;
-                    info.el.title = `Dr. ${p.doctor}\nRoom: ${p.room}\nTime: ${p.time}\nDays: ${p.days}\nActive: ${p.is_active ? 'Yes' : 'No'}`;
+                    info.el.title = `Dr. ${p.doctor}\nTime: ${p.time}\nDays: ${p.days}\nActive: ${p.is_active ? 'Yes' : 'No'}`;
                 }
             });
 

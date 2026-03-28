@@ -130,7 +130,7 @@
                     style="width:100%">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -308,12 +308,11 @@
                                 {
                                     extend: 'collection', text: "{{ __('file.Export') }}", className: 'btn btn-sm btn-dark',
                                     buttons: [
-                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
-                                        { extend: 'excel', text: 'Excel', filename: 'Employees_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
-                                        { extend: 'csv', text: 'CSV', filename: 'Employees_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
-                                        { extend: 'pdf', text: 'PDF', filename: 'Employees_{{ date("Y-m-d") }}', title: 'Employee List', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
-                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } }
-
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Employees_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Employees_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Employees_{{ date("Y-m-d") }}', title: 'Employee List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
                                     ]
                                 }
                             ]
@@ -345,7 +344,8 @@
                 [filterDepartment, filterPosition, filterStatus].forEach(el => el.addEventListener('change', updateFilterCount));
 
                 // Bulk delete functionality
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

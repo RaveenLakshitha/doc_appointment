@@ -43,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
                 : null,
             'primary_color' => $setting->primary_color ?? '#1e40af',
             'currency_code' => $setting->currency ?? 'USD',
+            'tax_percentage' => $setting->tax_percentage ?? 0,
         ]);
     }
 }

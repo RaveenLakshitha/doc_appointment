@@ -86,7 +86,9 @@ class PatientController extends Controller
         $totalRecords = Patient::active()->count();
         $filteredRecords = (clone $query)->count();
 
-        if ($orderColumnIndex == 1) {
+        if ($orderColumnIndex == 0) {
+            $query->orderBy('patients.id', $orderDir);
+        } elseif ($orderColumnIndex == 1) {
             $query->orderBy('medical_record_number', $orderDir);
         } elseif ($orderColumnIndex == 2) {
             $query->orderBy('first_name', $orderDir)->orderBy('last_name', $orderDir);
@@ -99,7 +101,7 @@ class PatientController extends Controller
         } elseif ($orderColumnIndex == 6) {
             $query->orderBy('is_active', $orderDir);
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('patients.id', 'desc');
         }
 
         $patients = $query->offset($start)->limit($length)->get();
@@ -110,7 +112,7 @@ class PatientController extends Controller
                 ? \Carbon\Carbon::parse($p->last_appointment_date)->format('M d, Y')
                 : null;
 
-            $age = $p->date_of_birth ? $p->date_of_birth->diffInYears($now) : $p->age;
+            $age = $p->age !== null ? $p->age : ($p->date_of_birth ? $p->date_of_birth->diffInYears($now) : null);
 
             $genderBadge = match (strtolower($p->gender ?? '')) {
                 'male' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Male</span>',
@@ -125,7 +127,7 @@ class PatientController extends Controller
                 'id' => $p->id,
                 'medical_record_number' => $p->medical_record_number ?? '',
                 'full_name' => $p->getFullNameAttribute(),
-                'age' => $age !== null ? (int) $age : 0,
+                'age' => $age !== null ? (int) $age : null,
                 'gender' => $genderBadge,
                 'phone' => $p->phone ?? '-',
                 'last_visit' => $lastVisit,
@@ -153,7 +155,11 @@ class PatientController extends Controller
                 ->with('error', __('file.patients_create_denied'));
         }
 
-        return view('patients.create');
+        $ageGroups = \App\Models\AgeGroup::orderBy('name')->get();
+        $languages = \App\Models\OptionList::getOptions('language');
+        $cfdiOptions = Patient::getCfdiUsageOptions();
+
+        return view('patients.create', compact('ageGroups', 'languages', 'cfdiOptions'));
     }
 
     public function store(Request $request)
@@ -165,8 +171,9 @@ class PatientController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date',
-            'gender' => 'required|in:male,female,other',
+            'date_of_birth' => 'nullable|date',
+            'age' => 'nullable|integer|min:0',
+            'gender' => 'required|in:male,female',
             'phone' => 'nullable|string|regex:/^\+?[0-9]{10,15}$/',
             'middle_name' => 'nullable|string|max:255',
             'marital_status' => 'nullable|string',
@@ -197,17 +204,25 @@ class PatientController extends Controller
             'emergency_contact_relationship' => 'nullable|string',
             'emergency_contact_phone' => 'nullable|string',
             'emergency_contact_email' => 'nullable|email',
+            'age_group_id' => 'nullable|exists:age_groups,id',
+            'preferred_language_id' => 'nullable|exists:option_lists,id',
+            'tax_id' => 'nullable|string|max:255',
+            'tax_full_name' => 'nullable|string|max:255',
+            'tax_postal_code' => 'nullable|string|max:255',
+            'tax_regime' => 'nullable|string|max:255',
+            'tax_invoice_usage' => 'nullable|string|max:255',
+            'tax_cfdi_upload' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
-        $lastPatient = Patient::orderBy('id', 'desc')->first();
-        $nextNumber = $lastPatient ? $lastPatient->id + 1 : 1;
-        $medicalRecordNumber = 'MRN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-
+        do {
+            $medicalRecordNumber = 'MRN' . mt_rand(1000000, 9999999);
+        } while (\App\Models\Patient::where('medical_record_number', $medicalRecordNumber)->exists());
         $data = $request->only([
             'first_name',
             'middle_name',
             'last_name',
             'date_of_birth',
+            'age',
             'gender',
             'marital_status',
             'address',
@@ -236,6 +251,13 @@ class PatientController extends Controller
             'emergency_contact_relationship',
             'emergency_contact_phone',
             'emergency_contact_email',
+            'age_group_id',
+            'preferred_language_id',
+            'tax_id',
+            'tax_full_name',
+            'tax_postal_code',
+            'tax_regime',
+            'tax_invoice_usage',
         ]);
 
         $commaSeparated = ['allergies', 'current_medications', 'chronic_conditions'];
@@ -276,6 +298,25 @@ class PatientController extends Controller
             $newPatient->update(['document' => 'patient_documents/' . $filename]);
         }
 
+        if ($request->hasFile('tax_cfdi_upload')) {
+            $file = $request->file('tax_cfdi_upload');
+            $filename = time() . '_tax_' . $file->getClientOriginalName();
+            $file->move(public_path('patient_documents'), $filename);
+            $newPatient->update(['tax_cfdi_path' => 'patient_documents/' . $filename]);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'patient' => [
+                    'id' => $newPatient->id,
+                    'full_name' => $newPatient->full_name,
+                    'medical_record_number' => $newPatient->medical_record_number
+                ],
+                'message' => __('file.patient_added_successfully')
+            ]);
+        }
+
         return redirect()->route('patients.index')
             ->with('success', __('file.patients_created_successfully'));
     }
@@ -298,7 +339,11 @@ class PatientController extends Controller
                 ->with('error', __('file.patients_edit_denied'));
         }
 
-        return view('patients.edit', compact('patient'));
+        $ageGroups = \App\Models\AgeGroup::orderBy('name')->get();
+        $languages = \App\Models\OptionList::getOptions('language');
+        $cfdiOptions = Patient::getCfdiUsageOptions();
+
+        return view('patients.edit', compact('patient', 'ageGroups', 'languages', 'cfdiOptions'));
     }
 
     public function update(Request $request, Patient $patient)
@@ -310,8 +355,9 @@ class PatientController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date',
-            'gender' => 'required|in:male,female,other',
+            'date_of_birth' => 'nullable|date',
+            'age' => 'nullable|integer|min:0',
+            'gender' => 'required|in:male,female',
             'phone' => 'nullable|string|regex:/^\+?[0-9]{10,15}$/',
             'middle_name' => 'nullable|string|max:255',
             'marital_status' => 'nullable|string',
@@ -342,6 +388,14 @@ class PatientController extends Controller
             'emergency_contact_relationship' => 'nullable|string',
             'emergency_contact_phone' => 'nullable|string',
             'emergency_contact_email' => 'nullable|email',
+            'age_group_id' => 'nullable|exists:age_groups,id',
+            'preferred_language_id' => 'nullable|exists:option_lists,id',
+            'tax_id' => 'nullable|string|max:255',
+            'tax_full_name' => 'nullable|string|max:255',
+            'tax_postal_code' => 'nullable|string|max:255',
+            'tax_regime' => 'nullable|string|max:255',
+            'tax_invoice_usage' => 'nullable|string|max:255',
+            'tax_cfdi_upload' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
         $data = $request->only([
@@ -349,6 +403,7 @@ class PatientController extends Controller
             'middle_name',
             'last_name',
             'date_of_birth',
+            'age',
             'gender',
             'marital_status',
             'address',
@@ -377,6 +432,13 @@ class PatientController extends Controller
             'emergency_contact_relationship',
             'emergency_contact_phone',
             'emergency_contact_email',
+            'age_group_id',
+            'preferred_language_id',
+            'tax_id',
+            'tax_full_name',
+            'tax_postal_code',
+            'tax_regime',
+            'tax_invoice_usage',
         ]);
 
         $commaSeparated = ['allergies', 'current_medications', 'chronic_conditions'];
@@ -420,18 +482,35 @@ class PatientController extends Controller
             $patient->update(['document' => 'patient_documents/' . $filename]);
         }
 
+        if ($request->hasFile('tax_cfdi_upload')) {
+            if ($patient->tax_cfdi_path && file_exists(public_path($patient->tax_cfdi_path))) {
+                unlink(public_path($patient->tax_cfdi_path));
+            }
+            $file = $request->file('tax_cfdi_upload');
+            $filename = time() . '_tax_' . $file->getClientOriginalName();
+            $file->move(public_path('patient_documents'), $filename);
+            $patient->update(['tax_cfdi_path' => 'patient_documents/' . $filename]);
+        }
+
         return redirect()->route('patients.index')
             ->with('success', __('file.patients_updated_successfully'));
     }
 
-    public function destroy(Patient $patient)
+    public function destroy(Request $request, Patient $patient)
     {
         if (!Auth::user()->can('patients.delete')) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('file.patients_delete_denied')]);
+            }
             return redirect()->route('patients.index')
                 ->with('error', __('file.patients_delete_denied'));
         }
 
         $patient->update(['is_deleted' => true, 'is_active' => false]);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => __('file.patients_deleted_successfully')]);
+        }
         return back()->with('success', __('file.patients_deleted_successfully'));
     }
 
@@ -454,6 +533,10 @@ class PatientController extends Controller
         ]);
 
         Patient::whereIn('id', $ids)->update(['is_deleted' => true, 'is_active' => false]);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => __('file.patients_bulk_deleted_successfully')]);
+        }
         return back()->with('success', __('file.patients_bulk_deleted_successfully'));
     }
 
@@ -546,5 +629,102 @@ class PatientController extends Controller
             'id' => $patient->id,
             'text' => $patient->full_name . ' (MRN: ' . ($patient->medical_record_number ?? 'N/A') . ')'
         ]);
+    }
+
+    public function downloadTemplate()
+    {
+        $locale = app()->getLocale();
+
+        if ($locale === 'es') {
+            $headers = [
+                'Nombre',
+                'Segundo Nombre',
+                'Apellido',
+                'Fecha de Nacimiento',
+                'Edad',
+                'Genero',
+                'Telefono',
+                'Correo Electronico',
+                'Direccion',
+                'Ciudad',
+                'Estado',
+                'Codigo Postal',
+                'Estado Civil'
+            ];
+            $sampleRow = [
+                'Juan',
+                'Carlos',
+                'Perez',
+                '1990-05-15',
+                '33',
+                'masculino',
+                '+525512345678',
+                'juan.perez@example.com',
+                'Av. Insurgentes 123',
+                'Ciudad de Mexico',
+                'CDMX',
+                '01000',
+                'soltero'
+            ];
+        } else {
+            $headers = [
+                'First Name',
+                'Middle Name',
+                'Last Name',
+                'Date of Birth',
+                'Age',
+                'Gender',
+                'Phone',
+                'Email',
+                'Address',
+                'City',
+                'State',
+                'Zip Code',
+                'Marital Status'
+            ];
+            $sampleRow = [
+                'John',
+                'Edward',
+                'Doe',
+                '1990-05-15',
+                '33',
+                'male',
+                '+1234567890',
+                'john.doe@example.com',
+                '123 Main St',
+                'New York',
+                'NY',
+                '10001',
+                'single'
+            ];
+        }
+
+        $callback = function () use ($headers, $sampleRow) {
+            $file = fopen('php://output', 'w');
+            // Adding BOM for UTF-8 to ensure Excel reads Spanish accents and characters properly if used
+            fputs($file, "\xEF\xBB\xBF");
+            fputcsv($file, $headers);
+            fputcsv($file, $sampleRow);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="patients_import_template.csv"',
+        ]);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,txt,xlsx,xls'
+        ]);
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\PatientsImport, $request->file('file'));
+            return redirect()->back()->with('success', __('file.success'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', __('file.error') . ': ' . $e->getMessage());
+        }
     }
 }

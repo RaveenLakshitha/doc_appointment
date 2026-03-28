@@ -80,19 +80,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block mb-2 text-sm font-medium">Date Format</label>
-                    <select name="date_format" class="w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="MM/DD/YYYY" {{ $setting->date_format == 'MM/DD/YYYY' ? 'selected' : '' }}>MM/DD/YYYY</option>
-                        <option value="DD/MM/YYYY" {{ $setting->date_format == 'DD/MM/YYYY' ? 'selected' : '' }}>DD/MM/YYYY</option>
-                        <option value="YYYY-MM-DD" {{ $setting->date_format == 'YYYY-MM-DD' ? 'selected' : '' }}>YYYY-MM-DD</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium">Time Format</label>
-                    <select name="time_format" class="w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="12-hour" {{ $setting->time_format == '12-hour' ? 'selected' : '' }}>12-hour (AM/PM)</option>
-                        <option value="24-hour" {{ $setting->time_format == '24-hour' ? 'selected' : '' }}>24-hour</option>
-                    </select>
+                    <label class="block mb-2 text-sm font-medium">Default Tax %</label>
+                    <input type="number" step="0.01" min="0" max="100" name="tax_percentage" value="{{ old('tax_percentage', $setting->tax_percentage ?? 0) }}" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="0.00">
                 </div>
                 <div>
                     <label class="block mb-2 text-sm font-medium">First Day of Week</label>

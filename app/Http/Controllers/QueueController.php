@@ -74,7 +74,8 @@ class QueueController extends Controller
             return [
                 'session_key' => $group->first()->session_key,
                 'doctor_name' => $group->first()->doctor?->getFullNameAttribute() ?? 'Unknown',
-                'room_name' => $group->first()->room?->room_number,
+                'room_code' => $group->first()->room?->room_number,
+                'room_name' => $group->first()->room?->name,
                 'patients' => $group->map(fn($appt) => [
                     'queue_number' => $appt->queue_number,
                     'patient_name' => $appt->patient?->getFullNameAttribute() ?? '-',

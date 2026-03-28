@@ -112,7 +112,7 @@
                 <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -135,7 +135,7 @@
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 {{ __('file.status') }}</th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider no-export">
                                 {{ __('file.actions') }}</th>
                         </tr>
                     </thead>
@@ -271,31 +271,31 @@
                                         {
                                             extend: 'copy',
                                             text: "{{ __('file.copy') }}",
-                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                            exportOptions: { columns: ':not(.no-export)' }
                                         },
                                         {
                                             extend: 'excel',
                                             text: 'Excel',
                                             filename: 'Suppliers_{{ date("Y-m-d") }}',
-                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                            exportOptions: { columns: ':not(.no-export)' }
                                         },
                                         {
                                             extend: 'csv',
                                             text: 'CSV',
                                             filename: 'Suppliers_{{ date("Y-m-d") }}',
-                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                            exportOptions: { columns: ':not(.no-export)' }
                                         },
                                         {
                                             extend: 'pdf',
                                             text: 'PDF',
                                             filename: 'Suppliers_{{ date("Y-m-d") }}',
                                             title: 'Supplier List',
-                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                            exportOptions: { columns: ':not(.no-export)' }
                                         },
                                         {
                                             extend: 'print',
                                             text: "{{ __('file.print') }}",
-                                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                            exportOptions: { columns: ':not(.no-export)' }
                                         }
                                     ]
                                 }
@@ -333,7 +333,8 @@
 
                 filterStatus.addEventListener('change', updateFilterCount);
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

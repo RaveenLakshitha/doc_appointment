@@ -43,7 +43,8 @@ class ExpenseController extends Controller
                 'cash_register_name' => $expense->cashRegister ? 'CR-' . str_pad($expense->cashRegister->id, 4, '0', STR_PAD_LEFT) : '-',
                 'user_name' => $expense->user?->name ?? '-',
                 'note' => $expense->note ?? '',
-                'created_at' => $expense->created_at->format('Y-m-d H:i'),
+                'expense_date' => $expense->expense_date,
+                'created_at' => $expense->expense_date ? \Carbon\Carbon::parse($expense->expense_date)->format('Y-m-d') : $expense->created_at->format('Y-m-d'),
             ]);
         }
 
@@ -54,6 +55,7 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'reference_no' => ['required', 'string', Rule::unique('expenses')->whereNull('deleted_at')],
+            'expense_date' => 'required|date',
             'expense_category_id' => 'required|exists:expense_categories,id',
             'amount' => 'required|numeric|min:0',
             'cash_register_id' => 'nullable|exists:cash_registers,id',
@@ -62,6 +64,7 @@ class ExpenseController extends Controller
 
         $expense = Expense::create([
             'reference_no' => $validated['reference_no'],
+            'expense_date' => $validated['expense_date'],
             'expense_category_id' => $validated['expense_category_id'],
             'amount' => $validated['amount'],
             'cash_register_id' => $validated['cash_register_id'] ?? null,
@@ -83,7 +86,11 @@ class ExpenseController extends Controller
         }
 
         if ($request->expectsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'message' => __('file.expense_created_successfully')]);
+            return response()->json([
+                'success' => true,
+                'message' => __('file.expense_created_successfully'),
+                'expense_id' => $expense->id
+            ]);
         }
 
         return redirect()->route('expenses.index')->with('success', __('file.expense_created_successfully'));
@@ -93,6 +100,7 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'reference_no' => ['required', 'string', Rule::unique('expenses')->ignore($expense)->whereNull('deleted_at')],
+            'expense_date' => 'required|date',
             'expense_category_id' => 'required|exists:expense_categories,id',
             'amount' => 'required|numeric|min:0',
             'cash_register_id' => 'nullable|exists:cash_registers,id',
@@ -104,6 +112,7 @@ class ExpenseController extends Controller
 
         $expense->update([
             'reference_no' => $validated['reference_no'],
+            'expense_date' => $validated['expense_date'],
             'expense_category_id' => $validated['expense_category_id'],
             'amount' => $validated['amount'],
             'cash_register_id' => $validated['cash_register_id'] ?? null,
@@ -184,7 +193,7 @@ class ExpenseController extends Controller
             ->addColumn('cash_register_name', fn($e) => $e->cashRegister ? 'CR-' . str_pad($e->cashRegister->id, 4, '0', STR_PAD_LEFT) : '-')
             ->addColumn('user_name', fn($e) => $e->user?->name ?? '-')
             ->editColumn('amount', fn($e) => number_format($e->amount, 2, '.', ''))
-            ->editColumn('created_at', fn($e) => $e->created_at->format('Y-m-d'))
+            ->editColumn('created_at', fn($e) => $e->expense_date ? \Carbon\Carbon::parse($e->expense_date)->format('Y-m-d') : $e->created_at->format('Y-m-d'))
             ->addColumn('delete_url', fn($e) => route('expenses.destroy', $e))
             ->rawColumns(['actions']) // if you later add HTML in actions
             ->make(true);
@@ -199,5 +208,16 @@ class ExpenseController extends Controller
         }
 
         return response()->json([]);
+    }
+
+    public function print(Expense $expense)
+    {
+        $settings = \App\Models\Setting::first() ?? new \App\Models\Setting();
+        $clinic_name = $settings->clinic_name ?? 'Clinic Name';
+        $clinic_address = $settings->clinic_address ?? 'Clinic Address';
+        $clinic_phone = $settings->clinic_phone ?? 'Clinic Phone';
+        $clinic_email = $settings->clinic_email ?? 'Clinic Email';
+
+        return view('expenses.print-80mm', compact('expense', 'clinic_name', 'clinic_address', 'clinic_phone', 'clinic_email'));
     }
 }

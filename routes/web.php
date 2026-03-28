@@ -97,9 +97,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/appointments/doctors/all', [AppointmentController::class, 'getAllDoctors'])->name('appointments.doctors.all');
     Route::get('/appointments/doctors/filtered', [AppointmentController::class, 'getFilteredDoctors'])->name('appointments.doctors.filtered');
+    Route::get('/appointments/specialization-availability', [AppointmentController::class, 'getSpecializationAvailability'])->name('appointments.specialization-availability');
     Route::get('/doctors/{doctor}/attributes', [AppointmentController::class, 'getDoctorAttributes'])->name('doctors.attributes');
     Route::get('/doctors/{doctor}/available-days', [AppointmentController::class, 'availableDays'])->name('doctors.available-days');
     Route::get('/doctors/{doctor}/available-slots', [AppointmentController::class, 'availableSlots'])->name('doctors.available-slots');
+    Route::get('/doctors/{doctor}/check-availability', [AppointmentController::class, 'checkAvailability'])->name('doctors.check-availability');
 
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])->name('appointments.complete');
@@ -114,6 +116,7 @@ Route::middleware('auth')->group(function () {
     Route::get('treatments/{treatment}/price', [AppointmentController::class, 'getTreatmentPrice'])->name('treatments.price');
 
     Route::post('/appointments/bulk-delete', [AppointmentController::class, 'bulkDelete'])->name('appointments.bulkDelete');
+    Route::get('/appointments/check-room-availability', [AppointmentController::class, 'checkRoomAvailability'])->name('appointments.check_room_availability');
     Route::resource('appointments', AppointmentController::class);
 
 
@@ -347,6 +350,7 @@ Route::middleware('auth')->group(function () {
     Route::get('expenses/datatable', [ExpenseController::class, 'datatable'])->name('expenses.datatable');
     Route::get('expenses/filters', [ExpenseController::class, 'filters'])->name('expenses.filters');
     Route::post('expenses/bulk-delete', [ExpenseController::class, 'bulkDelete'])->name('expenses.bulkDelete');
+    Route::get('expenses/{expense}/print', [ExpenseController::class, 'print'])->name('expenses.print');
     Route::resource('expenses', ExpenseController::class);
 
     // ── Reports ───────────────────────────────────────────────────────────────

@@ -40,7 +40,7 @@
             <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-4 sm:px-6 py-3 text-right pr-6" style="width: 80px; min-width: 80px;">
+                        <th class="px-4 sm:px-6 py-3 text-right pr-6 no-export" style="width: 80px; min-width: 80px;">
                             <input type="checkbox" id="select-all"
                                 class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         </th>
@@ -61,7 +61,7 @@
                             {{ __('file.department') }}
                         </th>
                         <th
-                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider no-export">
                             {{ __('file.actions') }}
                         </th>
                     </tr>
@@ -225,11 +225,11 @@
                                 {
                                     extend: 'collection', text: "{{ __('file.Export') }}", className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium',
                                     buttons: [
-                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'excel', text: 'Excel', filename: 'Specializations_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'csv', text: 'CSV', filename: 'Specializations_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'pdf', text: 'PDF', filename: 'Specializations_{{ date("Y-m-d") }}', title: 'Specialization List', exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'print', text: "{{ __('file.print') }}" }
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Specializations_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Specializations_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Specializations_{{ date("Y-m-d") }}', title: 'Specialization List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
                                     ]
                                 }
                             ]
@@ -250,7 +250,8 @@
                     }
                 });
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

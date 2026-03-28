@@ -7,8 +7,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">My Schedule Calendar</h1>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your recurring availability, assigned rooms, and
-                    active days</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your recurring availability and active days</p>
             </div>
         </div>
 
@@ -248,7 +247,6 @@
                             html: `
                                     <div class="fc-event-title fc-sticky text-xs leading-tight p-1 rounded">
                                         <div class="font-semibold text-xs opacity-90">${p.time || ''}</div>
-                                        <div class="font-medium truncate">Room: ${p.room}</div>
                                     </div>
                                 `};
                     }
@@ -258,14 +256,13 @@
                         html: `
                                 <div class="text-white text-xs leading-tight px-2 py-1.5 h-full flex flex-col justify-center">
                                     <div class="font-semibold">${p.time}</div>
-                                    <div class="opacity-90 text-xs">Room: ${p.room}</div>
                                 </div>
                             `};
                 },
 
                 eventDidMount: function (info) {
                     const p = info.event.extendedProps;
-                    info.el.title = `Room: ${p.room}\nTime: ${p.time}\nDays: ${p.days}\nActive: ${p.is_active ? 'Yes' : 'No'}`;
+                    info.el.title = `Time: ${p.time}\nDays: ${p.days}\nActive: ${p.is_active ? 'Yes' : 'No'}`;
                 }
             });
 

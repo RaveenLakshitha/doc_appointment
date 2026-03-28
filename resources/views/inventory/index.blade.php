@@ -141,7 +141,7 @@
                     style="width:100%">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -170,7 +170,7 @@
                                 {{ __('file.status') }}
                             </th>
                             <th
-                                class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
                                 {{ __('file.actions') }}
                             </th>
                         </tr>
@@ -319,7 +319,13 @@
                                     extend: 'collection',
                                     text: "{{ __('file.Export') }}",
                                     className: 'btn btn-sm btn-dark',
-                                    buttons: ['copy', 'excel', 'csv', 'pdf', 'print']
+                                    buttons: [
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Inventory_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Inventory_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Inventory_{{ date("Y-m-d") }}', title: 'Inventory List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
+                                    ]
                                 }
                             ]
                         },
@@ -358,7 +364,8 @@
 
                 [filterCategory, filterSupplier, filterStatus].forEach(el => el.addEventListener('change', updateFilterCount));
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });
@@ -395,11 +402,11 @@
                             $('.row-checkbox').prop('checked', false);
                             $('#select-all').prop('checked', false);
                             updateBulkDelete();
-                            if (typeof showNotification === 'function') showNotification('Success', response.message || 'Items deleted successfully.', 'success');
+                            if (typeof showNotification === 'function') showNotification('{{ __("file.success") }}', response.message || '{{ __("file.items_deleted_successfully") }}', 'success');
                         },
                         error: (xhr) => {
-                            const msg = xhr.responseJSON?.message || 'Delete failed.';
-                            if (typeof showNotification === 'function') showNotification('Error', msg, 'error');
+                            const msg = xhr.responseJSON?.message || '{{ __("file.delete_failed") }}';
+                            if (typeof showNotification === 'function') showNotification('{{ __("file.error") }}', msg, 'error');
                         }
                     });
                 });
@@ -417,14 +424,14 @@
                         success: function (response) {
                             table.draw(false);
                             if (response.success) {
-                                if (typeof showNotification === 'function') showNotification('Success', response.message, 'success');
+                                if (typeof showNotification === 'function') showNotification('{{ __("file.success") }}', response.message, 'success');
                             } else {
-                                if (typeof showNotification === 'function') showNotification('Error', response.message, 'error');
+                                if (typeof showNotification === 'function') showNotification('{{ __("file.error") }}', response.message, 'error');
                             }
                         },
                         error: function (xhr) {
-                            const msg = xhr.responseJSON?.message || 'Delete failed.';
-                            if (typeof showNotification === 'function') showNotification('Error', msg, 'error');
+                            const msg = xhr.responseJSON?.message || '{{ __("file.delete_failed") }}';
+                            if (typeof showNotification === 'function') showNotification('{{ __("file.error") }}', msg, 'error');
                         }
                     });
                 };

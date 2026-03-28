@@ -64,7 +64,7 @@
             <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-6 py-3 text-left w-12">
+                        <th class="px-6 py-3 text-left w-12 no-export">
                             <input type="checkbox" id="select-all"
                                 class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         </th>
@@ -92,7 +92,7 @@
                             {{ __('file.status') }}
                         </th>
                         <th
-                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider no-export">
                             {{ __('file.actions') }}
                         </th>
                     </tr>
@@ -326,8 +326,10 @@
                             d.to = $('#filter-to').val();
                         }
                     },
+                    order: [[0, 'desc']],
                     columnDefs: [
-                        { orderable: false, targets: [0, 5, 8] },
+                        { orderable: false, targets: [0] },
+                        { orderable: false, targets: [5, 8] },
                         { searchable: false, targets: [0, 3, 6, 8] }
                     ],
                     columns: [
@@ -343,7 +345,7 @@
                         {
                             data: 'age',
                             className: 'text-center font-medium',
-                            render: data => data > 0 ? data : '-'
+                            render: data => data !== null ? data : '-'
                         },
                         { data: 'gender' },
                         { data: 'phone' },
@@ -403,11 +405,11 @@
                                     className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2',
                                     text: "{{ __('file.Export') }}",
                                     buttons: [
-                                        { extend: 'copy', text: "{{ __('file.copy') }}" },
-                                        { extend: 'excel', text: 'Excel', filename: 'Patients_{{ date("Y-m-d") }}' },
-                                        { extend: 'csv', text: 'CSV', filename: 'Patients_{{ date("Y-m-d") }}' },
-                                        { extend: 'pdf', text: 'PDF', filename: 'Patients_{{ date("Y-m-d") }}', title: 'Patient List' },
-                                        { extend: 'print', text: "{{ __('file.print') }}" }
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Patients_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Patients_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Patients_{{ date("Y-m-d") }}', title: 'Patient List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
                                     ]
                                 }
                             ]
@@ -451,7 +453,8 @@
 
                 updateFilterCount();
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

@@ -43,7 +43,7 @@
                 <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -57,6 +57,10 @@
                             </th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Price
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 {{ __('file.appointments') }}
                             </th>
                             <th
@@ -64,7 +68,7 @@
                                 {{ __('file.status') }}
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider no-export">
                                 {{ __('file.actions') }}
                             </th>
                         </tr>
@@ -107,6 +111,14 @@
                         <input type="text" name="name" id="create-name" required
                             class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                             placeholder="e.g. Root Canal, Dental Cleaning" />
+                    </div>
+                    <div>
+                        <label
+                            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">Price
+                            <span class="text-red-500">*</span></label>
+                        <input type="number" step="0.01" min="0" name="price" id="create-price" required
+                            class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                            placeholder="0.00" />
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="active" id="create-active" value="1" checked
@@ -162,6 +174,10 @@
                             <div>
                                 <label class="text-xs text-gray-500 dark:text-gray-400">{{ __('file.code') }}</label>
                                 <div class="text-gray-900 dark:text-white mt-1" id="drawer-code"></div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 dark:text-gray-400">Price</label>
+                                <div class="text-gray-900 dark:text-white mt-1" id="drawer-price"></div>
                             </div>
                         </div>
                     </div>
@@ -229,6 +245,13 @@
                     </div>
                     <div>
                         <label
+                            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">Price
+                            <span class="text-red-500">*</span></label>
+                        <input type="number" step="0.01" min="0" name="price" id="edit-price" required
+                            class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow" />
+                    </div>
+                    <div>
+                        <label
                             class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
                             {{ __('file.status') }}
                         </label>
@@ -282,6 +305,7 @@
                         },
                         { data: 'name', render: data => data || '-' },
                         { data: 'code', render: data => data || '—' },
+                        { data: 'price', render: data => data ? Number(data).toFixed(2) : '0.00' },
                         { data: 'appointment_count', className: 'text-left', render: data => data || 0 },
                         {
                             data: 'active',
@@ -329,11 +353,11 @@
                                     text: "{{ __('file.Export') }}",
                                     className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium',
                                     buttons: [
-                                        { extend: 'copy', text: "{{ __('file.copy') }}" },
-                                        { extend: 'excel', text: 'Excel', filename: 'Treatments_{{ date("Y-m-d") }}' },
-                                        { extend: 'csv', text: 'CSV', filename: 'Treatments_{{ date("Y-m-d") }}' },
-                                        { extend: 'pdf', text: 'PDF', filename: 'Treatments_{{ date("Y-m-d") }}', title: 'Treatment List' },
-                                        { extend: 'print', text: "{{ __('file.print') }}" }
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Treatments_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Treatments_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Treatments_{{ date("Y-m-d") }}', title: 'Treatment List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
                                     ]
                                 }
                             ]
@@ -355,7 +379,8 @@
                 });
 
                 // Checkbox logic
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });
@@ -431,6 +456,7 @@
                     document.getElementById('drawer-name').textContent = treatment.name;
                     document.getElementById('drawer-name-detail').textContent = treatment.name;
                     document.getElementById('drawer-code').textContent = treatment.code || '—';
+                    document.getElementById('drawer-price').textContent = treatment.price ? Number(treatment.price).toFixed(2) : '0.00';
                     document.getElementById('drawer-usage').textContent = `Used in ${treatment.appointment_count || 0} appointment(s)`;
 
                     const statusHtml = treatment.active
@@ -463,6 +489,7 @@
                     document.getElementById('edit-name').value = treatment.name || '';
                     document.getElementById('edit-code').value = treatment.code || '';
                     document.getElementById('edit-code-hidden').value = treatment.code || '';
+                    document.getElementById('edit-price').value = treatment.price || '';
                     document.getElementById('edit-active').value = treatment.active ? 1 : 0;
 
                     bodyScrollPos = window.pageYOffset;

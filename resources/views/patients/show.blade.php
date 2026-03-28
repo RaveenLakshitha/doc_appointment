@@ -119,7 +119,7 @@
                                 <option value="overview">{{ __('file.overview') }}</option>
                                 <option value="appointments">{{ __('file.appointments') }}</option>
                                 <option value="prescriptions">{{ __('file.prescriptions') }}</option>
-                                
+                                <option value="tax">{{ __('file.tax_information') }}</option>
                             </select>
                         </div>
 
@@ -138,7 +138,9 @@
                                 class="tab-button py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300">
                                 {{ __('file.prescriptions') }}
                             </button>
-                            
+                            <button type="button" id="tab-tax" onclick="switchTab('tax')" class="tab-button py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300">
+                                {{ __('file.tax_information') }}
+                            </button>
                         </nav>
                     </div>
 
@@ -177,7 +179,7 @@
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('file.preferred_session_time') }}</label>
                                         <p class="mt-1 text-gray-900 dark:text-white">
-                                            {{ $patient->preferred_session_time ?? '—' }}
+                                            {{ $patient->preferred_session_time ? date('h:i A', strtotime($patient->preferred_session_time)) : '—' }}
                                         </p>
                                     </div>
                                     <div>
@@ -189,38 +191,7 @@
                                 </div>
                             </div>
 
-                            @if($patient->document)
-                                <div class="mb-8">
-                                    <label
-                                        class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('file.document') }}</label>
-                                    @php
-                                        $extension = strtolower(pathinfo($patient->document, PATHINFO_EXTENSION));
-                                        $docUrl = asset($patient->document);
-                                    @endphp
-                                    
-                                    @if(in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp']))
-                                        <div class="mt-2 text-center bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 inline-block">
-                                            <a href="{{ $docUrl }}" target="_blank" title="Click to view full size">
-                                                <img src="{{ $docUrl }}" class="max-w-full h-auto rounded shadow-sm object-contain" alt="Patient Document" style="max-height: 500px;">
-                                            </a>
-                                        </div>
-                                    @elseif($extension === 'pdf')
-                                        <div class="mt-2 w-full">
-                                            <iframe src="{{ $docUrl }}" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" style="height: 600px;"></iframe>
-                                        </div>
-                                    @else
-                                        <!-- Fallback for other file types like doc, docx where browser inline view is not supported locally -->
-                                        <div class="mt-2">
-                                            <a href="{{ $docUrl }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
-                                                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                                </svg>
-                                                Download Document
-                                            </a>
-                                        </div>
-                                    @endif
-                                </div>
-                            @endif
+                            {{-- Patient document moved below medical info --}}
 
                             @php
                                 $allergiesList = is_string($patient->allergies) ? [$patient->allergies] : (is_array($patient->allergies) ? $patient->allergies : []);
@@ -232,7 +203,7 @@
                             @if(count($allergiesList) > 0 || count($medicationsList) > 0 || count($conditionsList) > 0 || count($surgeriesList) > 0 || count($hospitalizationsList) > 0)
                                 <div class="mb-8 border-t border-gray-200 dark:border-gray-700 pt-6">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                        {{ __('file.medical_information') ?? 'Medical Information' }}
+                                        {{ __('file.medical_information') }}
                                     </h3>
                                     
                                     <div class="space-y-6">
@@ -251,7 +222,7 @@
 
                                         @if(count($medicationsList) > 0)
                                             <div>
-                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.current_medications') ?? 'Current Medications' }}</h4>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.current_medications') }}</h4>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($medicationsList as $medication)
                                                         <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full">
@@ -264,7 +235,7 @@
 
                                         @if(count($conditionsList) > 0)
                                             <div>
-                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.chronic_conditions') ?? 'Chronic Conditions' }}</h4>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.chronic_conditions') }}</h4>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($conditionsList as $condition)
                                                         <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 text-xs font-medium rounded-full">
@@ -277,7 +248,7 @@
 
                                         @if(count($surgeriesList) > 0)
                                             <div>
-                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.past_surgeries') ?? 'Past Surgeries' }}</h4>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.past_surgeries') }}</h4>
                                                 <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
                                                     @foreach($surgeriesList as $surgery)
                                                         <li>{{ $surgery }}</li>
@@ -288,7 +259,7 @@
 
                                         @if(count($hospitalizationsList) > 0)
                                             <div>
-                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.previous_hospitalizations') ?? 'Previous Hospitalizations' }}</h4>
+                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.previous_hospitalizations') }}</h4>
                                                 <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
                                                     @foreach($hospitalizationsList as $hospitalization)
                                                         <li>{{ $hospitalization }}</li>
@@ -297,6 +268,39 @@
                                             </div>
                                         @endif
                                     </div>
+                                </div>
+                            @endif
+
+                            @if($patient->document)
+                                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        {{ __('file.document') }}
+                                    </h3>
+                                    @php
+                                        $extension = strtolower(pathinfo($patient->document, PATHINFO_EXTENSION));
+                                        $docUrl = asset($patient->document);
+                                    @endphp
+                                    
+                                    @if(in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp']))
+                                        <div class="mt-2 text-center bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 inline-block">
+                                            <a href="{{ $docUrl }}" target="_blank" title="Click to view full size">
+                                                <img src="{{ $docUrl }}" class="max-w-full h-auto rounded shadow-sm object-contain" alt="Patient Document" style="max-height: 500px;">
+                                            </a>
+                                        </div>
+                                    @elseif($extension === 'pdf')
+                                        <div class="mt-2 w-full">
+                                            <iframe src="{{ $docUrl }}" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" style="height: 600px;"></iframe>
+                                        </div>
+                                    @else
+                                        <div class="mt-2">
+                                            <a href="{{ $docUrl }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                                                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                                </svg>
+                                                {{ __('file.download_document') }}
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
 
@@ -408,13 +412,64 @@
                             </div>
                         </div>
 
-                        <!-- Billings Tab -->
+                        <!-- Tax Information Tab -->
+                        <div id="content-tax" class="tab-content hidden space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{{ __('file.tax_id') }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $patient->tax_id ?? __('file.not_specified') }}</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{{ __('file.tax_full_name') }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $patient->tax_full_name ?? __('file.not_specified') }}</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{{ __('file.tax_postal_code') }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $patient->tax_postal_code ?? __('file.not_specified') }}</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{{ __('file.tax_regime') }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $patient->tax_regime ?? __('file.not_specified') }}</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{{ __('file.tax_invoice_usage') }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $patient->tax_invoice_usage_label }}</p>
+                                </div>
+                                <div></div> {{-- Empty cell for alignment --}}
+                            </div>
+
+                            @if($patient->tax_cfdi_path)
+                                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            {{ __('file.tax_document') }}
+                                        </h3>
+                                        <a href="{{ asset($patient->tax_cfdi_path) }}" target="_blank" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                            <i class="fas fa-external-link-alt mr-2"></i> {{ __('file.view_document') }}
+                                        </a>
+                                    </div>
+                                    @php
+                                        $taxDocUrl = asset($patient->tax_cfdi_path);
+                                        $taxDocExtension = strtolower(pathinfo($patient->tax_cfdi_path, PATHINFO_EXTENSION));
+                                    @endphp
+                                    @if($taxDocExtension === 'pdf')
+                                        <div class="w-full">
+                                            <iframe src="{{ $taxDocUrl }}" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" style="height: 600px;"></iframe>
+                                        </div>
+                                    @else
+                                        {{-- Should only be PDF based on validation, but adding fallback --}}
+                                        <div class="text-center bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 inline-block">
+                                            <img src="{{ $taxDocUrl }}" class="max-w-full h-auto rounded shadow-sm object-contain" alt="Tax Document" style="max-height: 500px;">
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
-</div>
-</div>
-</div>
-</div>
-        </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
     </div>
 
     <script>

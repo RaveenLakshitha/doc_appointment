@@ -14,10 +14,12 @@ class Treatment extends Model
     protected $fillable = [
         'name',
         'code',
+        'price',
         'active',
     ];
 
     protected $casts = [
+        'price' => 'decimal:2',
         'active' => 'boolean',
     ];
 

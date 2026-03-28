@@ -37,6 +37,17 @@
                                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                                     {{ $session['session_key'] }}
                                 </h2>
+                                @if(isset($session['room_name']) || isset($session['room_code']))
+                                    <div class="mt-2 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-700/10 dark:ring-indigo-700/30">
+                                            <i class="mdi mdi-door-open mr-1.5 opacity-70 text-sm"></i>
+                                            @if($session['room_code'])
+                                                <span class="opacity-70 mr-1">{{ $session['room_code'] }}:</span>
+                                            @endif
+                                            {{ $session['room_name'] ?? '-' }}
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
                             <span
                                 class="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">

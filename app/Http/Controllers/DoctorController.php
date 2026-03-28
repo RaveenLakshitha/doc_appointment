@@ -75,6 +75,9 @@ class DoctorController extends Controller
         $filteredRecords = (clone $query)->count();
 
         switch ($orderIdx) {
+            case 0:
+                $query->orderBy('id', $orderDir);
+                break;
             case 1:
                 $query->orderByRaw("CONCAT(COALESCE(first_name,''), ' ', COALESCE(middle_name,''), ' ', COALESCE(last_name,'')) {$orderDir}");
                 break;
@@ -101,7 +104,7 @@ class DoctorController extends Controller
                 $query->orderBy('phone', $orderDir);
                 break;
             default:
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('id', 'desc');
                 break;
         }
 
@@ -159,7 +162,7 @@ class DoctorController extends Controller
         $ageGroups = AgeGroup::where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $languages = OptionList::getOptions('language');
 
-        $availableUsers = User::role('doctor')
+        $availableUsers = User::role(['doctor', 'primary_care_provider'])
             ->where('is_active', true)
             ->doesntHave('employee')
             ->with('doctor')
@@ -168,7 +171,7 @@ class DoctorController extends Controller
 
         $treatments = \App\Models\Treatment::where('active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'code']);
+            ->get(['id', 'name', 'code', 'price']);
 
         return view('doctors.create', compact(
             'departments',
@@ -210,8 +213,6 @@ class DoctorController extends Controller
                             return $existingDoctor ? $rule->ignore($existingDoctor->id) : $rule;
                         }),
                 ],
-                'emergency_contact_name' => 'nullable|string|max:255',
-                'emergency_contact_phone' => 'nullable|string|min:7|max:15',
                 'specialization_ids' => 'required|array',
                 'specialization_ids.*' => 'exists:specializations,id',
                 'license_number' => [
@@ -305,8 +306,6 @@ class DoctorController extends Controller
                         'zip_code' => $validated['zip_code'] ?? null,
                         'phone' => $validated['phone'] ?? null,
                         'email' => $validated['email'] ?? null,
-                        'emergency_contact_name' => $validated['emergency_contact_name'] ?? null,
-                        'emergency_contact_phone' => $validated['emergency_contact_phone'] ?? null,
                         'license_number' => $validated['license_number'] ?? null,
                         'license_expiry_date' => $validated['license_expiry_date'] ?? null,
                         'qualifications' => $validated['qualifications'] ?? null,
@@ -371,13 +370,22 @@ class DoctorController extends Controller
             'ageGroups',
             'languages',
             'treatments',
-            'appointments' => fn($q) => $q->latest()->take(5),
-            'schedules' => fn($q) => $q->with('room')->where('is_active', true),
+            'schedules' => fn($q) => $q->with('days.room')->where('is_active', true),
         ]);
+
+        $appointments = $doctor->appointments()
+            ->with(['patient'])
+            ->latest('scheduled_start')
+            ->paginate(5, ['*'], 'appointments_page');
+
+        $patients = \App\Models\Patient::whereHas('appointments', function($q) use ($doctor) {
+            $q->where('doctor_id', $doctor->id);
+        })
+        ->paginate(10, ['*'], 'patients_page');
 
         $doctor->loadCount('appointments');
 
-        return view('doctors.show', compact('doctor'));
+        return view('doctors.show', compact('doctor', 'appointments', 'patients'));
     }
 
     public function edit(Doctor $doctor)
@@ -401,9 +409,9 @@ class DoctorController extends Controller
 
         $treatments = \App\Models\Treatment::where('active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'code']);
+            ->get(['id', 'name', 'code', 'price']);
 
-        $availableUsers = User::role('doctor')
+        $availableUsers = User::role(['doctor', 'primary_care_provider'])
             ->where('is_active', true)
             ->where(function($q) use ($doctor) {
                 $q->doesntHave('employee')
@@ -457,8 +465,6 @@ class DoctorController extends Controller
                 'max:255',
                 Rule::unique('doctors', 'email')->ignore($doctor->id)->whereNull('deleted_at'),
             ],
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|min:7|max:15',
             'specialization_ids' => 'required|array',
             'specialization_ids.*' => 'exists:specializations,id',
             'license_number' => [
@@ -523,8 +529,6 @@ class DoctorController extends Controller
                 'zip_code' => $validated['zip_code'] ?? null,
                 'phone' => $validated['phone'] ?? null,
                 'email' => $validated['email'] ?? null,
-                'emergency_contact_name' => $validated['emergency_contact_name'] ?? null,
-                'emergency_contact_phone' => $validated['emergency_contact_phone'] ?? null,
                 'license_number' => $validated['license_number'] ?? null,
                 'license_expiry_date' => $validated['license_expiry_date'] ?? null,
                 'qualifications' => $validated['qualifications'] ?? null,
@@ -541,7 +545,7 @@ class DoctorController extends Controller
 
             if ($doctor->user) {
                 $doctor->user->update([
-                    'name' => 'Dr. ' . trim($doctor->first_name . ' ' . ($doctor->middle_name ?? '') . ' ' . $doctor->last_name),
+                    'name' => trim($doctor->first_name . ' ' . ($doctor->middle_name ?? '') . ' ' . $doctor->last_name),
                     'email' => $doctor->email,
                     'phone' => $doctor->phone,
                 ]);

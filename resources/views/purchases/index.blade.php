@@ -44,7 +44,7 @@
                 <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -77,7 +77,7 @@
                                 {{ __('file.cash_register') }}
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
                                 {{ __('file.actions') }}
                             </th>
                         </tr>
@@ -479,7 +479,7 @@
                     serverSide: true,
                     responsive: false,
                     ajax: '{{ route('purchases.datatable') }}',
-                    order: [[1, 'desc']],
+                    order: [[0, 'desc']],
                     columnDefs: [
                         { orderable: false, targets: [0, -1] },
                         { searchable: false, targets: [0, 4, 5, 6, 7, -1] }
@@ -488,7 +488,8 @@
                         {
                             data: 'id',
                             render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`,
-                            className: 'text-center'
+                            className: 'text-center',
+                            orderable: false
                         },
                         { data: 'reference_no', render: data => data || '-' },
                         { data: 'supplier_name', render: data => data || '—' },
@@ -552,11 +553,11 @@
                                     text: "{{ __('file.Export') }}",
                                     className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium',
                                     buttons: [
-                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
-                                        { extend: 'excel', text: 'Excel', filename: 'Purchases_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
-                                        { extend: 'csv', text: 'CSV', filename: 'Purchases_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
-                                        { extend: 'pdf', text: 'PDF', filename: 'Purchases_{{ date("Y-m-d") }}', title: 'Purchase List', exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
-                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: [0, 1, 2, 3, 4, 5] } },
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Purchases_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Purchases_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Purchases_{{ date("Y-m-d") }}', title: 'Purchase List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } },
                                     ]
                                 }
                             ]
@@ -577,7 +578,8 @@
                     }
                 });
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

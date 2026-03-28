@@ -129,23 +129,49 @@
                                 <div class="text-sm text-gray-400 dark:text-gray-500 italic">{{ __('file.not_scheduled_yet') }}</div>
                             @endif
                         </div>
-                        <div class="text-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg col-span-2">
-                            <div class="flex items-center justify-center gap-6">
+                        <div class="text-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg col-span-2 sm:col-span-3">
+                            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                                 <div>
                                     <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.time_slot') }}</div>
-                                    @if($appointment->scheduled_start)
-                                        <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $appointment->scheduled_start->format('g:i A') }} – {{ $appointment->scheduled_end?->format('g:i A') }}</div>
+                                    @if($doctorSlot)
+                                        <div class="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $doctorSlot['start']->format('g:i A') }} – {{ $doctorSlot['end']->format('g:i A') }}</div>
+                                    @elseif($appointment->scheduled_start && $appointment->scheduled_end)
+                                        <div class="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $appointment->scheduled_start->format('g:i A') }} – {{ $appointment->scheduled_end->format('g:i A') }}</div>
                                     @else
                                         <div class="text-sm text-gray-400 dark:text-gray-500">—</div>
                                     @endif
                                 </div>
                                 <div class="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-2"></div>
                                 <div>
-                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.room') ?? 'Room' }}</div>
-                                    @if($appointment->room)
-                                        <div class="text-base font-semibold text-indigo-600 dark:text-indigo-400">{{ $appointment->room->room_number }}</div>
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.appointment_time') }}</div>
+                                    @if($appointment->scheduled_start)
+                                        @php
+                                            $apptStart = $appointment->scheduled_start;
+                                            $apptEnd   = $appointment->duration_minutes
+                                                ? $apptStart->copy()->addMinutes($appointment->duration_minutes)
+                                                : $appointment->scheduled_end;
+                                        @endphp
+                                        <div class="text-base font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                                            {{ $apptStart->format('g:i A') }}{{ $apptEnd ? ' – ' . $apptEnd->format('g:i A') : '' }}
+                                        </div>
                                     @else
-                                        <div class="text-sm text-gray-400 dark:text-gray-500 italic">{{ __('file.not_assigned') ?? 'Not Assigned' }}</div>
+                                        <div class="text-sm text-gray-400 dark:text-gray-500 italic">{{ __('file.not_specified') }}</div>
+                                    @endif
+                                </div>
+                                <div class="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                                <div>
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.duration') ?? 'Duration' }}</div>
+                                    <div class="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                                        {{ $appointment->duration_minutes ?? 15 }} {{ __('file.min') ?? 'min' }}
+                                    </div>
+                                </div>
+                                <div class="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                                <div>
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">{{ __('file.room') }}</div>
+                                    @if($appointment->room)
+                                        <div class="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ $appointment->room->room_number }}</div>
+                                    @else
+                                        <div class="text-sm text-gray-400 dark:text-gray-500 italic">{{ __('file.not_assigned') }}</div>
                                     @endif
                                 </div>
                             </div>
@@ -181,16 +207,6 @@
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">{{ __('file.preferred_language') }}</label>
                         <p class="text-sm text-gray-900 dark:text-white">{{ $appointment->preferredLanguage->name }}</p>
-                    </div>
-                    @endif
-
-                    {{-- Preferred Time --}}
-                    @if($appointment->preferred_time)
-                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">{{ __('file.preferred_time') }}</label>
-                        <p class="text-sm text-gray-900 dark:text-white">
-                            {{ \App\Models\Appointment::getPreferredTimeOptions()[$appointment->preferred_time] ?? $appointment->preferred_time }}
-                        </p>
                     </div>
                     @endif
                 </div>
@@ -621,27 +637,95 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.date') }}</label>
-                        <div id="modal_available_days" class="flex flex-wrap gap-2 mb-3 hidden">
-                            <!-- Quick select days will go here -->
-                        </div>
-                        <input type="date" name="date" id="modal_date" value="{{ date('Y-m-d') }}" min="{{ date('Y-m-d') }}" class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                        @if($appointment->scheduled_start)
+                            <div class="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                                {{ \Carbon\Carbon::parse($appointment->scheduled_start)->format('l, d M Y') }}
+                            </div>
+                            <input type="hidden" name="date" value="{{ \Carbon\Carbon::parse($appointment->scheduled_start)->format('Y-m-d') }}">
+                        @else
+                            <div id="modal_available_days_container" class="space-y-3 hidden mb-3">
+                                <div id="modal_available_days" class="flex flex-wrap gap-2">
+                                    <!-- Quick select days will go here -->
+                                </div>
+                                <button type="button" id="toggle_modal_date" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    {{ __('file.pick_another_date') ?? 'Pick another date' }}
+                                </button>
+                            </div>
+                            <div id="modal_date_input_group">
+                                <input type="date" name="date" id="modal_date" value="{{ date('Y-m-d') }}" min="{{ date('Y-m-d') }}" class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                            </div>
+
+                            <div id="modal_date_warning" class="mt-2 hidden">
+                                <div class="flex items-center p-2 text-xs text-amber-800 border border-amber-200 rounded-lg bg-amber-50 dark:bg-gray-800 dark:text-amber-400 dark:border-amber-900">
+                                    <svg class="flex-shrink-0 inline w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                    </svg>
+                                    <span class="sr-only">Warning</span>
+                                    <div id="modal_date_warning_text">
+                                        <!-- Warning message will go here -->
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.patient_preferred_time') }}</label>
-                        <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-                            @if($appointment->preferred_time)
-                                {{ \App\Models\Appointment::getPreferredTimeOptions()[$appointment->preferred_time] ?? $appointment->preferred_time }}
-                            @else
-                                {{ __('file.not_specified') ?? 'Not specified' }}
-                            @endif
-                        </p>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.time_slot') }}</label>
-                        <select name="slot" id="modal_slot" class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <div id="modal_slot_group">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.time_slot') }} <span class="text-red-500">*</span></label>
+                        <select name="slot" id="modal_slot"
+                                class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
                             <option value="">{{ __('file.select_slot') }}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.appointment_time') }} <span class="text-red-500">*</span></label>
+                        <input type="time" name="appointment_time" id="modal_appointment_time" required
+                               value="{{ $appointment->scheduled_start ? $appointment->scheduled_start->format('H:i') : '' }}"
+                               class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+
+                    @if($appointment->appointment_type === \App\Models\Appointment::TYPE_SPECIFIC)
+                        <div id="modal_specific_slot_info">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.time_slot') }}</label>
+                            @if($appointment->scheduled_start && $appointment->scheduled_end)
+                                <div class="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                                    {{ $appointment->scheduled_start->format('h:i A') }} - {{ $appointment->scheduled_end->format('h:i A') }}
+                                </div>
+                                <input type="hidden" name="slot" value="{{ $appointment->scheduled_start->format('H:i') }}|{{ $appointment->scheduled_end->format('H:i') }}">
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Unavailable Times --}}
+                    <div id="modal_unavailable_container" class="hidden mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <label class="block text-sm font-medium text-red-600 dark:text-red-400 mb-2 flex items-center">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ __('file.unavailable_times') ?? 'Unavailable Times' }}
+                        </label>
+                        <div id="modal_unavailable_list" class="space-y-2">
+                            {{-- Booked slots will be injected here --}}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.duration_minutes') ?? 'Duration' }} <span class="text-red-500">*</span></label>
+                        <select name="duration_minutes" id="modal_duration_minutes" required class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                            <option value="15" {{ ($appointment->duration_minutes ?? 15) == 15 ? 'selected' : '' }}>15 {{ __('file.min') ?? 'min' }}</option>
+                            <option value="30" {{ ($appointment->duration_minutes ?? 15) == 30 ? 'selected' : '' }}>30 {{ __('file.min') ?? 'min' }}</option>
+                            <option value="45" {{ ($appointment->duration_minutes ?? 15) == 45 ? 'selected' : '' }}>45 {{ __('file.min') ?? 'min' }}</option>
+                            <option value="60" {{ ($appointment->duration_minutes ?? 15) == 60 ? 'selected' : '' }}>1 {{ __('file.hour') ?? 'hr' }}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.room') }}</label>
+                        <select required name="room_id" id="modal_room_id" class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all">
+                            <option value="" disabled selected>{{ __('file.select_room') ?? 'Select Room' }}</option>
+                            @foreach(\App\Models\Room::active()->get() as $room)
+                                <option value="{{ $room->id }}">{{ $room->name }} ({{ $room->room_number }})</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -659,7 +743,7 @@
     </div>
 </div>
 
-<script>
+    <script>
     function openTreatmentModal() {
         const modal = document.getElementById('treatment_modal');
         const content = document.getElementById('modal_content');
@@ -697,6 +781,8 @@
     const modalSpecText = document.getElementById('modal_specialization_text');
     const modalDoctorText = document.getElementById('modal_doctor_text');
     const modalAvailableDays = document.getElementById('modal_available_days');
+    const modalSlotGroup = document.getElementById('modal_slot_group');
+    const modalSpecificSlotInfo = document.getElementById('modal_specific_slot_info');
 
     function openAssignModal() {
         const modal = document.getElementById('assign_modal');
@@ -722,24 +808,36 @@
         modalDoctorSelect.classList.remove('hidden');
 
         if (appointmentType === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}') {
-            modalSpecSelect.value = '{{ $appointment->doctor?->primary_specialization_id ?? $appointment->specialization_id ?? "" }}';
             modalSpecSelect.classList.add('hidden');
-            modalSpecText.textContent = '{{ $appointment->doctor?->primarySpecialization?->name ?? '' }}' || (modalSpecSelect.options[modalSpecSelect.selectedIndex]?.text || '');
-            modalSpecText.classList.remove('hidden');
-            
             modalDoctorSelect.classList.add('hidden');
-            modalDoctorText.textContent = '{{ $appointment->doctor ? "Dr. " . $appointment->doctor->getFullNameAttribute() : "" }}';
-            modalDoctorText.classList.remove('hidden');
-        } else if (appointmentType === '{{ \App\Models\Appointment::TYPE_ANY }}') {
-            modalSpecSelect.classList.add('hidden');
-            modalSpecText.textContent = modalSpecSelect.options[modalSpecSelect.selectedIndex]?.text || '';
             modalSpecText.classList.remove('hidden');
-            modalAgeGroupContainer.classList.remove('hidden');
+            modalDoctorText.classList.remove('hidden');
             
-            // Set Age Group text
-            const ageGroupText = '{{ $appointment->ageGroup?->name ?? "" }}';
+            const specId = '{{ $appointment->doctor?->primary_specialization_id ?? $appointment->specialization_id ?? "" }}';
+            modalSpecSelect.value = specId;
+            modalSpecText.textContent = '{{ $appointment->doctor?->primarySpecialization?->name ?? $appointment->specialization?->name ?? "" }}' || (modalSpecSelect.options[modalSpecSelect.selectedIndex]?.text || "");
+            modalDoctorText.textContent = '{{ $appointment->doctor ? "Dr. " . $appointment->doctor->getFullNameAttribute() : "" }}';
+
+            if (modalSlotGroup) modalSlotGroup.classList.add('hidden');
+            if (modalSpecificSlotInfo) modalSpecificSlotInfo.classList.remove('hidden');
+        } else if (appointmentType === '{{ \App\Models\Appointment::TYPE_ANY }}') {
+            const specId = '{{ $appointment->specialization_id }}';
+            const specName = '{{ $appointment->specialization?->name ?? "" }}';
+            
+            modalSpecSelect.value = specId;
+            modalSpecSelect.classList.add('hidden');
+            modalSpecText.textContent = specName;
+            modalSpecText.classList.remove('hidden');
+            
+            modalDoctorSelect.classList.remove('hidden');
+            modalDoctorText.classList.add('hidden');
+            
+            if (modalSlotGroup) modalSlotGroup.classList.remove('hidden');
+            if (modalSpecificSlotInfo) modalSpecificSlotInfo.classList.add('hidden');
+
+            modalAgeGroupContainer.classList.remove('hidden');
             const ageGroupDisplay = document.getElementById('modal_age_group_text');
-            if (ageGroupDisplay) ageGroupDisplay.textContent = ageGroupText;
+            if (ageGroupDisplay) ageGroupDisplay.textContent = '{{ $appointment->ageGroup?->name ?? "" }}';
         }
 
         loadModalDoctors();
@@ -767,7 +865,11 @@
         }
 
         const specId = modalSpecSelect.value;
-        const ageGroupId = modalAgeGroupSelect.value || '{{ $appointment->age_group_id }}';
+        const ageGroupId = modalAgeGroupSelect ? (modalAgeGroupSelect.value || '{{ $appointment->age_group_id }}') : '{{ $appointment->age_group_id }}';
+        // modalDateSelect is null when scheduled_start is already set (date rendered as static text)
+        // Fall back to the hidden date input in that case
+        const dateInput = modalDateSelect || document.querySelector('#assign_form input[name="date"]');
+        const date = dateInput ? dateInput.value : '';
 
         if (!specId) {
             modalDoctorSelect.innerHTML = '<option value="">{{ __("file.select_doctor") }}</option>';
@@ -777,6 +879,9 @@
         let url = `{{ route('appointments.doctors.filtered') }}?specialization_id=${specId}`;
         if (ageGroupId) {
             url += `&age_group_id=${ageGroupId}`;
+        }
+        if (date) {
+            url += `&date=${date}`;
         }
 
         fetch(url)
@@ -808,9 +913,14 @@
 
     function loadModalDays() {
         const doctorId = modalDoctorSelect.value;
-        if (!doctorId) {
-            modalAvailableDays.classList.add('hidden');
-            modalAvailableDays.innerHTML = '';
+        const container = document.getElementById('modal_available_days');
+        const containerWrapper = document.getElementById('modal_available_days_container');
+        const inputGroup = document.getElementById('modal_date_input_group');
+        const toggleBtn = document.getElementById('toggle_modal_date');
+
+        if (!doctorId || !container) {
+            if (containerWrapper) containerWrapper.classList.add('hidden');
+            if (inputGroup) inputGroup.classList.remove('hidden');
             return;
         }
 
@@ -818,34 +928,61 @@
             .then(r => r.json())
             .then(data => {
                 const days = data.days || [];
+                container.innerHTML = '';
                 if (days.length === 0) {
-                    modalAvailableDays.classList.add('hidden');
-                    modalAvailableDays.innerHTML = '';
+                    containerWrapper.classList.add('hidden');
+                    inputGroup.classList.remove('hidden');
                     return;
                 }
 
-                modalAvailableDays.classList.remove('hidden');
-                modalAvailableDays.innerHTML = days.map(day => `
-                    <button type="button" 
-                            onclick="selectDate('${day.date}')"
-                            class="px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                        ${day.label}
-                    </button>
-                `).join('');
+                containerWrapper.classList.remove('hidden');
+                inputGroup.classList.add('hidden');
+                
+                days.forEach(day => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors';
+                    btn.textContent = day.label;
+                    btn.onclick = () => {
+                        selectDate(day.date);
+                        // Highlight logic
+                        container.querySelectorAll('button').forEach(b => {
+                            b.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/30', 'text-indigo-700', 'dark:text-indigo-300', 'border-indigo-600');
+                            b.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300', 'border-indigo-200');
+                        });
+                        btn.classList.add('bg-indigo-50', 'dark:bg-indigo-900/30', 'text-indigo-700', 'dark:text-indigo-300', 'border-indigo-600');
+                        btn.classList.remove('bg-white', 'dark:bg-gray-800', 'border-indigo-200');
+                    };
+                    container.appendChild(btn);
+                });
             })
             .catch(() => {
-                modalAvailableDays.classList.add('hidden');
+                if (containerWrapper) containerWrapper.classList.add('hidden');
+                if (inputGroup) inputGroup.classList.remove('hidden');
             });
+
+        if (toggleBtn) {
+            toggleBtn.onclick = () => {
+                inputGroup.classList.toggle('hidden');
+                if (!inputGroup.classList.contains('hidden')) {
+                    toggleBtn.textContent = '{{ __("file.use_available_days") ?? "Use available days" }}';
+                } else {
+                    toggleBtn.textContent = '{{ __("file.pick_another_date") ?? "Pick another date" }}';
+                }
+            };
+        }
     }
 
     function selectDate(dateStr) {
-        modalDateSelect.value = dateStr;
+        const dateField = modalDateSelect || document.querySelector('#assign_form input[name="date"]');
+        if (dateField) dateField.value = dateStr;
         loadModalSlots();
     }
 
     function loadModalSlots() {
         const doctorId = modalDoctorSelect.value;
-        const date = modalDateSelect.value;
+        const dateInput2 = modalDateSelect || document.querySelector('#assign_form input[name="date"]');
+        const date = dateInput2 ? dateInput2.value : '';
         if (!doctorId || !date) {
             modalSlotSelect.innerHTML = '<option value="">{{ __("file.select_slot") }}</option>';
             return;
@@ -853,8 +990,21 @@
         fetch(`{{ url('doctors') }}/${doctorId}/available-slots?date=${date}`)
             .then(r => r.json())
             .then(data => {
+                const warningDiv = document.getElementById('modal_date_warning');
+                const warningText = document.getElementById('modal_date_warning_text');
+                
+                if (warningDiv && warningText) {
+                    if (data.message && (!data.slots || data.slots.length === 0)) {
+                        warningText.textContent = data.message;
+                        warningDiv.classList.remove('hidden');
+                    } else {
+                        warningDiv.classList.add('hidden');
+                    }
+                }
+
                 modalSlotSelect.innerHTML = '<option value="">{{ __("file.select_slot") }}</option>';
                 const slots = data.slots || [];
+                const appointments = data.appointments || [];
                 
                 if (slots.length === 0 && data.message) {
                     const opt = new Option(data.message, "");
@@ -867,14 +1017,150 @@
                     const val = `${slot.start}|${slot.end}`;
                     modalSlotSelect.add(new Option(label, val));
                 });
+
+                if (slots.length === 1) {
+                    modalSlotSelect.value = `${slots[0].start}|${slots[0].end}`;
+                    modalSlotSelect.dispatchEvent(new Event('change'));
+                }
+
+                renderUnavailableTimes(appointments);
             });
     }
+
+    function renderUnavailableTimes(appointments) {
+        const container = document.getElementById('modal_unavailable_container');
+        const list = document.getElementById('modal_unavailable_list');
+        
+        if (!container || !list) return;
+        
+        if (!appointments || appointments.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.classList.remove('hidden');
+        list.innerHTML = appointments.map(a => {
+            // Convert 24h to 12h for display
+            const formatTime = (t) => {
+                const [h, m] = t.split(':');
+                const hour = parseInt(h);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const h12 = hour % 12 || 12;
+                return `${h12}:${m} ${ampm}`;
+            };
+
+            return `
+                <div class="flex items-center justify-between px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg text-xs">
+                    <span class="font-medium text-red-700 dark:text-red-300">
+                        ${formatTime(a.start)} - ${formatTime(a.end)}
+                    </span>
+                    <span class="text-[10px] uppercase tracking-wider text-red-500 dark:text-red-400 font-bold">
+                        ${a.status}
+                    </span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    const modalRoomSelect = document.getElementById('modal_room_id');
+    const modalTimeInput = document.getElementById('modal_appointment_time');
+    const modalDurationSelect = document.getElementById('modal_duration_minutes');
+
+    function checkModalRoomAvailability() {
+        const dateInputRoom = modalDateSelect || document.querySelector('#assign_form input[name="date"]');
+        if (!dateInputRoom || !modalTimeInput || !modalDurationSelect || !modalRoomSelect) return;
+        
+        const date = dateInputRoom.value;
+        const time = modalTimeInput.value;
+        const duration = modalDurationSelect.value;
+        const excludeId = '{{ $appointment->id }}';
+
+        if (!date || !time) return;
+
+        fetch(`{{ route('appointments.check_room_availability') }}?date=${date}&time=${time}&duration=${duration}&exclude_id=${excludeId}`)
+            .then(r => r.json())
+            .then(data => {
+                const busyRooms = data.busy_rooms || [];
+
+                // Restore previously hidden options
+                if (!modalRoomSelect._hiddenBank) modalRoomSelect._hiddenBank = [];
+                modalRoomSelect._hiddenBank.forEach(opt => modalRoomSelect.add(opt));
+                modalRoomSelect._hiddenBank = [];
+
+                // Remove busy options
+                Array.from(modalRoomSelect.options).forEach(opt => {
+                    if (!opt.value) return;
+                    const roomId = parseInt(opt.value);
+                    if (busyRooms.includes(roomId)) {
+                        if (opt.selected) modalRoomSelect.value = '';
+                        modalRoomSelect._hiddenBank.push(opt);
+                        modalRoomSelect.remove(opt.index);
+                    }
+                });
+            });
+    }
+
+    modalSlotSelect.addEventListener('change', () => {
+        if (modalSlotSelect.value) {
+            const startTime = modalSlotSelect.value.split('|')[0];
+            const timeInput = document.getElementById('modal_appointment_time');
+            if (timeInput && (!timeInput.value || timeInput.value === "00:00")) {
+                timeInput.value = startTime;
+            }
+            checkModalRoomAvailability();
+            filterModalDurationBySlot();
+        }
+    });
 
     modalSpecSelect.addEventListener('change', loadModalDoctors);
     modalDoctorSelect.addEventListener('change', () => {
         loadModalDays();
         loadModalSlots();
     });
-    modalDateSelect.addEventListener('change', loadModalSlots);
+    if (modalDateSelect) {
+        modalDateSelect.addEventListener('change', () => {
+            loadModalDoctors();
+            checkModalRoomAvailability();
+        });
+    }
+    if (modalTimeInput) modalTimeInput.addEventListener('change', function() {
+        checkModalRoomAvailability();
+        filterModalDurationBySlot();
+    });
+    if (modalDurationSelect) modalDurationSelect.addEventListener('change', checkModalRoomAvailability);
+
+    // Remove modal duration options that would push past the slot end
+    function filterModalDurationBySlot() {
+        const dSel = document.getElementById('modal_duration_minutes');
+        const timeSel = document.getElementById('modal_appointment_time');
+        // Get slot end from the hidden input or the slot select (for any-doctor modal)
+        const slotHidden = document.querySelector('#assign_form input[name="slot"]');
+        const slotVal = slotHidden ? slotHidden.value : (modalSlotSelect ? modalSlotSelect.value : '');
+
+        if (!dSel || !timeSel || !slotVal || !timeSel.value) {
+            if (dSel && dSel._hiddenBank) {
+                dSel._hiddenBank.forEach(opt => dSel.add(opt));
+                dSel._hiddenBank = [];
+            }
+            return;
+        }
+        const [, slotEnd] = slotVal.split('|');
+        const [apptH, apptM] = timeSel.value.split(':').map(Number);
+        const [endH, endM] = slotEnd.split(':').map(Number);
+        const maxMinutes = (endH * 60 + endM) - (apptH * 60 + apptM);
+
+        if (!dSel._hiddenBank) dSel._hiddenBank = [];
+        dSel._hiddenBank.forEach(opt => dSel.add(opt));
+        dSel._hiddenBank = [];
+
+        Array.from(dSel.options).forEach(opt => {
+            if (!opt.value) return;
+            if (parseInt(opt.value) > maxMinutes) {
+                if (opt.selected) dSel.value = '';
+                dSel._hiddenBank.push(opt);
+                dSel.remove(opt.index);
+            }
+        });
+    }
 </script>
 @endsection

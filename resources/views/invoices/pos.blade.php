@@ -436,7 +436,7 @@
                     <div class="space-y-1">
                         <div class="flex items-center gap-1">
                             <span class="text-gray-600 dark:text-gray-400">{{ __('file.tax') }}</span>
-                            <input type="number" id="tax-input" value="8" min="0" max="100" step="0.1"
+                            <input type="number" id="tax-input" value="{{ $tax_percentage ?? 0 }}" min="0" max="100" step="0.1"
                                 class="w-14 px-1 py-0.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-500 dark:bg-gray-700 dark:text-white text-center"
                                 onchange="updateTotals()">
                             <span class="text-gray-600 dark:text-gray-400">%</span>
@@ -457,6 +457,13 @@
                             class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('file.total_amount') }}</span>
                         <span id="grand-total"
                             class="text-2xl font-bold text-gray-900 dark:text-white">{{ $currency_code }}0.00</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 mb-3">
+                        <input type="checkbox" id="print-invoice" checked
+                            class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-800 dark:border-gray-600">
+                        <label for="print-invoice"
+                            class="text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('file.print_invoice') ?? 'Invoiced' }}</label>
                     </div>
 
                     <div class="mb-3">
@@ -690,8 +697,8 @@
                             class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">1</button>
                         <button onclick="addCashDenomination(0.25)"
                             class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium text-xs">0.25</button>
-                        <button onclick="addCashDenomination(0.10)"
-                            class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium text-xs">0.10</button>
+                        <button onclick="clearCashReceived()"
+                            class="py-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg font-bold text-xs">{{ strtoupper(__('file.clear')) }}</button>
                     </div>
 
                     <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
@@ -725,10 +732,6 @@
                 </div>
             </div>
             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg space-y-3">
-                <div class="flex items-center gap-2 pb-1">
-                    <input type="checkbox" id="print-invoice" checked class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-800 dark:border-gray-600">
-                    <label for="print-invoice" class="text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('file.print_invoice') ?? 'Print Invoice' }}</label>
-                </div>
                 <button id="complete-payment-btn" onclick="processPayment()"
                     class="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 active:scale-98 transition-all text-base">
                     {{ __('file.complete_payment') }}
@@ -907,7 +910,7 @@
                 
                 <div class="flex items-center gap-2 mt-4 pt-2 border-t dark:border-gray-700">
                     <input type="checkbox" id="partial-print-invoice" checked class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-800 dark:border-gray-600">
-                    <label for="partial-print-invoice" class="text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('file.print_invoice') ?? 'Print Invoice' }}</label>
+                    <label for="partial-print-invoice" class="text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('file.print_invoice') ?? 'Print Bill' }}</label>
                 </div>
             </div>
 
@@ -993,6 +996,81 @@
                 </button>
                 <button onclick="showCloseRegisterForm()" class="w-full py-3 bg-red-600 ...">
                     {{ __('file.close_and_reconcile_register') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Sale Statistics Modal ==================== -->
+    <div id="sales-stats-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('file.sale_statistics') }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400" id="stats-session-info"></p>
+                </div>
+                <button onclick="closeSalesStats()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+                        <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">{{ __('file.total_sales') }}</p>
+                        <p class="text-2xl font-bold dark:text-white" id="stats-total-sales">--</p>
+                        <div class="mt-2 text-xs flex justify-between text-blue-800/70 dark:text-blue-300/70">
+                            <span>Cash: <span id="stats-cash-sales">--</span></span>
+                            <span>Card: <span id="stats-card-sales">--</span></span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl">
+                        <p class="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Expenses/Purchases</p>
+                        <p class="text-2xl font-bold dark:text-white" id="stats-total-outflow">--</p>
+                        <div class="mt-2 text-xs flex justify-between text-red-800/70 dark:text-red-300/70">
+                            <span>Exp: <span id="stats-expenses">--</span></span>
+                            <span>Pur: <span id="stats-purchases">--</span></span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-xl">
+                        <p class="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider mb-1">{{ __('file.expected_cash') }}</p>
+                        <p class="text-2xl font-bold dark:text-white" id="stats-expected-cash">--</p>
+                        <p class="mt-2 text-xs text-green-800/70 dark:text-green-300/70">Balance in Register</p>
+                    </div>
+                </div>
+
+                <!-- Transaction History -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Recent Transactions
+                    </h4>
+                    <div class="border dark:border-gray-700 rounded-lg overflow-hidden">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-b dark:border-gray-700">
+                                <tr>
+                                    <th class="px-4 py-2 font-medium">Time</th>
+                                    <th class="px-4 py-2 font-medium">Type</th>
+                                    <th class="px-4 py-2 font-medium">Ref</th>
+                                    <th class="px-4 py-3 font-medium text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-transactions-body" class="divide-y dark:divide-gray-700">
+                                <!-- JS items here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <button onclick="closeSalesStats()" class="w-full py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg font-medium transition-colors">
+                    {{ __('file.close') }}
                 </button>
             </div>
         </div>
@@ -1500,7 +1578,7 @@
             document.getElementById('other-section').classList.add('hidden');
             if (method === 'cash') {
                 document.getElementById('cash-section').classList.remove('hidden');
-                document.getElementById('cash-received').value = grandTotal.toFixed(2);
+                document.getElementById('cash-received').value = '0.00';
                 updateCashChange();
             } else if (method === 'card') {
                 document.getElementById('card-section').classList.remove('hidden');
@@ -1515,8 +1593,20 @@
         }
 
         function addCashDenomination(amount) {
-            const current = parseFloat(document.getElementById('cash-received').value) || 0;
-            document.getElementById('cash-received').value = (current + amount).toFixed(2);
+            const input = document.getElementById('cash-received');
+            const current = parseFloat(input.value) || 0;
+            
+            // If it's the first time and value is 0, replace it, otherwise add
+            if (current === 0) {
+                input.value = amount.toFixed(2);
+            } else {
+                input.value = (current + amount).toFixed(2);
+            }
+            updateCashChange();
+        }
+
+        function clearCashReceived() {
+            document.getElementById('cash-received').value = '0.00';
             updateCashChange();
         }
 
@@ -1638,7 +1728,7 @@
                             printInvoice(printUrl);
                         }
 
-                        showNotification('{{ __("file.sale_completed") }}' + ': ' + '{{ __("file.sale_success_msg", ["number" => ":number"]) }}'.replace(':number', data.invoice_number), 'success');
+                        showNotification(data.message || '{{ __("file.sale_completed") }}', 'success');
 
                         closePaymentModal();
                         clearCart();
@@ -1762,7 +1852,62 @@
         }
 
         function showSalesStats() {
-            document.getElementById('sales-stats-modal').classList.remove('hidden');
+            if (!currentRegister) {
+                return showNotification('{{ __("file.register_not_open") }}', 'error');
+            }
+
+            // Fetch latest data to be accurate
+            fetch('{{ route("cash-registers.current") }}')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.open && data.register) {
+                        const r = data.register;
+                        
+                        // Populate Header
+                        document.getElementById('stats-session-info').textContent = `Session started: ${r.opened_at_formatted}`;
+                        
+                        // Populate Cards
+                        const totalSales = (parseFloat(r.cash_sales_formatted.replace(/,/g, '')) + parseFloat(r.card_sales_formatted.replace(/,/g, ''))).toLocaleString(undefined, {minimumFractionDigits: 2});
+                        document.getElementById('stats-total-sales').textContent = `{{ $currency_code }}${totalSales}`;
+                        document.getElementById('stats-cash-sales').textContent = `{{ $currency_code }}${r.cash_sales_formatted}`;
+                        document.getElementById('stats-card-sales').textContent = `{{ $currency_code }}${r.card_sales_formatted}`;
+                        
+                        const totalOutflow = (parseFloat(r.expenses_total_formatted.replace(/,/g, '')) + parseFloat(r.purchases_total_formatted.replace(/,/g, ''))).toLocaleString(undefined, {minimumFractionDigits: 2});
+                        document.getElementById('stats-total-outflow').textContent = `{{ $currency_code }}${totalOutflow}`;
+                        document.getElementById('stats-expenses').textContent = `{{ $currency_code }}${r.expenses_total_formatted}`;
+                        document.getElementById('stats-purchases').textContent = `{{ $currency_code }}${r.purchases_total_formatted}`;
+                        
+                        document.getElementById('stats-expected-cash').textContent = `{{ $currency_code }}${r.expected_closing_formatted}`;
+                        
+                        // Populate Transactions
+                        const tbody = document.getElementById('stats-transactions-body');
+                        tbody.innerHTML = '';
+                        
+                        if (r.transactions && r.transactions.length > 0) {
+                            r.transactions.forEach(t => {
+                                const row = document.createElement('tr');
+                                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors';
+                                row.innerHTML = `
+                                    <td class="px-4 py-2 text-gray-500 dark:text-gray-400 text-xs">${t.happened_at_formatted}</td>
+                                    <td class="px-4 py-2 font-medium dark:text-gray-200">${t.type_formatted}</td>
+                                    <td class="px-4 py-2 text-gray-500 dark:text-gray-400 text-xs">${t.reference}</td>
+                                    <td class="px-4 py-2 text-right font-bold ${t.is_outflow ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}">
+                                        {{ $currency_code }}${t.amount_formatted}
+                                    </td>
+                                `;
+                                tbody.appendChild(row);
+                            });
+                        } else {
+                            tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No transactions recorded yet in this session.</td></tr>`;
+                        }
+
+                        document.getElementById('sales-stats-modal').classList.remove('hidden');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching stats:', err);
+                    showNotification('Error loading statistics', 'error');
+                });
         }
 
         function closeSalesStats() {
@@ -1785,7 +1930,10 @@
                             if (data.open && data.register) {
                                 currentRegister = data.register;
                                 label.textContent = `{{ __('file.register') }}: ${data.register.id} ({{ __('file.open') }})`;
-                                subtitle.innerHTML = `<span class="text-green-600 dark:text-green-400">{{ __('file.opened_at') }} ${data.register.opened_at_formatted} • {{ $currency_code }}${data.register.opening_balance_formatted}</span>`;
+                                subtitle.innerHTML = `<span class="text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                    {{ __('file.expected_cash') }}: {{ $currency_code }}${data.register.expected_closing_formatted}
+                                </span>`;
                             } else {
                                 currentRegister = null;
                                 label.textContent = '{{ __('file.register') }}: {{ __('file.not_open') }}';
@@ -1968,39 +2116,43 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success && data.appointments.length > 0) {
-                    let html = '<div class="divide-y divide-gray-100 dark:divide-gray-700/50">';
-                    data.appointments.forEach(app => {
-                        html += `
-                            <div class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <div>
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="text-xs font-bold px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded">#${app.appointment_number}</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">${app.completed_at}</span>
+                if (data.success) {
+                    if (data.appointments.length > 0) {
+                        let html = '<div class="divide-y divide-gray-100 dark:divide-gray-700/50">';
+                        data.appointments.forEach(app => {
+                            html += `
+                                <div class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-xs font-bold px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded">#${app.appointment_number}</span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">${app.completed_at}</span>
+                                        </div>
+                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">${app.patient_name}</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Dr. ${app.doctor_name}</p>
                                     </div>
-                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">${app.patient_name}</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Dr. ${app.doctor_name}</p>
+                                    <div>
+                                        <button onclick="loadCompletedAppointment(${app.id})" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-lg transition-colors">
+                                            {{ __('file.load') ?? 'Load' }}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <button onclick="loadCompletedAppointment(${app.id})" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-lg transition-colors">
-                                        {{ __('file.load') ?? 'Load' }}
-                                    </button>
+                            `;
+                        });
+                        html += '</div>';
+                        content.innerHTML = html;
+                    } else {
+                        content.innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3">
+                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                                 </div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ __('file.no_completed_appointments') ?? 'No Completed Appointments' }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('file.no_completed_appointments_message') ?? 'There are no appointments ready for billing at this time.' }}</p>
                             </div>
                         `;
-                    });
-                    html += '</div>';
-                    content.innerHTML = html;
+                    }
                 } else {
-                    content.innerHTML = `
-                        <div class="text-center py-8">
-                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3">
-                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                            </div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ __('file.no_completed_appointments') ?? 'No Completed Appointments' }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('file.no_completed_appointments_message') ?? 'There are no appointments ready for billing at this time.' }}</p>
-                        </div>
-                    `;
+                    throw new Error(data.message || 'Server returned an error');
                 }
             })
             .catch(err => {

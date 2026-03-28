@@ -33,8 +33,7 @@ class UpdateSettingsRequest extends FormRequest
             'currency' => 'required|string|size:3|alpha',
 
             'timezone'        => 'required|timezone',
-            'date_format'     => 'required|in:MM/DD/YYYY,DD/MM/YYYY,YYYY-MM-DD',
-            'time_format'     => 'required|in:12-hour,24-hour',
+            'tax_percentage'  => 'nullable|numeric|min:0|max:100',
 
             'logo'            => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
             'primary_color'   => 'required|string|regex:/^#[a-f0-9]{6}$/i',

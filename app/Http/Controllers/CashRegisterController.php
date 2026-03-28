@@ -139,7 +139,7 @@ class CashRegisterController extends Controller
         if ($user->cashRegisters()->whereNull('closed_at')->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You already have an open cash register. Please close it first.'
+                'message' => __('file.already_have_open_register')
             ], 422);
         }
 
@@ -173,7 +173,7 @@ class CashRegisterController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to open register: ' . $e->getMessage()
+                'message' => __('file.failed_to_open_register_with_error', ['error' => $e->getMessage()])
             ], 500);
         }
     }
@@ -223,7 +223,7 @@ class CashRegisterController extends Controller
                 'user_id' => Auth::id(),
                 'type'    => 'close_register',
                 'amount'  => $actualBalance,
-                'notes'   => "Closed register - Difference: {$difference}",
+                'notes'   => __('file.closed_register_with_difference', ['difference' => $difference]),
             ]);
 
             DB::commit();
@@ -274,6 +274,23 @@ class CashRegisterController extends Controller
             ->where('type', 'purchase')
             ->sum('amount');
 
+        $transactions = $register->transactions()
+            ->with(['invoice.patient', 'expense', 'purchase'])
+            ->latest('happened_at')
+            ->limit(50)
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'happened_at_formatted' => $t->happened_at->format('h:i A'),
+                    'type_formatted' => trans('file.' . $t->type),
+                    'amount_formatted' => ($t->isOutflow() ? '-' : '+') . number_format($t->amount, 2),
+                    'is_outflow' => $t->isOutflow(),
+                    'notes' => $t->notes,
+                    'reference' => $t->invoice?->invoice_number ?? $t->expense?->reference_no ?? $t->purchase?->reference_no ?? '—',
+                ];
+            });
+
         return response()->json([
             'open' => true,
             'register' => [
@@ -286,7 +303,7 @@ class CashRegisterController extends Controller
                 'expenses_total_formatted' => number_format($expensesTotal, 2),
                 'purchases_total_formatted' => number_format($purchasesTotal, 2),
                 'transaction_count' => $transactionCount,
-                // Add more as needed
+                'transactions' => $transactions,
             ]
         ]);
     }

@@ -68,15 +68,6 @@
                             <option value="">{{ __('file.all_doctors') }}</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {{ __('file.room') }}
-                        </label>
-                        <select id="filter-room"
-                            class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                            <option value="">{{ __('file.all_rooms') }}</option>
-                        </select>
-                    </div>
                 </div>
             </div>
 
@@ -115,17 +106,13 @@
                     style="width:100%">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
                             <th
                                 class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">
                                 {{ __('file.doctor') }}
-                            </th>
-                            <th
-                                class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
-                                {{ __('file.room') }}
                             </th>
                             <th
                                 class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
@@ -136,7 +123,7 @@
                                 {{ __('file.time') }}
                             </th>
                             <th
-                                class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
                                 {{ __('file.actions') }}
                             </th>
                         </tr>
@@ -156,7 +143,6 @@
                 const closeDrawer = document.getElementById('close-drawer');
                 const filterCount = document.getElementById('filter-count');
                 const filterDoctor = document.getElementById('filter-doctor');
-                const filterRoom = document.getElementById('filter-room');
 
                 function openDrawer() {
                     filterBackdrop.classList.remove('hidden');
@@ -195,16 +181,13 @@
                 });
 
                 function updateFilterCount() {
-                    const count = [filterDoctor.value, filterRoom.value].filter(Boolean).length;
+                    const count = filterDoctor.value ? 1 : 0;
                     filterCount.textContent = count;
                     filterCount.classList.toggle('hidden', count === 0);
                 }
 
                 $.get('{{ route("doctor-schedules.filters") }}', { column: 'doctor' }, data => {
                     $.each(data, (id, name) => $('#filter-doctor').append(`<option value="${id}">${name}</option>`));
-                });
-                $.get('{{ route("doctor-schedules.filters") }}', { column: 'room' }, data => {
-                    $.each(data, (id, name) => $('#filter-room').append(`<option value="${id}">${name}</option>`));
                 });
 
                 const table = $('#docapp-table').DataTable({
@@ -215,7 +198,6 @@
                         url: '{{ route("doctor-schedules.datatable") }}',
                         data: d => {
                             d.doctor = filterDoctor.value;
-                            d.room = filterRoom.value;
                         }
                     },
                     order: [[1, 'asc']], // Doctor column (index 1) as default sort
@@ -235,7 +217,6 @@
                             data: 'doctor',
                             render: data => `<div class="font-medium text-gray-900 dark:text-white">${data}</div>`
                         },
-                        { data: 'room', render: data => data },
                         { data: 'days', render: data => data || '-' },
                         { data: 'time', render: data => data },
                         {
@@ -263,11 +244,11 @@
                                 { extend: 'pageLength', className: 'inline-flex items-center gap-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium transition shadow-sm' },
                                 {
                                     extend: 'collection', text: "{{ __('file.Export') }}", className: 'bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium', buttons: [
-                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'excel', text: 'Excel', filename: 'Rooms_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'csv', text: 'CSV', filename: 'Rooms_{{ date("Y-m-d") }}', exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'pdf', text: 'PDF', filename: 'Rooms_{{ date("Y-m-d") }}', title: 'Doctor Schedules List', exportOptions: { columns: [0, 1, 2, 3, 4] } },
-                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: [0, 1, 2, 3, 4] } }
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Schedules_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Schedules_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Schedules_{{ date("Y-m-d") }}', title: 'Doctor Schedules List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
                                     ]
                                 }
                             ]
@@ -296,14 +277,14 @@
 
                 document.getElementById('clear-filters').addEventListener('click', () => {
                     filterDoctor.value = '';
-                    filterRoom.value = '';
                     table.draw();
                     updateFilterCount();
                 });
 
-                [filterDoctor, filterRoom].forEach(el => el.addEventListener('change', updateFilterCount));
+                filterDoctor.addEventListener('change', updateFilterCount);
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

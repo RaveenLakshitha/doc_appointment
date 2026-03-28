@@ -109,7 +109,7 @@
                 <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -130,7 +130,7 @@
                                 {{ __('file.date') }}
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
                                 {{ __('file.actions') }}
                             </th>
                         </tr>
@@ -179,7 +179,7 @@
                             <span class="text-sm font-medium text-gray-900 dark:text-white" id="drawer-category"></span>
                         </div>
                         <div class="flex justify-between items-start pb-3 border-b border-gray-100 dark:border-gray-700/50">
-                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ __('file.amount') }}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ __('file.amount') }} ({{ $currency_code }})</span>
                             <span class="text-sm font-bold text-red-600 dark:text-red-400" id="drawer-amount"></span>
                         </div>
                         <div class="flex justify-between items-start pb-3 border-b border-gray-100 dark:border-gray-700/50">
@@ -253,6 +253,14 @@
 
                     <div>
                         <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.date') }}
+                            *</label>
+                        <input type="date" name="expense_date" id="add-expense-date" required value="{{ date('Y-m-d') }}"
+                            class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-all shadow-sm" />
+                    </div>
+
+                    <div>
+                        <label
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.category') }}
                             *</label>
                         <select name="expense_category_id" required
@@ -266,7 +274,7 @@
 
                     <div>
                         <label
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.amount') }}
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.amount') }} ({{ $currency_code }})
                             *</label>
                         <input type="number" step="0.01" name="amount" required
                             class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-all shadow-sm" />
@@ -279,7 +287,7 @@
                             class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-all shadow-sm">
                             <option value="">{{ __('file.select_register_optional') }}</option>
                             @foreach($cashRegisters as $register)
-                                <option value="{{ $register->id }}">
+                                <option value="{{ $register->id }}" {{ $register->user_id == auth()->id() ? 'selected' : '' }}>
                                     CR-{{ str_pad($register->id, 4, '0', STR_PAD_LEFT) }}
                                     ({{ $register->user ? $register->user->name : __('file.unknown') }})
                                 </option>
@@ -350,6 +358,14 @@
 
                     <div>
                         <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.date') }}
+                            *</label>
+                        <input type="date" name="expense_date" id="edit-expense-date" required
+                            class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-all shadow-sm" />
+                    </div>
+
+                    <div>
+                        <label
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.category') }}
                             *</label>
                         <select name="expense_category_id" id="edit-category-id" required
@@ -362,7 +378,7 @@
 
                     <div>
                         <label
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.amount') }}
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.amount') }} ({{ $currency_code }})
                             *</label>
                         <input type="number" step="0.01" name="amount" id="edit-amount" required
                             class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-all shadow-sm" />
@@ -504,7 +520,7 @@
                         {
                             data: 'amount',
                             className: 'text-right font-medium text-red-600 dark:text-red-400',
-                            render: d => parseFloat(d).toFixed(2)
+                            render: d => '{{ $currency_code }} ' + parseFloat(d).toFixed(2)
                         },
                         { data: 'created_at', className: 'text-center' },
                         {
@@ -521,6 +537,12 @@
                                                             class="p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition" title="{{ __('file.edit') }}">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button onclick="printExpense(${row.id})"
+                                                            class="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition" title="{{ __('file.Print') }}">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                                         </svg>
                                                     </button>
                                                     <form method="POST" action="${row.delete_url}" class="inline">
@@ -545,11 +567,11 @@
                                     text: "{{ __('file.Export') }}",
                                     className: 'inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm',
                                     buttons: [
-                                        { extend: 'copy', exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] } },
-                                        { extend: 'excel', filename: 'Expenses_{{ date("Y-m-d") }}', exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] } },
-                                        { extend: 'csv', filename: 'Expenses_{{ date("Y-m-d") }}', exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] } },
-                                        { extend: 'pdf', filename: 'Expenses_{{ date("Y-m-d") }}', title: 'Expenses List', exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] } },
-                                        { extend: 'print', exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] } }
+                                        { extend: 'copy', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', filename: 'Expenses_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', filename: 'Expenses_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', filename: 'Expenses_{{ date("Y-m-d") }}', title: 'Expenses List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', exportOptions: { columns: ':not(.no-export)' } }
                                     ]
                                 }
                             ]
@@ -584,7 +606,8 @@
 
                 filterCategory.addEventListener('change', updateFilterCount);
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });
@@ -645,7 +668,7 @@
                             document.getElementById('drawer-reference').textContent = row.reference_no || '—';
                             document.getElementById('drawer-reference-no').textContent = row.reference_no || '—';
                             document.getElementById('drawer-category').textContent = row.category_name || '—';
-                            document.getElementById('drawer-amount').textContent = parseFloat(row.amount).toFixed(2);
+                            document.getElementById('drawer-amount').textContent = '{{ $currency_code }} ' + parseFloat(row.amount).toFixed(2);
                             document.getElementById('drawer-cash-register').textContent = row.cash_register_name || '—';
                             document.getElementById('drawer-user').textContent = row.user_name || '—';
                             document.getElementById('drawer-date').textContent = row.created_at || '—';
@@ -666,6 +689,7 @@
                 window.openAddDrawer = () => {
                     document.getElementById('add-form').reset();
                     document.getElementById('add-reference-no').value = 'EXP-' + Date.now();
+                    document.getElementById('add-expense-date').value = new Date().toISOString().split('T')[0];
                     openDrawer(addDrawer);
                 };
 
@@ -681,6 +705,7 @@
                             document.getElementById('edit-id').value = row.id;
                             document.getElementById('edit-drawer-title').textContent = row.reference_no || 'Edit Expense';
                             document.getElementById('edit-reference-no').value = row.reference_no || '';
+                            document.getElementById('edit-expense-date').value = row.expense_date || '';
                             document.getElementById('edit-category-id').value = row.expense_category_id || '';
                             document.getElementById('edit-amount').value = row.amount || '';
                             document.getElementById('edit-cash-register-id').value = row.cash_register_id || '';
@@ -696,6 +721,11 @@
 
                 window.closeEditDrawer = () => {
                     closeDrawer(editDrawer);
+                };
+
+                window.printExpense = id => {
+                    const url = `{{ route('expenses.print', ':id') }}`.replace(':id', id);
+                    window.location.href = url;
                 };
 
                 document.getElementById('add-form')?.addEventListener('submit', e => {
@@ -717,6 +747,9 @@
                                 table.draw(false);
                                 closeAddDrawer();
                                 if (typeof showNotification === 'function') showNotification('Success', data.message, 'success');
+                                if (data.expense_id) {
+                                    setTimeout(() => window.printExpense(data.expense_id), 800);
+                                }
                             } else {
                                 if (typeof showNotification === 'function') showNotification('Error', data.message, 'error');
                                 else alert(data.message);

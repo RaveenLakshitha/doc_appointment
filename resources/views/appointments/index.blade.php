@@ -62,7 +62,7 @@
                     @foreach($statuses as $value => $label)
                         <label class="inline-flex items-center cursor-pointer group">
                             <input type="checkbox" name="status[]" value="{{ $value }}"
-                                @if($value === \App\Models\Appointment::STATUS_PENDING && auth()->user()->hasAnyRole(['admin', 'primary_care_provider'])) checked @endif
+                                @if(in_array($value, [\App\Models\Appointment::STATUS_PENDING, \App\Models\Appointment::STATUS_APPROVED]) && auth()->user()->hasAnyRole(['admin', 'primary_care_provider'])) checked @endif
                                 class="status-checkbox w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 transition-colors">
                             <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
                                 {{ __('file.' . $label) }}
@@ -81,7 +81,7 @@
                     style="width:100%">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-6 py-3 text-left w-12 all">
+                            <th class="px-6 py-3 text-left w-12 all no-export">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -140,7 +140,7 @@
                             d.status = selectedStatuses;
                         }
                     },
-                    order: [[4, 'desc']], // Shifted due to new column
+                    order: [[0, 'desc']], 
                     columnDefs: [
                         { targets: [0, 1, 2, 3], responsivePriority: 1 },
                         { targets: -1, orderable: false, searchable: false, responsivePriority: 2 },
@@ -255,7 +255,8 @@
                     table.draw();
                 });
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

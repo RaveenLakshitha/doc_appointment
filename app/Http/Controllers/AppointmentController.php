@@ -68,7 +68,7 @@ class AppointmentController extends Controller
             $color = $colors[$doc->id % count($colors)];
             return [
                 $doc->id => [
-                    'name' => 'Dr. ' . $doc->full_name,
+                    'name' => $doc->full_name,
                     'spec' => $doc->primarySpecialization?->name ?? 'General Medicine',
                     'spec_id' => $doc->primary_specialization_id,
                     'dotClass' => $color
@@ -131,7 +131,7 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $query = Appointment::with(['patient', 'doctor', 'room'])
-            ->orderByDesc('scheduled_start');
+            ->orderByDesc('created_at');
 
         if (!auth()->user()->hasAnyRole(['admin', 'doctor', 'primary_care_provider'])) {
             $query->where('status', '!=', Appointment::STATUS_PENDING);
@@ -161,7 +161,7 @@ class AppointmentController extends Controller
         $doctorFilter = $request->input('doctor_id');
 
         $query = Appointment::query()
-            ->with(['patient', 'doctor', 'room'])
+            ->with(['patient', 'doctor', 'room', 'specialization'])
             ->select('appointments.*');
 
         // Handle "My Appointments" scoping
@@ -208,10 +208,16 @@ class AppointmentController extends Controller
 
         $filteredRecords = (clone $query)->count();
 
-        $columns = ['patient_name', 'doctor_name', 'scheduled_start', 'appointment_type', 'status', 'actions'];
+        $columns = ['id', 'appointment_number', 'patient_name', 'doctor_name', 'scheduled_start', 'status', 'actions'];
 
         if (isset($columns[$orderIdx])) {
             switch ($columns[$orderIdx]) {
+                case 'id':
+                    $query->orderBy('id', $orderDir);
+                    break;
+                case 'appointment_number':
+                    $query->orderBy('appointment_number', $orderDir);
+                    break;
                 case 'patient_name':
                     $query->join('patients', 'appointments.patient_id', '=', 'patients.id')
                         ->orderByRaw("CONCAT(patients.first_name, ' ', COALESCE(patients.middle_name,''), ' ', patients.last_name) {$orderDir}");
@@ -223,17 +229,14 @@ class AppointmentController extends Controller
                 case 'scheduled_start':
                     $query->orderBy('scheduled_start', $orderDir);
                     break;
-                case 'appointment_type':
-                    $query->orderBy('appointment_type', $orderDir);
-                    break;
                 case 'status':
                     $query->orderBy('status', $orderDir);
                     break;
                 default:
-                    $query->orderByDesc('scheduled_start');
+                    $query->orderByDesc('id');
             }
         } else {
-            $query->orderByDesc('scheduled_start');
+            $query->orderByDesc('id');
         }
 
         $appointments = $query->offset($start)->limit($length)->get();
@@ -253,9 +256,13 @@ class AppointmentController extends Controller
                     }
                 }
 
-                $scheduledDisplay = $start->format('M d, Y') . '<br><span class="text-xs text-gray-500">' . $timeDisplay . '</span>';
+                $duration = $appt->duration_minutes ?? ($appt->scheduled_end ? $start->diffInMinutes(Carbon::parse($appt->scheduled_end)) : null);
+                $scheduledDisplay = $start->format('M d, Y') . '<br><span class="text-xs font-semibold text-indigo-500">Time: ' . $start->format('h:i A') . '</span>';
+                if ($duration) {
+                    $scheduledDisplay .= '<br><span class="text-xs font-medium text-indigo-600">Duration: ' . $duration . ' min</span>';
+                }
                 if ($appt->room) {
-                    $scheduledDisplay .= '<br><span class="text-xs font-medium text-indigo-600">Room ' . $appt->room->room_number . '</span>';
+                    $scheduledDisplay .= '<br><span class="text-xs font-medium text-indigo-600">Room: ' . $appt->room->name . ' (' . $appt->room->room_number . ')</span>';
                 }
 
                 $scheduledClass = '';
@@ -278,7 +285,11 @@ class AppointmentController extends Controller
                 'id' => $appt->id,
                 'appointment_number' => $appt->appointment_number ?? '—',
                 'patient_name' => $appt->patient?->getFullNameAttribute() ?? '-',
-                'doctor_name' => $appt->doctor?->getFullNameAttribute() ?? '(Any Doctor)',
+                'doctor_name' => $appt->doctor
+                    ? $appt->doctor->getFullNameAttribute()
+                    : (__('file.any_therapist') ?? 'First Time Appointment') . ($appt->specialization ? ' — ' . $appt->specialization->name : ''),
+                'appointment_type' => $appt->appointment_type,
+                'specialization_name' => $appt->specialization?->name ?? null,
                 'scheduled_datetime' => $scheduledDisplay,
                 'room_number' => $appt->room?->room_number ?? '—',
                 'scheduled_class' => $scheduledClass,
@@ -309,9 +320,10 @@ class AppointmentController extends Controller
         $specializations = Specialization::orderBy('name')->get();
         $ageGroups = \App\Models\AgeGroup::orderBy('name')->get();
         $languages = \App\Models\OptionList::getOptions('language');
+        $rooms = \App\Models\Room::active()->get();
 
         $preferredTimeOptions = Appointment::getPreferredTimeOptions();
-        return view('appointments.create', compact('patients', 'specializations', 'ageGroups', 'languages', 'preferredTimeOptions'));
+        return view('appointments.create', compact('patients', 'specializations', 'ageGroups', 'languages', 'preferredTimeOptions', 'rooms'));
     }
 
     public function store(Request $request)
@@ -328,27 +340,85 @@ class AppointmentController extends Controller
             'reason_for_visit' => 'required|string|max:1000',
             'patient_notes' => 'nullable|string|max:2000',
             'scheduled_start' => 'nullable|date|after_or_equal:today',
-            'age_group_id' => 'nullable|exists:age_groups,id',
-            'preferred_language_id' => 'nullable|exists:option_lists,id',
-            'preferred_time' => 'nullable|string',
+            'date' => 'required_without:scheduled_start|date|after_or_equal:today',
+            'appointment_time' => 'required_without:scheduled_start|date_format:H:i',
+            'room_id' => 'nullable|exists:rooms,id',
+            'duration_minutes' => 'nullable|integer|in:15,30,45,60',
         ];
 
         if ($request->input('appointment_type') === Appointment::TYPE_SPECIFIC) {
             $rules['doctor_id'] = 'required|exists:doctors,id';
+            $rules['slot'] = 'nullable|string';
         } elseif ($request->input('appointment_type') === Appointment::TYPE_ANY) {
             $rules['specialization_id'] = 'required|exists:specializations,id';
         }
 
         $validated = $request->validate($rules);
 
-        if (!empty($validated['scheduled_start'])) {
-            $startCheck = Carbon::parse($validated['scheduled_start']);
-            if (\App\Models\Holiday::isHoliday($startCheck->format('Y-m-d'))) {
+        $start = null;
+        $end = null;
+
+        if (!empty($validated['date']) && !empty($validated['appointment_time'])) {
+            $start = Carbon::parse("{$validated['date']} {$validated['appointment_time']}");
+
+            $duration = (int) $request->input('duration_minutes', 15);
+            $end = $start->copy()->addMinutes($duration);
+
+            if ($request->input('appointment_type') === Appointment::TYPE_SPECIFIC && !empty($validated['slot'])) {
+                [$startTime, $endTime] = explode('|', $validated['slot']);
+                $slotStart = Carbon::parse("{$validated['date']} {$startTime}");
+                $slotEnd = Carbon::parse("{$validated['date']} {$endTime}");
+
+                if ($start->lt($slotStart) || $start->gt($slotEnd)) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => __('file.appointment_time_out_of_slot') ?? 'Appointment time must be within the selected slot.'], 422);
+                    }
+                    return back()->withErrors(['appointment_time' => __('file.appointment_time_out_of_slot') ?? 'Appointment time must be within the selected slot.'])->withInput();
+                }
+
+                if ($end->gt($slotEnd)) {
+                    $msg = __('file.appointment_duration_exceeds_slot') ?? 'The appointment duration exceeds the end of the selected time slot.';
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $msg], 422);
+                    }
+                    return back()->withErrors(['duration_minutes' => $msg])->withInput();
+                }
+            }
+        } elseif (!empty($validated['scheduled_start'])) {
+            $start = Carbon::parse($validated['scheduled_start']);
+            $duration = (int) $request->input('duration_minutes', 15);
+            $end = $start->copy()->addMinutes($duration);
+        }
+
+        // Room conflict check
+        if (!empty($validated['room_id']) && $start && $end) {
+            $busyRooms = $this->getBusyRooms($start, $end);
+            if (in_array($validated['room_id'], $busyRooms)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => __('file.room_occupied_at_this_time') ?? 'Selected room is already occupied during this time.'], 422);
+                }
+                return back()->withErrors(['room_id' => __('file.room_occupied_at_this_time') ?? 'Selected room is already occupied during this time.'])->withInput();
+            }
+        }
+
+        if ($start) {
+            if (\App\Models\Holiday::isHoliday($start->format('Y-m-d'))) {
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json(['success' => false, 'message' => __('file.cannot_schedule_on_holiday') ?? 'Cannot schedule appointment on a holiday.'], 422);
                 }
-                return back()->withErrors(['scheduled_start' => __('file.cannot_schedule_on_holiday') ?? 'Cannot schedule appointment on a holiday.'])->withInput();
+                $errorField = (!empty($validated['date']) && !empty($validated['slot'])) ? 'date' : 'scheduled_start';
+                return back()->withErrors([$errorField => __('file.cannot_schedule_on_holiday') ?? 'Cannot schedule appointment on a holiday.'])->withInput();
             }
+        }
+
+        $isFirstTime = !Appointment::where('patient_id', $validated['patient_id'])
+            ->where('status', '!=', Appointment::STATUS_CANCELLED)
+            ->where('status', '!=', Appointment::STATUS_REJECTED)
+            ->exists();
+
+        $status = Appointment::STATUS_PENDING;
+        if ($validated['appointment_type'] === Appointment::TYPE_SPECIFIC && !$isFirstTime) {
+            $status = Appointment::STATUS_APPROVED;
         }
 
         $appointment = Appointment::create([
@@ -356,20 +426,15 @@ class AppointmentController extends Controller
             'appointment_type' => $validated['appointment_type'],
             'reason_for_visit' => $validated['reason_for_visit'],
             'patient_notes' => $validated['patient_notes'] ?? null,
-            'status' => Appointment::STATUS_PENDING,
+            'status' => $status,
             'specialization_id' => $validated['specialization_id'] ?? null,
             'doctor_id' => $validated['doctor_id'] ?? null,
-            'age_group_id' => $validated['age_group_id'] ?? null,
-            'preferred_language_id' => $validated['preferred_language_id'] ?? null,
-            'preferred_time' => $validated['preferred_time'] ?? null,
+            'duration_minutes' => $validated['duration_minutes'] ?? 15,
         ]);
 
-        if (!empty($validated['scheduled_start'])) {
-            $start = Carbon::parse($validated['scheduled_start']);
-            $end = $start->copy()->addMinutes(30);
-
-            $roomId = null;
-            if (isset($validated['doctor_id'])) {
+        if ($start && $end) {
+            $roomId = $validated['room_id'] ?? null;
+            if (!$roomId && isset($validated['doctor_id'])) {
                 $roomId = $this->getRoomIdForAppointment($validated['doctor_id'], $start);
             }
 
@@ -378,6 +443,13 @@ class AppointmentController extends Controller
                 'scheduled_end' => $end,
                 'room_id' => $roomId,
             ]);
+
+            if ($status === Appointment::STATUS_APPROVED) {
+                if (!$this->processAppointmentApproval($appointment)) {
+                    // Fallback if approval fails (e.g. session key generation issues)
+                    $appointment->update(['status' => Appointment::STATUS_PENDING]);
+                }
+            }
         }
 
         $recipients = NotificationSetting::getRecipients('appointment_created');
@@ -436,10 +508,6 @@ class AppointmentController extends Controller
             'treatments' => fn($q) => $q->select('treatments.id', 'treatments.name', 'treatments.code'),
         ]);
 
-        $appointment->duration_minutes = $appointment->scheduled_start && $appointment->scheduled_end
-            ? $appointment->scheduled_start->diffInMinutes($appointment->scheduled_end)
-            : null;
-
         $treatments = collect();
         if ($appointment->doctor) {
             $treatments = $appointment->doctor
@@ -447,6 +515,35 @@ class AppointmentController extends Controller
                 ->where('active', true)
                 ->orderBy('name')
                 ->get();
+        }
+
+        // Fetch the doctor's schedule slot for the appointment date
+        $doctorSlot = null;
+        if ($appointment->doctor && $appointment->scheduled_start) {
+            $apptDate = $appointment->scheduled_start->copy();
+            $dayName = strtolower($apptDate->format('l'));
+
+            $schedule = $appointment->doctor->schedules()
+                ->where('is_active', true)
+                ->where(function ($q) use ($apptDate) {
+                    $q->whereNull('valid_from')->orWhere('valid_from', '<=', $apptDate);
+                })
+                ->where(function ($q) use ($apptDate) {
+                    $q->whereNull('valid_until')->orWhere('valid_until', '>=', $apptDate);
+                })
+                ->whereHas('days', fn($q) => $q->where('day_of_week', $dayName))
+                ->with(['days' => fn($q) => $q->where('day_of_week', $dayName)])
+                ->first();
+
+            if ($schedule) {
+                $daySchedule = $schedule->days->first();
+                if ($daySchedule && $daySchedule->start_time && $daySchedule->end_time) {
+                    $doctorSlot = [
+                        'start' => $apptDate->copy()->setTimeFromTimeString($daySchedule->start_time->format('H:i')),
+                        'end' => $apptDate->copy()->setTimeFromTimeString($daySchedule->end_time->format('H:i')),
+                    ];
+                }
+            }
         }
 
         $specializations = Specialization::orderBy('name')->get();
@@ -458,7 +555,8 @@ class AppointmentController extends Controller
             'specializations',
             'ageGroups',
             'treatments',
-            'currency_code'
+            'currency_code',
+            'doctorSlot'
         ));
     }
 
@@ -499,6 +597,7 @@ class AppointmentController extends Controller
         $rules = [
             'date' => 'nullable|date',
             'slot' => 'nullable|string',
+            'appointment_time' => 'nullable|date_format:H:i',
             'appointment_type' => [
                 'required',
                 Rule::in([
@@ -524,9 +623,8 @@ class AppointmentController extends Controller
             ],
             'treatment_ids' => 'nullable|array',
             'treatment_ids.*' => 'exists:treatments,id',
-            'age_group_id' => 'nullable|exists:age_groups,id',
-            'preferred_language_id' => 'nullable|exists:option_lists,id',
-            'preferred_time' => 'nullable|string',
+            'room_id' => 'nullable|exists:rooms,id',
+            'duration_minutes' => 'nullable|integer|in:15,30,45,60',
         ];
 
         $status = $request->input('status', $appointment->status);
@@ -535,6 +633,7 @@ class AppointmentController extends Controller
         if ($isApproved) {
             $rules['specialization_id'] = 'required|exists:specializations,id';
             $rules['doctor_id'] = 'required|exists:doctors,id';
+            $rules['room_id'] = 'required|exists:rooms,id';
             $rules['appointment_type'] = 'sometimes|string';
         } else {
             if ($request->input('appointment_type') === Appointment::TYPE_SPECIFIC) {
@@ -551,17 +650,40 @@ class AppointmentController extends Controller
         $start = $appointment->scheduled_start;
         $end = $appointment->scheduled_end;
 
-        if (!empty($validated['date']) && !empty($validated['slot']) && str_contains($validated['slot'], '|')) {
-            [$startTime, $endTime] = explode('|', $validated['slot']);
-            $start = Carbon::parse("{$validated['date']} {$startTime}");
-            $end = Carbon::parse("{$validated['date']} {$endTime}");
+        $providedDate = $validated['date'] ?? null;
+        $providedTime = $validated['appointment_time'] ?? null;
+        $providedSlot = $validated['slot'] ?? null;
+        $type = $validated['appointment_type'] ?? $appointment->appointment_type;
 
-            if ($end->lte($start)) {
-                return back()->withErrors(['slot' => 'End time must be after start time'])->withInput();
+        $duration = (int) $request->input('duration_minutes', $appointment->duration_minutes ?? 15);
+
+        if (!empty($providedDate) && !empty($providedTime)) {
+            $start = Carbon::parse("{$providedDate} {$providedTime}");
+            $end = $start->copy()->addMinutes($duration);
+
+            if ($type === Appointment::TYPE_SPECIFIC && !empty($providedSlot) && str_contains($providedSlot, '|')) {
+                [$startTime, $endTime] = explode('|', $providedSlot);
+                $slotStart = Carbon::parse("{$providedDate} {$startTime}");
+                $slotEnd = Carbon::parse("{$providedDate} {$endTime}");
+
+                if ($start->lt($slotStart) || $start->gt($slotEnd)) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => __('file.appointment_time_out_of_slot') ?? 'Appointment time must be within the selected slot.'], 422);
+                    }
+                    return back()->withErrors(['appointment_time' => __('file.appointment_time_out_of_slot') ?? 'Appointment time must be within the selected slot.'])->withInput();
+                }
+
+                if ($end->gt($slotEnd)) {
+                    $msg = __('file.appointment_duration_exceeds_slot') ?? 'The appointment duration exceeds the end of the selected time slot.';
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $msg], 422);
+                    }
+                    return back()->withErrors(['duration_minutes' => $msg])->withInput();
+                }
             }
-        } elseif (empty($validated['date']) || empty($validated['slot'])) {
-            $start = null;
-            $end = null;
+        } elseif ($start) {
+            // Recalculate end if start exists but only duration was changed
+            $end = $start->copy()->addMinutes($duration);
         }
 
         $checkDate = $start ? $start->format('Y-m-d') : null;
@@ -574,9 +696,16 @@ class AppointmentController extends Controller
 
         $oldStatus = $appointment->status;
 
-        $roomId = $appointment->room_id;
-        if (isset($validated['doctor_id']) && $start) {
-            $roomId = $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+        $roomId = $validated['room_id'] ?? $appointment->room_id;
+
+        if ($roomId && $start && $end) {
+            $busyRooms = $this->getBusyRooms($start, $end, $appointment->id);
+            if (in_array($roomId, $busyRooms)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => __('file.room_occupied_at_this_time') ?? 'Selected room is already occupied during this time.'], 422);
+                }
+                return back()->withErrors(['room_id' => __('file.room_occupied_at_this_time') ?? 'Selected room is already occupied during this time.'])->withInput();
+            }
         }
 
         $appointment->update([
@@ -590,10 +719,8 @@ class AppointmentController extends Controller
             'patient_notes' => $validated['patient_notes'] ?? $appointment->patient_notes,
             'admin_notes' => $validated['admin_notes'] ?? $appointment->admin_notes,
             'doctor_notes' => $validated['doctor_notes'] ?? $appointment->doctor_notes,
+            'duration_minutes' => $duration,
             'status' => $validated['status'] ?? $appointment->status,
-            'age_group_id' => $validated['age_group_id'] ?? $appointment->age_group_id,
-            'preferred_language_id' => $validated['preferred_language_id'] ?? $appointment->preferred_language_id,
-            'preferred_time' => $validated['preferred_time'] ?? $appointment->preferred_time,
         ]);
 
         // Notifications for status/doctor changes
@@ -648,53 +775,9 @@ class AppointmentController extends Controller
         }
 
         if (isset($validated['status']) && $validated['status'] === Appointment::STATUS_APPROVED && $oldStatus !== Appointment::STATUS_APPROVED) {
-            if (!$appointment->doctor_id || !$appointment->scheduled_start) {
+            if (!$this->processAppointmentApproval($appointment)) {
                 $appointment->update(['status' => $oldStatus]);
-                return back()->withErrors(['status' => 'Cannot approve without doctor and time slot'])->withInput();
-            }
-
-            $date = $appointment->scheduled_start->startOfDay();
-            $sessionKey = $this->generateSessionKey($appointment);
-
-            if (!$sessionKey) {
-                $appointment->update(['status' => $oldStatus]);
-                return back()->withErrors(['status' => 'Cannot generate session key'])->withInput();
-            }
-
-            try {
-                $queueNumber = DB::transaction(function () use ($appointment, $date, $sessionKey) {
-                    $queue = DoctorSessionQueue::lockForUpdate()
-                        ->firstOrCreate(
-                            [
-                                'doctor_id' => $appointment->doctor_id,
-                                'queue_date' => $date,
-                                'session_key' => $sessionKey,
-                            ],
-                            ['last_number' => 0]
-                        );
-
-                    $next = $queue->last_number + 1;
-                    $queue->update(['last_number' => $next]);
-
-                    return $next;
-                });
-
-                $year = now()->format('y');
-                $nextNum = Appointment::whereYear('created_at', now()->year)
-                    ->whereNotNull('appointment_number')
-                    ->count() + 1;
-                $appointmentNumber = sprintf("VN-%s-%06d", $year, $nextNum);
-
-                $appointment->update([
-                    'approved_at' => now(),
-                    'approved_by' => auth()->id(),
-                    'session_key' => $sessionKey,
-                    'queue_number' => $queueNumber,
-                    'appointment_number' => $appointmentNumber,
-                ]);
-            } catch (\Exception $e) {
-                $appointment->update(['status' => $oldStatus]);
-                return back()->withErrors(['status' => 'Approval process failed'])->withInput();
+                return back()->withErrors(['status' => 'Approval process failed (check doctor schedule/time)'])->withInput();
             }
         }
 
@@ -800,7 +883,7 @@ class AppointmentController extends Controller
 
             return [
                 'id' => $apt->id,
-                'title' => $patient . ' - Dr. ' . $doctor,
+                'title' => $patient . ' - ' . $doctor,
                 'start' => $start->toDateTimeString(),
                 'end' => $end->toDateTimeString(),
                 'url' => route('appointments.show', $apt),
@@ -832,6 +915,90 @@ class AppointmentController extends Controller
         ]));
     }
 
+    public function getSpecializationAvailability(Request $request)
+    {
+        $specId = $request->query('specialization_id');
+        $dateStr = $request->query('date');
+
+        if (!$specId || !$dateStr) {
+            return response()->json(['doctors' => []]);
+        }
+
+        $date = Carbon::parse($dateStr);
+        $dayName = strtolower($date->format('l'));
+
+        $doctors = Doctor::active()
+            ->where(function ($q) use ($specId) {
+                $q->where('primary_specialization_id', $specId)
+                    ->orWhereHas('specializations', function ($sq) use ($specId) {
+                        $sq->where('specializations.id', $specId);
+                    });
+            })
+            ->get();
+
+        $results = [];
+        foreach ($doctors as $doctor) {
+            $slots = [];
+
+            // Check leave
+            $employee = \App\Models\Employee::where('user_id', $doctor->user_id)->first();
+            $isOnLeave = false;
+            if ($employee) {
+                $isOnLeave = \App\Models\LeaveRequest::where('employee_id', $employee->id)
+                    ->where('status', 'approved')
+                    ->where('start_date', '<=', $date)
+                    ->where('end_date', '>=', $date)
+                    ->exists();
+            }
+
+            if (!$isOnLeave && !\App\Models\Holiday::isHoliday($date->format('Y-m-d'))) {
+                $schedules = $doctor->schedules()
+                    ->where('is_active', true)
+                    ->where(function ($q) use ($date) {
+                        $q->whereNull('valid_from')->orWhere('valid_from', '<=', $date);
+                    })
+                    ->where(function ($q) use ($date) {
+                        $q->whereNull('valid_until')->orWhere('valid_until', '>=', $date);
+                    })
+                    ->with([
+                        'days' => function ($q) use ($dayName) {
+                            $q->where('day_of_week', $dayName);
+                        }
+                    ])
+                    ->get();
+
+                foreach ($schedules as $schedule) {
+                    $daySchedule = $schedule->days->first();
+                    if (!$daySchedule || !$daySchedule->start_time || !$daySchedule->end_time)
+                        continue;
+
+                    $start = $date->copy()->setTimeFromTimeString($daySchedule->start_time->format('H:i'));
+                    $end = $date->copy()->setTimeFromTimeString($daySchedule->end_time->format('H:i'));
+
+                    $slots[] = [
+                        'start' => $start->format('H:i'),
+                        'end' => $end->format('H:i'),
+                        'label' => $start->format('g:i A') . ' - ' . $end->format('g:i A')
+                    ];
+                }
+                usort($slots, fn($a, $b) => strcmp($a['start'], $b['start']));
+            }
+
+            $results[] = [
+                'id' => $doctor->id,
+                'name' => 'Dr. ' . $doctor->full_name,
+                'slots' => $slots,
+                'on_leave' => $isOnLeave
+            ];
+        }
+
+        return response()->json([
+            'doctors' => $results,
+            'day_name' => $date->translatedFormat('l'),
+            'date_label' => $date->translatedFormat('d M Y')
+        ]);
+    }
+
     public function getAllDoctors()
     {
         $doctors = Doctor::active()
@@ -849,11 +1016,17 @@ class AppointmentController extends Controller
         $specializationId = $request->query('specialization_id');
         $ageGroupId = $request->query('age_group_id');
         $languageId = $request->query('preferred_language_id');
+        $date = $request->query('date');
 
         $query = Doctor::active();
 
         if ($specializationId) {
-            $query->where('primary_specialization_id', $specializationId);
+            $query->where(function ($q) use ($specializationId) {
+                $q->where('primary_specialization_id', $specializationId)
+                    ->orWhereHas('specializations', function ($sq) use ($specializationId) {
+                        $sq->where('specializations.id', $specializationId);
+                    });
+            });
         }
 
         if ($ageGroupId) {
@@ -867,6 +1040,10 @@ class AppointmentController extends Controller
                 $q->where('option_lists.id', $languageId);
             });
         }
+
+        // We don't filter the doctor list by date/schedule here anymore to ensure
+        // therapists load even if their specific availability isn't yet active for the selected date.
+        // The modal's 'available days' buttons will handle the next step of selection.
 
         $doctors = $query->orderByFullName()
             ->get(['id', 'first_name', 'middle_name', 'last_name']);
@@ -929,7 +1106,8 @@ class AppointmentController extends Controller
                 if ($schedule->valid_until && $date->gt(Carbon::parse($schedule->valid_until)->endOfDay()))
                     continue;
 
-                if ($schedule->days->contains('day_of_week', $dayName)) {
+                $dayRecord = $schedule->days->where('day_of_week', $dayName)->first();
+                if ($dayRecord && $dayRecord->start_time && $dayRecord->end_time) {
                     $hasSchedule = true;
                     break;
                 }
@@ -949,6 +1127,44 @@ class AppointmentController extends Controller
         return response()->json([
             'days' => $availableDays
         ]);
+    }
+
+    public function checkAvailability(Doctor $doctor, Request $request)
+    {
+        $date = $request->query('date');
+        if (!$date) {
+            return response()->json(['status' => 'available']);
+        }
+
+        $carbonDate = Carbon::parse($date);
+        $dateString = $carbonDate->format('Y-m-d');
+
+        // Check if it's a holiday
+        if (\App\Models\Holiday::isHoliday($dateString)) {
+            return response()->json([
+                'status' => 'holiday',
+                'message' => __('file.cannot_schedule_on_holiday') ?? 'The selected date is a holiday.'
+            ]);
+        }
+
+        // Check if the doctor is on leave
+        $employee = \App\Models\Employee::where('user_id', $doctor->user_id)->first();
+        if ($employee) {
+            $isOnLeave = \App\Models\LeaveRequest::where('employee_id', $employee->id)
+                ->where('status', 'approved')
+                ->where('start_date', '<=', $dateString)
+                ->where('end_date', '>=', $dateString)
+                ->exists();
+
+            if ($isOnLeave) {
+                return response()->json([
+                    'status' => 'leave',
+                    'message' => __('file.doctor_on_leave') ?? 'The doctor is on leave on the selected date.'
+                ]);
+            }
+        }
+
+        return response()->json(['status' => 'available']);
     }
 
     public function availableSlots(Request $request, Doctor $doctor)
@@ -1015,8 +1231,20 @@ class AppointmentController extends Controller
 
         usort($slots, fn($a, $b) => strcmp($a['start'], $b['start']));
 
+        $appointments = \App\Models\Appointment::with([])->where('doctor_id', $doctor->id)
+            ->whereDate('scheduled_start', $date)
+            ->whereIn('status', [\App\Models\Appointment::STATUS_APPROVED, \App\Models\Appointment::STATUS_RUNNING, \App\Models\Appointment::STATUS_COMPLETED])
+            ->get(['scheduled_start', 'scheduled_end', 'status', 'duration_minutes']);
+
         return response()->json([
             'slots' => $slots,
+            'appointments' => $appointments->map(fn($a) => [
+                'start' => $a->scheduled_start->format('H:i'),
+                'end' => $a->duration_minutes 
+                    ? $a->scheduled_start->copy()->addMinutes($a->duration_minutes)->format('H:i')
+                    : ($a->scheduled_end ? $a->scheduled_end->format('H:i') : null),
+                'status' => $a->status,
+            ]),
             'message' => $slots ? null : 'No schedule found for this date'
         ]);
     }
@@ -1032,12 +1260,28 @@ class AppointmentController extends Controller
             'doctor_id' => 'required|exists:doctors,id',
             'date' => 'required|date|after_or_equal:today',
             'slot' => 'required|string',
+            'room_id' => 'nullable|exists:rooms,id',
         ]);
 
         [$startTime, $endTime] = explode('|', $validated['slot']);
 
+        $durationMinutes = (int) $request->input('duration_minutes', $appointment->duration_minutes ?? 15);
         $start = Carbon::parse("{$validated['date']} {$startTime}");
-        $end = Carbon::parse("{$validated['date']} {$endTime}");
+        $slotEnd = Carbon::parse("{$validated['date']} {$endTime}");
+        $end = $start->copy()->addMinutes($durationMinutes);
+
+        if ($end->gt($slotEnd)) {
+            return back()->withErrors(['duration_minutes' => __('file.appointment_duration_exceeds_slot') ?? 'The appointment duration exceeds the end of the selected time slot.'])->withInput();
+        }
+
+        $roomId = $validated['room_id'] ?? $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+
+        if ($roomId) {
+            $busyRooms = $this->getBusyRooms($start, $end, $appointment->id);
+            if (in_array($roomId, $busyRooms)) {
+                return back()->with('error', __('file.room_occupied_at_this_time') ?? 'Selected room is already occupied during this time.');
+            }
+        }
 
         if (\App\Models\Holiday::isHoliday($start->format('Y-m-d'))) {
             return back()->with('error', __('file.cannot_schedule_on_holiday') ?? 'Cannot assign appointment on a holiday.');
@@ -1061,11 +1305,13 @@ class AppointmentController extends Controller
             'specialization_id' => $validated['specialization_id'],
             'scheduled_start' => $start,
             'scheduled_end' => $end,
+            'duration_minutes' => $durationMinutes,
+            'room_id' => $roomId,
         ]);
 
         NotificationService::send('appointment_assigned', new AppointmentAssigned($appointment), array_filter([$appointment->doctor?->user]));
 
-        return back()->with('success', __('file.doctor_time_slot_assigned'));
+        return redirect()->route('appointments.index')->with('success', __('file.doctor_time_slot_assigned'));
     }
 
     public function assignAndApprove(Request $request, Appointment $appointment)
@@ -1084,11 +1330,22 @@ class AppointmentController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'slot' => 'required|string',
             'age_group_id' => 'nullable|exists:age_groups,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'appointment_time' => 'required|date_format:H:i',
+            'duration_minutes' => 'nullable|integer|in:15,30,45,60',
         ]);
 
-        [$startTime, $endTime] = explode('|', $validated['slot']);
+        $durationMinutes = (int) ($validated['duration_minutes'] ?? $appointment->duration_minutes ?? 15);
+
+        // Use the specific appointment time provided, or fall back to slot start if somehow missing
+        $startTime = $validated['appointment_time'] ?? explode('|', $validated['slot'])[0];
+        $slotEnd = Carbon::parse("{$validated['date']} " . explode('|', $validated['slot'])[1]);
         $start = Carbon::parse("{$validated['date']} {$startTime}");
-        $end = Carbon::parse("{$validated['date']} {$endTime}");
+        $end = $start->copy()->addMinutes($durationMinutes);
+
+        if ($end->gt($slotEnd)) {
+            return back()->with('error', __('file.appointment_duration_exceeds_slot') ?? 'The appointment duration exceeds the end of the selected time slot.');
+        }
 
         if (\App\Models\Holiday::isHoliday($start->format('Y-m-d'))) {
             return back()->with('error', __('file.cannot_schedule_on_holiday') ?? 'Cannot assign and approve appointment on a holiday.');
@@ -1109,7 +1366,14 @@ class AppointmentController extends Controller
 
         DB::beginTransaction();
         try {
-            $roomId = $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+            $roomId = $request->filled('room_id') ? $validated['room_id'] : $this->getRoomIdForAppointment($validated['doctor_id'], $start);
+
+            if ($roomId) {
+                $busyRooms = $this->getBusyRooms($start, $end, $appointment->id);
+                if (in_array($roomId, $busyRooms)) {
+                    throw new \Exception(__('file.room_occupied_at_this_time') ?? 'Selected room is already occupied during this time.');
+                }
+            }
 
             $updateData = [
                 'doctor_id' => $validated['doctor_id'],
@@ -1117,6 +1381,7 @@ class AppointmentController extends Controller
                 'scheduled_start' => $start,
                 'scheduled_end' => $end,
                 'room_id' => $roomId,
+                'duration_minutes' => $durationMinutes,
             ];
 
             if (isset($validated['age_group_id'])) {
@@ -1124,6 +1389,9 @@ class AppointmentController extends Controller
             }
 
             $appointment->update($updateData);
+
+            // Reload doctor + schedules — the relation is stale after update() when no doctor was assigned before
+            $appointment->load(['doctor.schedules.days']);
 
             $date = $appointment->scheduled_start->startOfDay();
             $sessionKey = $this->generateSessionKey($appointment);
@@ -1145,11 +1413,7 @@ class AppointmentController extends Controller
             $queueNumber = $queue->last_number + 1;
             $queue->update(['last_number' => $queueNumber]);
 
-            $year = now()->format('y');
-            $nextNum = Appointment::whereYear('created_at', now()->year)
-                ->whereNotNull('appointment_number')
-                ->count() + 1;
-            $appointmentNumber = sprintf("VN-%s-%06d", $year, $nextNum);
+            $appointmentNumber = Appointment::generateNextAppointmentNumber();
 
             $appointment->update([
                 'status' => Appointment::STATUS_APPROVED,
@@ -1165,7 +1429,7 @@ class AppointmentController extends Controller
             NotificationService::send('appointment_assigned', new AppointmentAssigned($appointment), array_filter([$appointment->doctor?->user]));
             NotificationService::send('appointment_approved', new AppointmentApproved($appointment), array_filter([$appointment->doctor?->user]));
 
-            return back()->with('success', __('file.appointment_assigned_and_approved'));
+            return redirect()->route('appointments.index')->with('success', __('file.appointment_assigned_and_approved'));
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', $e->getMessage() ?: __('file.appointment_approval_failed'));
@@ -1211,11 +1475,7 @@ class AppointmentController extends Controller
                 return $next;
             });
 
-            $year = now()->format('y');
-            $nextNum = Appointment::whereYear('created_at', now()->year)
-                ->whereNotNull('appointment_number')
-                ->count() + 1;
-            $appointmentNumber = sprintf("VN-%s-%06d", $year, $nextNum);
+            $appointmentNumber = Appointment::generateNextAppointmentNumber();
 
             $appointment->update([
                 'status' => Appointment::STATUS_APPROVED,
@@ -1228,7 +1488,7 @@ class AppointmentController extends Controller
 
             NotificationService::send('appointment_approved', new AppointmentApproved($appointment), array_filter([$appointment->doctor?->user]));
 
-            return back()->with('success', __('file.appointment_approved'));
+            return redirect()->route('appointments.index')->with('success', __('file.appointment_approved'));
         } catch (\Exception $e) {
             return back()->with('error', __('file.appointment_approval_failed'));
         }
@@ -1383,6 +1643,55 @@ class AppointmentController extends Controller
             ->route('appointments.show', $appointment)
             ->with('success', __('file.treatments_updated_successfully'));
     }
+    private function processAppointmentApproval(Appointment $appointment): bool
+    {
+        if (!$appointment->doctor_id || !$appointment->scheduled_start) {
+            return false;
+        }
+
+        $date = $appointment->scheduled_start->startOfDay();
+        $sessionKey = $this->generateSessionKey($appointment);
+
+        if (!$sessionKey) {
+            return false;
+        }
+
+        try {
+            $queueNumber = DB::transaction(function () use ($appointment, $date, $sessionKey) {
+                $queue = \App\Models\DoctorSessionQueue::lockForUpdate()
+                    ->firstOrCreate(
+                        [
+                            'doctor_id' => $appointment->doctor_id,
+                            'queue_date' => $date,
+                            'session_key' => $sessionKey,
+                        ],
+                        ['last_number' => 0]
+                    );
+
+                $next = $queue->last_number + 1;
+                $queue->update(['last_number' => $next]);
+
+                return $next;
+            });
+
+            $appointmentNumber = Appointment::generateNextAppointmentNumber();
+
+            $appointment->update([
+                'status' => Appointment::STATUS_APPROVED,
+                'approved_at' => now(),
+                'approved_by' => auth()->id(),
+                'session_key' => $sessionKey,
+                'queue_number' => $queueNumber,
+                'appointment_number' => $appointmentNumber,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error("Appointment Approval Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
 
     private function generateSessionKey(Appointment $appointment): ?string
     {
@@ -1412,28 +1721,7 @@ class AppointmentController extends Controller
 
     private function getRoomIdForAppointment(int $doctorId, Carbon $start): ?int
     {
-        $apptDate = $start->clone()->startOfDay();
-        $apptDay = $start->englishDayOfWeek;
-
-        $schedule = \App\Models\DoctorSchedule::where('doctor_id', $doctorId)
-            ->where('is_active', true)
-            ->where(function ($q) use ($apptDate) {
-                $q->whereDate('valid_from', '<=', $apptDate)->orWhereNull('valid_from');
-            })
-            ->where(function ($q) use ($apptDate) {
-                $q->whereDate('valid_until', '>=', $apptDate)->orWhereNull('valid_until');
-            })
-            ->with([
-                'days' => function ($q) use ($apptDay) {
-                    $q->where('day_of_week', $apptDay);
-                }
-            ])
-            ->first();
-
-        if ($schedule && $schedule->days->isNotEmpty()) {
-            return $schedule->days->first()->room_id;
-        }
-
+        // room_id was removed from doctor_schedule_days; no automatic room can be derived from schedule.
         return null;
     }
 
@@ -1441,7 +1729,7 @@ class AppointmentController extends Controller
     {
         $apptTime = $appointment->scheduled_start->format('H:i:s');
         $apptDate = $appointment->scheduled_start->startOfDay();
-        $apptDay = $appointment->scheduled_start->englishDayOfWeek;
+        $apptDay = strtolower($appointment->scheduled_start->englishDayOfWeek); // stored lowercase in DB
 
         $schedules = $appointment->doctor
             ->schedules()
@@ -1462,13 +1750,13 @@ class AppointmentController extends Controller
         }
 
         $sorted = $schedules->sortBy(function ($s) use ($apptDay) {
-            $day = $s->days->where('day_of_week', strtolower($apptDay))->first();
+            $day = $s->days->where('day_of_week', $apptDay)->first();
             return $day && $day->start_time ? $day->start_time->format('H:i:s') : '23:59:59';
         });
 
         $index = 0;
         foreach ($sorted as $schedule) {
-            $day = $schedule->days->where('day_of_week', strtolower($apptDay))->first();
+            $day = $schedule->days->where('day_of_week', $apptDay)->first();
             if (!$day || !$day->start_time || !$day->end_time)
                 continue;
 
@@ -1508,21 +1796,57 @@ class AppointmentController extends Controller
             'patient_id' => $appt->patient_id,
             'patient_mrn' => $patient?->medical_record_number ?? '—',
             'patient_dob' => $patient?->date_of_birth ? Carbon::parse($patient->date_of_birth)->format('d M Y') : '—',
-            'patient_age' => $patient?->date_of_birth ? Carbon::parse($patient->date_of_birth)->age : '—',
+            'patient_age' => $patient?->age !== null ? (int) $patient->age : ($patient?->date_of_birth ? Carbon::parse($patient->date_of_birth)->age : '—'),
             'contact' => $patient?->phone ?? '',
             'date' => $appt->scheduled_start?->toDateString() ?? '',
             'time' => $appt->scheduled_start?->format('H:i') ?? '',
             'start_time' => $appt->scheduled_start?->format('H:i') ?? '',
             'end_time' => $appt->scheduled_end?->format('H:i') ?? '',
+            'appt_time_label' => (function () use ($appt): string{
+                if (!$appt->scheduled_start)
+                    return '—';
+                $start = $appt->scheduled_start;
+                $dur = $appt->duration_minutes ?? null;
+                if ($dur) {
+                    return $start->format('g:i A') . ' – ' . $start->copy()->addMinutes($dur)->format('g:i A');
+                }
+                return $start->format('g:i A');
+            })(),
             'slot_val' => $appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->format('H:i') . '|' . $appt->scheduled_end->format('H:i') : '',
-            'slot_label' => $appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->format('g:i A') . ' – ' . $appt->scheduled_end->format('g:i A') : ($appt->scheduled_start?->format('g:i A') ?? '—'),
+            'slot_label' => (function () use ($appt): string{
+                if (!$appt->doctor || !$appt->scheduled_start) {
+                    return $appt->scheduled_start && $appt->scheduled_end
+                        ? $appt->scheduled_start->format('g:i A') . ' – ' . $appt->scheduled_end->format('g:i A')
+                        : ($appt->scheduled_start?->format('g:i A') ?? '—');
+                }
+                $apptDate = $appt->scheduled_start->copy();
+                $dayName = strtolower($apptDate->format('l'));
+                $schedule = $appt->doctor->schedules()
+                    ->where('is_active', true)
+                    ->where(fn($q) => $q->whereNull('valid_from')->orWhere('valid_from', '<=', $apptDate))
+                    ->where(fn($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $apptDate))
+                    ->whereHas('days', fn($q) => $q->where('day_of_week', $dayName))
+                    ->with(['days' => fn($q) => $q->where('day_of_week', $dayName)])
+                    ->first();
+                if ($schedule) {
+                    $day = $schedule->days->first();
+                    if ($day && $day->start_time && $day->end_time) {
+                        $slotStart = $apptDate->copy()->setTimeFromTimeString($day->start_time->format('H:i'));
+                        $slotEnd = $apptDate->copy()->setTimeFromTimeString($day->end_time->format('H:i'));
+                        return $slotStart->format('g:i A') . ' – ' . $slotEnd->format('g:i A');
+                    }
+                }
+                return $appt->scheduled_start && $appt->scheduled_end
+                    ? $appt->scheduled_start->format('g:i A') . ' – ' . $appt->scheduled_end->format('g:i A')
+                    : ($appt->scheduled_start?->format('g:i A') ?? '—');
+            })(),
             'attended_psychotherapy' => (bool) $patient?->attended_psychotherapy,
-            'preferred_session_time' => $patient?->preferred_session_time,
+            'preferred_session_time' => $patient?->preferred_session_time ? date('h:i A', strtotime($patient->preferred_session_time)) : null,
             'recommended_by' => $patient?->recommended_by,
             'patient_document' => $patient?->document,
-            'duration' => $appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->diffInMinutes($appt->scheduled_end) : 30,
+            'duration' => $appt->duration_minutes ?? ($appt->scheduled_start && $appt->scheduled_end ? $appt->scheduled_start->diffInMinutes($appt->scheduled_end) : 15),
             'doctor_id' => $appt->doctor_id,
-            'doctor_name' => $doctor ? 'Dr. ' . $doctor->full_name : 'Not Assigned',
+            'doctor_name' => $doctor ? $doctor->full_name : 'Not Assigned',
             'doctor_email' => $appt->doctor?->email ?? '—',
             'doctor_spec' => $appt->doctor?->primarySpecialization?->name ?? '—',
             'room' => $appt->room?->room_number ? 'Room ' . $appt->room->room_number : 'Room —',
@@ -1630,6 +1954,58 @@ class AppointmentController extends Controller
         }
 
         return back()->with('success', __('file.appointment_bulk_deleted_successfully'));
+    }
+
+    public function checkRoomAvailability(Request $request)
+    {
+        $date = $request->query('date');
+        $time = $request->query('time');
+        $duration = (int) $request->query('duration', 30);
+        $excludeId = $request->query('exclude_id');
+
+        if (!$date || !$time) {
+            return response()->json(['busy_rooms' => []]);
+        }
+
+        try {
+            $start = Carbon::parse("$date $time");
+            $end = $start->copy()->addMinutes($duration);
+            $busyRooms = $this->getBusyRooms($start, $end, $excludeId);
+            
+            return response()->json(['busy_rooms' => $busyRooms]);
+        } catch (\Exception $e) {
+            return response()->json(['busy_rooms' => [], 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Get rooms that are already occupied by either a therapist's shift or another appointment.
+     */
+    private function getBusyRooms(Carbon $start, Carbon $end, ?int $excludeAppointmentId = null): array
+    {
+        $date = $start->toDateString();
+        $startTimeStr = $start->format('H:i:s');
+        $endTimeStr = $end->format('H:i:s');
+        $dayOfWeek = strtolower($start->englishDayOfWeek);
+
+        // room_id was dropped from doctor_schedule_days; shift-based room occupancy is no longer tracked there.
+        $shiftBusyRooms = [];
+
+        // 2. Rooms occupied by other appointments
+        $appointmentBusyRooms = Appointment::whereDate('scheduled_start', $date)
+            ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_APPROVED, Appointment::STATUS_RUNNING])
+            ->whereNotNull('room_id')
+            ->when($excludeAppointmentId, function ($q) use ($excludeAppointmentId) {
+                $q->where('id', '!=', $excludeAppointmentId);
+            })
+            ->where(function ($q) use ($start, $end) {
+                $q->where('scheduled_start', '<', $end)
+                  ->where('scheduled_end', '>', $start);
+            })
+            ->pluck('room_id')
+            ->toArray();
+
+        return array_values(array_unique(array_merge($shiftBusyRooms, $appointmentBusyRooms)));
     }
 }
 

@@ -156,7 +156,7 @@
                                         class="h-5 w-5 text-gray-900 focus:ring-gray-900 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
                                         {{ ($currentRole ?? old('role')) === $role->name ? 'checked' : '' }}>
                                     <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-200">
-                                        {{ ucfirst(str_replace('-', ' ', $role->name)) }}
+                                        {{ \Illuminate\Support\Facades\Lang::has('file.role_' . \Str::slug($role->name, '_')) ? __('file.role_' . \Str::slug($role->name, '_')) : ucfirst(str_replace('-', ' ', $role->name)) }}
                                     </span>
                                     <span
                                         class="absolute inset-0 rounded-lg pointer-events-none border-2 border-transparent group-has-[:checked]:border-gray-900 dark:group-has-[:checked]:border-gray-300 transition-all"></span>

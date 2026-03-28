@@ -33,7 +33,7 @@ class DoctorPanelPrescriptionController extends Controller
             ->where('doctor_id', $doctor->id)
             ->whereDate('scheduled_start', $date)
             ->whereIn('status', [Appointment::STATUS_APPROVED, Appointment::STATUS_RUNNING, Appointment::STATUS_PAID])
-            ->with(['patient' => fn($q) => $q->select('id', 'first_name', 'middle_name', 'last_name')])
+            ->with(['patient' => fn($q) => $q->select('id', 'first_name', 'middle_name', 'last_name'), 'room'])
             ->orderBy('session_key')
             ->orderByRaw("CASE WHEN status = 'running' THEN 0 ELSE 1 END")
             ->orderBy('queue_number')
@@ -44,6 +44,8 @@ class DoctorPanelPrescriptionController extends Controller
         $queues = $appointments->groupBy('session_key')->map(function ($group) {
             return [
                 'session_key' => $group->first()->session_key,
+                'room_code' => $group->first()->room?->room_number,
+                'room_name' => $group->first()->room?->name,
                 'patients' => $group->map(fn($appt) => [
                     'queue_number' => $appt->queue_number,
                     'patient_name' => $appt->patient?->getFullNameAttribute() ?? '-',

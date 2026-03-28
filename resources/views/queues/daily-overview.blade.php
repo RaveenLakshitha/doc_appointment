@@ -19,7 +19,7 @@
                         class="w-full sm:w-auto px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white [color-scheme:light] dark:[color-scheme:dark] transition-shadow">
 
                     <select name="doctor_id"
-                        class="w-full sm:w-48 px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-gray-300 transition-shadow bg-white dark:bg-gray-800">
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
                         <option value="">{{ __('file.all_doctors') ?? 'All Doctors' }}</option>
                         @foreach($doctors as $doc)
                             <option value="{{ $doc->id }}" {{ $selectedDoctor == $doc->id ? 'selected' : '' }}>
@@ -29,7 +29,7 @@
                     </select>
 
                     <select name="room_id"
-                        class="w-full sm:w-48 px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-gray-300 transition-shadow bg-white dark:bg-gray-800">
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
                         <option value="">{{ __('file.all_rooms') ?? 'All Rooms' }}</option>
                         @foreach($rooms as $room)
                             <option value="{{ $room->id }}" {{ $selectedRoom == $room->id ? 'selected' : '' }}>
@@ -63,8 +63,15 @@
                                 </h2>
                                 <p class="text-base text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
                                     <span>{{ $session['doctor_name'] }}</span>
-                                    @if($session['room_name'])
-                                        <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-md">{{ $session['room_name'] }}</span>
+                                    @if($session['room_name'] || isset($session['room_code']))
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-700/10 dark:ring-indigo-700/30">
+                                            <i class="mdi mdi-door-open mr-1.5 opacity-70 text-sm"></i>
+                                            @if($session['room_code'])
+                                                <span class="opacity-70 mr-1">{{ $session['room_code'] }}:</span>
+                                            @endif
+                                            {{ $session['room_name'] ?? '-' }}
+                                        </span>
                                     @endif
                                 </p>
                             </div>
@@ -106,16 +113,14 @@
                                         @endphp
                                         <form action="{{ route('queues.start', $patient['id']) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit"
-                                                {{ $docRunning ? 'disabled' : '' }}
+                                            <button type="submit" {{ $docRunning ? 'disabled' : '' }}
                                                 class="{{ $docRunning ? 'text-gray-400 cursor-not-allowed' : 'text-amber-600 hover:text-amber-800' }} p-1 font-medium text-sm flex items-center gap-1.5"
                                                 title="{{ __('file.call_in') }}">
                                                 <i class="fas fa-bullhorn text-xs"></i> {{ __('file.call_in') }}
                                             </button>
                                         </form>
                                     @elseif($patient['status'] === \App\Models\Appointment::STATUS_RUNNING)
-                                        <span
-                                            class="text-xs font-bold text-amber-600 uppercase">{{ __('file.currently_serving') }}</span>
+                                        <span class="text-xs font-bold text-amber-600 uppercase">{{ __('file.currently_serving') }}</span>
                                     @endif
 
                                     <form action="{{ route('queues.update-queue', $patient['id']) }}" method="POST"

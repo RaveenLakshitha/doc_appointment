@@ -103,7 +103,7 @@
 
             <div class="w-full lg:col-span-8">
                 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-                    x-data="{ activeTab: 'profile' }">
+                    x-data="{ activeTab: new URLSearchParams(location.search).get('tab') || 'profile' }">
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <!-- Mobile Tab Selector (Visible only on mobile) -->
                         <div class="sm:hidden p-4 bg-white dark:bg-gray-800">
@@ -402,9 +402,9 @@
                         </div>
 
                         <div x-show="activeTab === 'appointments'" x-cloak>
-                            @if($doctor->appointments->isNotEmpty())
+                            @if($appointments->isNotEmpty())
                                 <div class="space-y-3">
-                                    @foreach($doctor->appointments as $appointment)
+                                    @foreach($appointments as $appointment)
                                         <div
                                             class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600">
                                             <div>
@@ -423,19 +423,18 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                <div class="mt-4">
+                                    {{ $appointments->appends(request()->except('appointments_page') + ['tab' => 'appointments'])->links() }}
+                                </div>
                             @else
                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('file.no_appointments_found') }}</p>
                             @endif
                         </div>
 
                         <div x-show="activeTab === 'patients'" x-cloak>
-                            @php
-                                $uniquePatients = $doctor->appointments->map(fn($a) => $a->patient)->unique('id');
-                            @endphp
-
-                            @if($uniquePatients->isNotEmpty())
+                            @if($patients->isNotEmpty())
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    @foreach($uniquePatients as $patient)
+                                    @foreach($patients as $patient)
                                         <div
                                             class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600">
                                             <div class="flex items-center gap-3">
@@ -459,6 +458,9 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                <div class="mt-4">
+                                    {{ $patients->appends(request()->except('patients_page') + ['tab' => 'patients'])->links() }}
+                                </div>
                             @else
                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('file.no_patients_found') }}</p>
                             @endif
@@ -468,19 +470,18 @@
                             @if($doctor->schedules->isNotEmpty())
                                 <div class="space-y-3">
                                     @foreach($doctor->schedules as $schedule)
-                                        <div
-                                            class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600">
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                                                {{ implode(', ', $schedule->days_of_week) }}
-                                            </p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ $schedule->start_time->format('h:i A') }} -
-                                                {{ $schedule->end_time->format('h:i A') }}
-                                            </p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                {{ __('file.room') }}: {{ $schedule->room?->name ?? '—' }}
-                                            </p>
-                                        </div>
+                                        @foreach($schedule->days as $day)
+                                            <div
+                                                class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600 mb-2">
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white mb-1 capitalize">
+                                                    {{ $day->day_of_week }}
+                                                </p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ $day->start_time ? $day->start_time->format('h:i A') : '—' }} -
+                                                    {{ $day->end_time ? $day->end_time->format('h:i A') : '—' }}
+                                                </p>
+                                            </div>
+                                        @endforeach
                                     @endforeach
                                 </div>
                             @else

@@ -83,7 +83,7 @@
                 {{-- ==== COUNTER ==== --}}
                 @role('counter')
                 <x-sidebar-link href="{{ route('counter.invoices.index') }}">
-                    <x-icon name="file-invoice" /> Issue Invoice
+                    <x-icon name="file-invoice" /> Issue Bill
                 </x-sidebar-link>
                 @endrole
 

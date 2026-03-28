@@ -13,14 +13,16 @@ class DoctorSchedule extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'doctor_id', 'valid_from', 'valid_until', 'is_active'
+        'doctor_id', 'valid_from', 'valid_until', 'session_durations', 'is_active'
     ];
 
     protected $casts = [
         'valid_from' => 'date',
         'valid_until' => 'date',
+        'session_durations' => 'array',
         'is_active' => 'boolean',
     ];
+
 
     public function doctor(): BelongsTo
     {

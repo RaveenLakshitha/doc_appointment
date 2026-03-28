@@ -35,7 +35,7 @@ class DoctorPanelCalendarController extends Controller
 
 
         $events = $appointments->map(function ($appt) {
-            $doctorName = Auth::user()->full_name ?? Auth::user()->name ?? 'Dr. You';
+            $doctorName = Auth::user()->full_name ?? Auth::user()->name ?? 'You';
 
             return [
                 'id' => $appt->id,

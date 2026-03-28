@@ -146,6 +146,13 @@ class CategoryController extends Controller
             Category::create($validated);
         }
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('file.category_created_successfully')
+            ]);
+        }
+
         return redirect()->route('categories.index')
             ->with('success', __('file.category_created_successfully'));
     }

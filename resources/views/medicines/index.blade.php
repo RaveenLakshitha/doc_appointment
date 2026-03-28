@@ -129,7 +129,7 @@
                     style="width:100%">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -157,7 +157,7 @@
                                 {{ __('Status') }}
                             </th>
                             <th
-                                class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                class="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
                                 {{ __('Actions') }}
                             </th>
                         </tr>
@@ -329,7 +329,14 @@
                         topStart: {
                             buttons: [
                                 { extend: 'pageLength', className: 'btn btn-sm btn-light' },
-                                { extend: 'collection', text: "{{ __('file.Export') }}", className: 'btn btn-sm btn-dark', buttons: ['copy', 'excel', 'csv', 'pdf'] }
+                                { extend: 'collection', text: "{{ __('file.Export') }}", className: 'btn btn-sm btn-dark',
+                                buttons: [
+                                    { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                    { extend: 'excel', text: 'Excel', filename: 'Medicines_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                    { extend: 'csv', text: 'CSV', filename: 'Medicines_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                    { extend: 'pdf', text: 'PDF', filename: 'Medicines_{{ date("Y-m-d") }}', title: 'Medicine List', exportOptions: { columns: ':not(.no-export)' } },
+                                    { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
+                                ] }
                             ]
                         },
                         topEnd: 'search',
@@ -365,7 +372,8 @@
 
                 [filterCategory, filterStatus].forEach(el => el.addEventListener('change', updateFilterCount));
 
-                $('#select-all').on('change', function () {
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
                     $('.row-checkbox').prop('checked', this.checked);
                     updateBulkDelete();
                 });

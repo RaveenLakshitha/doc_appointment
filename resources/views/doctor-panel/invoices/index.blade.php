@@ -134,50 +134,7 @@
         </div>
     </div>
 
-    <!-- Invoice Modal (Reusing existing pattern if needed) -->
-    <div id="invoice-modal" class="fixed inset-0 z-[60] hidden">
-        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" id="invoice-modal-backdrop"></div>
-        <div class="fixed inset-0 overflow-y-auto">
-            <div class="flex min-h-full items-center justify-center p-4">
-                <div
-                    class="relative w-full max-w-5xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl transform transition-all overflow-hidden flex flex-col h-[90vh]">
-                    <div
-                        class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            {{ __('file.invoice_details') }}
-                        </h3>
-                        <div class="flex items-center gap-4">
-                            <button type="button" id="modal-print-btn"
-                                class="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                            </button>
-                            <button type="button" id="close-invoice-modal"
-                                class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex-1 w-full overflow-hidden relative bg-gray-50 dark:bg-gray-950">
-                        <div id="modal-loader"
-                            class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-                        </div>
-                        <iframe id="invoice-iframe" src="" class="w-full h-full border-none"></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     @push('scripts')
         <script>
@@ -199,9 +156,9 @@
                             render: (data, type, row) => {
                                 return `
                                             <div class="flex items-center justify-end gap-1">
-                                                <button type="button" onclick="openInvoice('${row.show_url}', '${row.print_url}')" class="p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                                <a href="${row.show_url}" class="p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                </button>
+                                                </a>
                                                 <a href="${row.print_url}" target="_blank" class="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                                 </a>
@@ -220,30 +177,7 @@
                     }
                 });
 
-                const invoiceModal = document.getElementById('invoice-modal');
-                const invoiceIframe = document.getElementById('invoice-iframe');
-                const modalLoader = document.getElementById('modal-loader');
-                const closeModalBtn = document.getElementById('close-invoice-modal');
-                const modalBackdrop = document.getElementById('invoice-modal-backdrop');
-                const modalPrintBtn = document.getElementById('modal-print-btn');
 
-                window.openInvoice = function (viewUrl, printUrl) {
-                    invoiceIframe.src = viewUrl;
-                    modalLoader.style.display = 'flex';
-                    invoiceModal.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                    modalPrintBtn.onclick = () => window.open(printUrl, '_blank');
-                };
-
-                function closeInvoiceModal() {
-                    invoiceModal.classList.add('hidden');
-                    invoiceIframe.src = '';
-                    document.body.style.overflow = '';
-                }
-
-                invoiceIframe.onload = () => modalLoader.style.display = 'none';
-                closeModalBtn.onclick = closeInvoiceModal;
-                modalBackdrop.onclick = closeInvoiceModal;
             });
         </script>
     @endpush

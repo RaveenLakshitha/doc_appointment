@@ -579,7 +579,8 @@
                 <button id="mobile-menu-btn"
                     class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors mr-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
             </div>
@@ -598,9 +599,9 @@
                 @can('invoices.index')
                     {{-- POS Link --}}
                     <a href="{{ route('invoices.pos') }}" title="{{ __('file.pos') ?? 'POS' }}" class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100
-                                   dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700
-                                   focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                                   dark:focus:ring-offset-gray-800 transition">
+                                       dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700
+                                       focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+                                       dark:focus:ring-offset-gray-800 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -789,6 +790,15 @@
         // Global DataTables Default Configuration
         window.addEventListener('DOMContentLoaded', function () {
             if (typeof $.fn.dataTable !== 'undefined') {
+                // Suppress default DataTables alert warnings
+                $.fn.dataTable.ext.errMode = 'none';
+
+                // Reload the page when DataTables encounters an AJAX error
+                $(document).on('error.dt', function (e, settings, techNote, message) {
+                    console.error('DataTables Error: ', message);
+                    window.location.reload();
+                });
+
                 $.extend(true, $.fn.dataTable.defaults, {
                     responsive: false,
                     drawCallback: function (settings) {
@@ -1162,6 +1172,28 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Global handler for HTML5 validation on hidden form tabs
+            document.addEventListener('invalid', function (e) {
+                const target = e.target;
+                const tabContent = target.closest('.tab-content');
+
+                if (tabContent && tabContent.classList.contains('hidden')) {
+                    let tabId = '';
+                    if (tabContent.id.startsWith('content-')) {
+                        tabId = tabContent.id.replace('content-', '');
+                    } else if (tabContent.id.startsWith('tab-')) {
+                        tabId = tabContent.id.replace('tab-', '');
+                    }
+
+                    if (tabId && typeof switchTab === 'function') {
+                        switchTab(tabId);
+                    }
+                }
+            }, true); // Use capture phase
+        });
+    </script>
 </body>
 
 </html>

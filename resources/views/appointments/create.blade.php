@@ -144,6 +144,21 @@
                         </select>
                         @error('specialization_id') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}
                         </p> @enderror
+
+                        {{-- Available Therapists & Slots Panel --}}
+                        <div id="availability-panel" class="hidden mt-8">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ __('file.available_therapists_and_slots') ?? 'Available Therapists & Slots' }}
+                            </h3>
+                            <div id="availability-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div class="col-span-full py-8 text-center text-gray-500 dark:text-gray-400 italic">
+                                    {{ __('file.loading_availability') ?? 'Loading availability...' }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="doctor-group"
@@ -171,51 +186,88 @@
                             @enderror
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    {{ __('file.age_group') }}
-                                </label>
-                                <select name="age_group_id"
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                                    <option value="">{{ __('file.select_age_group') }}</option>
-                                    @foreach($ageGroups as $ag)
-                                        <option value="{{ $ag->id }}" {{ old('age_group_id') == $ag->id ? 'selected' : '' }}>
-                                            {{ $ag->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+
+
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.date') }} <span class="text-red-500">*</span></label>
+                            
+                            <div id="create_available_days_container" class="space-y-3 hidden">
+                                <div id="create_available_days" class="flex flex-wrap gap-2">
+                                    <!-- Quick select days will go here -->
+                                </div>
+                                <button type="button" id="toggle_create_date" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    {{ __('file.pick_another_date') ?? 'Pick another date' }}
+                                </button>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    {{ __('file.preferred_language') }}
-                                </label>
-                                <select name="preferred_language_id"
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                                    <option value="">{{ __('file.select_language') }}</option>
-                                    @foreach($languages as $id => $name)
-                                        <option value="{{ $id }}" {{ old('preferred_language_id') == $id ? 'selected' : '' }}>
-                                            {{ $name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div id="create_date_input_group">
+                                <input type="date" name="date" id="create_date" value="{{ old('date', $requestedDate ?? date('Y-m-d')) }}" min="{{ date('Y-m-d') }}" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow [color-scheme:light] dark:[color-scheme:dark]">
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    {{ __('file.preferred_time') }}
-                                </label>
-                                <select name="preferred_time"
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                                    <option value="">{{ __('file.select_time') ?? 'Select Time' }}</option>
-                                    @foreach($preferredTimeOptions as $value => $label)
-                                        <option value="{{ $value }}" {{ old('preferred_time') == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div id="create_date_warning" class="mt-2 hidden">
+                                <div class="flex items-center p-2 text-xs text-amber-800 border border-amber-200 rounded-lg bg-amber-50 dark:bg-gray-800 dark:text-amber-400 dark:border-amber-900">
+                                    <svg class="flex-shrink-0 inline w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                    </svg>
+                                    <span class="sr-only">Warning</span>
+                                    <div id="create_date_warning_text">
+                                        <!-- Warning message will go here -->
+                                    </div>
+                                </div>
                             </div>
+                            @error('date') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                        <div id="slot-group" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.time_slot') }}</label>
+                            <select name="slot" id="create_slot" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                <option value="">{{ __('file.select_slot') }}</option>
+                            </select>
+                            @error('slot') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- Unavailable Times --}}
+                        <div id="create_unavailable_container" class="hidden col-span-full mt-2 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <label class="block text-sm font-medium text-red-600 dark:text-red-400 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {{ __('file.unavailable_times') ?? 'Unavailable Times' }}
+                            </label>
+                            <div id="create_unavailable_list" class="space-y-2">
+                                {{-- Booked slots will be injected here --}}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.appointment_time') ?? 'Appointment Time' }} <span class="text-red-500">*</span></label>
+                            <input type="time" name="appointment_time" id="appointment_time" value="{{ old('appointment_time') }}" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                            @error('appointment_time') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            <p id="time_slot_hint" class="mt-1.5 text-xs text-indigo-600 dark:text-indigo-400 hidden"></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.duration_minutes') ?? 'Duration' }} <span class="text-red-500">*</span></label>
+                            <select name="duration_minutes" id="duration_minutes" required class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                <option value="15" {{ old('duration_minutes') == 15 ? 'selected' : '' }}>15 {{ __('file.min') ?? 'min' }}</option>
+                                <option value="30" {{ old('duration_minutes', 30) == 30 ? 'selected' : '' }}>30 {{ __('file.min') ?? 'min' }}</option>
+                                <option value="45" {{ old('duration_minutes') == 45 ? 'selected' : '' }}>45 {{ __('file.min') ?? 'min' }}</option>
+                                <option value="60" {{ old('duration_minutes') == 60 ? 'selected' : '' }}>1 {{ __('file.hour') ?? 'hr' }}</option>
+                            </select>
+                            @error('duration_minutes') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div id="room-group" class="hidden">
+                            <label for="room_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.room') }} <span class="text-red-500">*</span></label>
+                            <select name="room_id" id="room_id" class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                <option value="">{{ __('file.select_room') ?? 'Select Room' }}</option>
+                                @foreach($rooms as $room)
+                                    <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>{{ $room->name }} ({{ $room->room_number }})</option>
+                                @endforeach
+                            </select>
+                            @error('room_id') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
@@ -295,10 +347,11 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ __('file.date_of_birth') }} <span class="text-red-500">*</span>
+                                {{ __('file.age') }} <span class="text-red-500">*</span>
                             </label>
-                            <input type="date" name="date_of_birth" required
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
+                            <input type="number" name="age" min="0" required
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                placeholder="{{ __('file.enter_age') }}">
                         </div>
 
                         <div>
@@ -310,7 +363,6 @@
                                 <option value="">{{ __('file.select_gender') }}</option>
                                 <option value="male">{{ __('file.male') }}</option>
                                 <option value="female">{{ __('file.female') }}</option>
-                                <option value="other">{{ __('file.other') }}</option>
                             </select>
                         </div>
 
@@ -323,23 +375,7 @@
                                 placeholder="{{ __('file.enter_phone') }}">
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ __('file.email') }}
-                            </label>
-                            <input type="email" name="email"
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
-                                placeholder="{{ __('file.enter_email') }}">
-                        </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ __('file.address') }}
-                            </label>
-                            <textarea name="address" rows="3"
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
-                                placeholder="{{ __('file.enter_address') }}"></textarea>
-                        </div>
 
                         <div id="drawer-error"
                             class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -378,8 +414,6 @@
             const specializationSelect = document.getElementById('specialization_id');
             const doctorSelect = document.getElementById('doctor_id');
 
-            const ageGroupSelect = document.querySelector('select[name="age_group_id"]');
-            const languageSelect = document.querySelector('select[name="preferred_language_id"]');
 
             function getCurrentType() {
                 const lockDoctor = {{ $lockDoctor ? 'true' : 'false' }};
@@ -387,14 +421,54 @@
                 return document.querySelector('input[name="appointment_type"]:checked')?.value || '{{ \App\Models\Appointment::TYPE_SPECIFIC }}';
             }
 
-            // Master lists of all options
-            const ALL_AGE_GROUPS = @json($ageGroups->map(fn($ag) => ['id' => $ag->id, 'name' => $ag->name]));
-            const ALL_LANGUAGES = @json($languages);
+
 
             function updateFormVisibility() {
                 const type = getCurrentType();
                 const isSpecific = type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}';
                 const isAny = type === '{{ \App\Models\Appointment::TYPE_ANY }}';
+
+                 const slotGroup = document.getElementById('slot-group');
+                const roomGroup = document.getElementById('room-group');
+                const roomSelect = document.getElementById('room_id');
+                const createSlot = document.getElementById('create_slot');
+
+                if (slotGroup) slotGroup.classList.toggle('hidden', !isSpecific);
+                if (roomGroup) roomGroup.classList.toggle('hidden', !isSpecific);
+                if (roomSelect) roomSelect.required = isSpecific;
+
+                if (isSpecific && createSlot) {
+                    createSlot.style.pointerEvents = 'none';
+                    createSlot.classList.add('bg-gray-100', 'dark:bg-gray-800', 'opacity-60', 'cursor-not-allowed');
+                    createSlot.setAttribute('tabindex', '-1');
+                } else if (createSlot) {
+                    createSlot.style.pointerEvents = '';
+                    createSlot.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'opacity-60', 'cursor-not-allowed');
+                    createSlot.removeAttribute('tabindex');
+                }
+
+                const timeSlotHint = document.getElementById('time_slot_hint');
+                const appointmentTimeInput = document.getElementById('appointment_time');
+                if (isAny) {
+                    if (timeSlotHint) timeSlotHint.classList.add('hidden');
+                    if (appointmentTimeInput) {
+                        appointmentTimeInput.removeAttribute('min');
+                        appointmentTimeInput.removeAttribute('max');
+                        appointmentTimeInput.setCustomValidity('');
+                    }
+                } else if (isSpecific) {
+                    const createSlot = document.getElementById('create_slot');
+                    if (createSlot && createSlot.value) {
+                        createSlot.dispatchEvent(new Event('change'));
+                    }
+                }
+
+                const createAvailableDays = document.getElementById('create_available_days');
+                if (isAny && createAvailableDays) {
+                    createAvailableDays.classList.add('hidden');
+                } else if (isSpecific && document.getElementById('doctor_id')?.value) {
+                    if (typeof loadCreateDays === 'function') loadCreateDays();
+                }
 
                 // Specific doctor: hide specialization, show all doctors
                 // Any doctor: show specialization, hide doctors (as per user request)
@@ -409,13 +483,83 @@
                     doctorSelect.required = isSpecific;
                     if (isSpecific) {
                         loadAllDoctors();
+                    } else if (isAny) {
+                        loadAvailabilityPanel();
                     } else {
                         // In Any Doctor mode, we don't necessarily need to load doctors into the hidden dropdown,
                         // but we can clear it or load filtered ones if needed for background logic.
                         // For now, let's just clear it.
                         doctorSelect.innerHTML = '<option value="">{{ __("file.select_doctor") }}</option>';
+                        if (document.getElementById('availability-panel')) {
+                            document.getElementById('availability-panel').classList.add('hidden');
+                        }
                     }
                 }
+            }
+
+            function loadAvailabilityPanel() {
+                const type = getCurrentType();
+                if (type !== '{{ \App\Models\Appointment::TYPE_ANY }}') {
+                    if (document.getElementById('availability-panel')) {
+                        document.getElementById('availability-panel').classList.add('hidden');
+                    }
+                    return;
+                }
+
+                const specId = specializationSelect.value;
+                const dateInput = document.getElementById('create_date');
+                const date = dateInput ? dateInput.value : '';
+
+                if (!specId || !date) {
+                    if (document.getElementById('availability-panel')) {
+                        document.getElementById('availability-panel').classList.add('hidden');
+                    }
+                    return;
+                }
+
+                const panel = document.getElementById('availability-panel');
+                const content = document.getElementById('availability-content');
+                if (panel) panel.classList.remove('hidden');
+                if (content) content.innerHTML = '<div class="col-span-full py-8 text-center text-gray-500 italic">{{ __("file.loading_availability") ?? "Loading availability..." }}</div>';
+
+                fetch(`{{ route("appointments.specialization-availability") }}?specialization_id=${specId}&date=${date}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!content) return;
+                        if (!data.doctors || data.doctors.length === 0) {
+                            content.innerHTML = '<div class="col-span-full py-8 text-center text-gray-400 italic">{{ __("file.no_doctors_found") ?? "No therapists found for this specialization" }}</div>';
+                            return;
+                        }
+
+                        content.innerHTML = data.doctors.map(doc => `
+                            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:shadow-md">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                        <span class="font-medium text-gray-900 dark:text-white">${doc.name}</span>
+                                    </div>
+                                    <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">${data.day_name}</span>
+                                </div>
+                                <div class="space-y-1.5">
+                                    ${doc.on_leave 
+                                        ? `<span class="text-xs text-red-500 italic">{{ __("file.doctor_on_leave") ?? "On Leave" }}</span>` 
+                                        : doc.slots.length > 0
+                                            ? `<div class="flex flex-wrap gap-1.5">
+                                                ${doc.slots.map(slot => `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800" title="${slot.label}">${slot.label}</span>`).join('')}
+                                               </div>`
+                                            : `<span class="text-xs text-gray-400 italic">{{ __("file.no_schedule_available") ?? "No slots available" }}</span>`
+                                    }
+                                </div>
+                            </div>
+                        `).join('');
+                    })
+                    .catch(err => {
+                        if (content) content.innerHTML = '<div class="col-span-full py-8 text-center text-red-500 italic">Error loading availability data.</div>';
+                    });
             }
 
             function loadAllDoctors() {
@@ -442,13 +586,9 @@
                 if (type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}') return;
 
                 const specId = specializationSelect.value;
-                const ageGroupId = ageGroupSelect.value;
-                const langId = languageSelect.value;
 
                 let url = '{{ route("appointments.doctors.filtered") }}?';
                 if (specId) url += `specialization_id=${specId}&`;
-                if (ageGroupId) url += `age_group_id=${ageGroupId}&`;
-                if (langId) url += `preferred_language_id=${langId}&`;
 
                 fetch(url)
                     .then(response => response.json())
@@ -476,37 +616,6 @@
                         // Set hidden specialization value for form submission
                         specializationSelect.value = data.specialization_id || '';
 
-                        // Filter Age Groups
-                        const supportedAgeGroups = data.age_groups || [];
-                        const currentAgeGroup = ageGroupSelect.value;
-
-                        ageGroupSelect.innerHTML = '<option value="">{{ __("file.select_age_group") }}</option>';
-
-                        // Strictly show only assigned
-                        const ageGroupsToShow = ALL_AGE_GROUPS.filter(ag => supportedAgeGroups.includes(ag.id));
-
-                        ageGroupsToShow.forEach(ag => {
-                            const opt = new Option(ag.name, ag.id);
-                            if (currentAgeGroup == ag.id) opt.selected = true;
-                            ageGroupSelect.add(opt);
-                        });
-
-                        // Filter Languages
-                        const supportedLanguages = data.languages || [];
-                        const currentLang = languageSelect.value;
-
-                        languageSelect.innerHTML = '<option value="">{{ __("file.select_language") }}</option>';
-
-                        // Strictly show only assigned
-                        const langsToShow = Object.entries(ALL_LANGUAGES).filter(([id, name]) =>
-                            supportedLanguages.includes(parseInt(id))
-                        );
-
-                        langsToShow.forEach(([id, name]) => {
-                            const opt = new Option(name, id);
-                            if (currentLang == id) opt.selected = true;
-                            languageSelect.add(opt);
-                        });
                     })
                     .catch(error => {
                         console.error('Error loading doctor attributes:', error);
@@ -515,31 +624,18 @@
             }
 
             function resetAttributes() {
-                const currentAgeGroup = ageGroupSelect.value;
-                const currentLang = languageSelect.value;
-
-                ageGroupSelect.innerHTML = '<option value="">{{ __("file.select_age_group") }}</option>';
-                ALL_AGE_GROUPS.forEach(ag => {
-                    const opt = new Option(ag.name, ag.id);
-                    if (currentAgeGroup == ag.id) opt.selected = true;
-                    ageGroupSelect.add(opt);
-                });
-
-                languageSelect.innerHTML = '<option value="">{{ __("file.select_language") }}</option>';
-                Object.entries(ALL_LANGUAGES).forEach(([id, name]) => {
-                    const opt = new Option(name, id);
-                    if (currentLang == id) opt.selected = true;
-                    languageSelect.add(opt);
-                });
+                // Future attributes can be reset here
             }
 
-            specializationSelect.addEventListener('change', loadFilteredDoctors);
-            ageGroupSelect.addEventListener('change', loadFilteredDoctors);
-            languageSelect.addEventListener('change', loadFilteredDoctors);
+            specializationSelect.addEventListener('change', function() {
+                loadFilteredDoctors();
+                loadAvailabilityPanel();
+            });
 
             doctorSelect.addEventListener('change', function () {
                 loadDoctorAttributes(this.value);
             });
+
 
             typeRadios.forEach(r => {
                 r.addEventListener('change', function () {
@@ -576,6 +672,303 @@
             // Initial attribute load if doctor is already selected (e.g., via old value)
             if (doctorSelect && doctorSelect.value) {
                 loadDoctorAttributes(doctorSelect.value);
+            }
+
+            const createAvailableDays = document.getElementById('create_available_days');
+            const createDateSelect = document.getElementById('create_date');
+            const createSlotSelect = document.getElementById('create_slot');
+
+            // Handle Exact Time Picker Validation based on selected slot
+            const appointmentTimeInput = document.getElementById('appointment_time');
+            const timeSlotHint = document.getElementById('time_slot_hint');
+
+            // Helper: remove duration options that exceed the slot end time
+            function filterDurationBySlot() {
+                const type = getCurrentType();
+                const durationSelect = document.getElementById('duration_minutes');
+                if (!durationSelect || !createSlotSelect || !appointmentTimeInput) return;
+
+                if (type !== '{{ \App\Models\Appointment::TYPE_SPECIFIC }}' || !createSlotSelect.value || !appointmentTimeInput.value) {
+                    // Restore all hidden options
+                    if (durationSelect._hiddenBank) {
+                        durationSelect._hiddenBank.forEach(opt => durationSelect.add(opt));
+                        durationSelect._hiddenBank = [];
+                    }
+                    return;
+                }
+
+                const [slotStart, slotEnd] = createSlotSelect.value.split('|');
+                const apptTime = appointmentTimeInput.value; // HH:mm
+                if (!apptTime) return;
+
+                const [apptH, apptM] = apptTime.split(':').map(Number);
+                const [endH, endM] = slotEnd.split(':').map(Number);
+                const maxMinutes = (endH * 60 + endM) - (apptH * 60 + apptM);
+
+                if (!durationSelect._hiddenBank) durationSelect._hiddenBank = [];
+                // Restore all first
+                durationSelect._hiddenBank.forEach(opt => durationSelect.add(opt));
+                durationSelect._hiddenBank = [];
+
+                Array.from(durationSelect.options).forEach(opt => {
+                    if (!opt.value) return;
+                    if (parseInt(opt.value) > maxMinutes) {
+                        if (opt.selected) durationSelect.value = '';
+                        durationSelect._hiddenBank.push(opt);
+                        durationSelect.remove(opt.index);
+                    }
+                });
+            }
+
+            if (createSlotSelect && appointmentTimeInput) {
+                createSlotSelect.addEventListener('change', function() {
+                    const type = getCurrentType();
+                    if (type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}' && this.value) {
+                        const [start, end] = this.value.split('|');
+                        appointmentTimeInput.min = start;
+                        appointmentTimeInput.max = end;
+
+                        if (appointmentTimeInput.value) {
+                            if (appointmentTimeInput.value < start || appointmentTimeInput.value > end) {
+                                appointmentTimeInput.setCustomValidity(`{{ __('file.time_must_be_between') }} ${start} {{ __('file.and') }} ${end}`);
+                                if (timeSlotHint) {
+                                    timeSlotHint.textContent = `{{ __('file.please_select_a_time_between') }} ${start} {{ __('file.and') }} ${end}`;
+                                    timeSlotHint.classList.remove('hidden');
+                                }
+                            } else {
+                                appointmentTimeInput.setCustomValidity('');
+                                if (timeSlotHint) timeSlotHint.classList.add('hidden');
+                            }
+                        } else {
+                            if (timeSlotHint) {
+                                timeSlotHint.textContent = `{{ __('file.please_select_a_time_between') }} ${start} {{ __('file.and') }} ${end}`;
+                                timeSlotHint.classList.remove('hidden');
+                            }
+                        }
+                    } else {
+                        appointmentTimeInput.removeAttribute('min');
+                        appointmentTimeInput.removeAttribute('max');
+                        if (timeSlotHint) timeSlotHint.classList.add('hidden');
+                        appointmentTimeInput.setCustomValidity('');
+                    }
+                    filterDurationBySlot();
+                });
+
+                appointmentTimeInput.addEventListener('input', function() {
+                    const type = getCurrentType();
+                    if (type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}' && createSlotSelect.value) {
+                        const [start, end] = createSlotSelect.value.split('|');
+                        if (this.value && (this.value < start || this.value > end)) {
+                            this.setCustomValidity(`{{ __('file.time_must_be_between') }} ${start} {{ __('file.and') }} ${end}`);
+                            if (timeSlotHint) {
+                                timeSlotHint.textContent = `{{ __('file.please_select_a_time_between') }} ${start} {{ __('file.and') }} ${end}`;
+                                timeSlotHint.classList.remove('hidden');
+                            }
+                        } else {
+                            this.setCustomValidity('');
+                            if (timeSlotHint && this.value) timeSlotHint.classList.add('hidden');
+                        }
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                    filterDurationBySlot();
+                });
+            }
+
+            function loadCreateDays() {
+                const doctorId = doctorSelect.value || '{{ $requestedDoctorId }}';
+                const type = getCurrentType();
+                if (!doctorId || type !== '{{ \App\Models\Appointment::TYPE_SPECIFIC }}') {
+                    if (createAvailableDays) {
+                        createAvailableDays.classList.add('hidden');
+                        createAvailableDays.innerHTML = '';
+                    }
+                    return;
+                }
+
+                fetch(`{{ url('doctors') }}/${doctorId}/available-days`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const days = data.days || [];
+                        if (days.length === 0) {
+                            createAvailableDays.classList.add('hidden');
+                            createAvailableDays.innerHTML = '';
+                            return;
+                        }
+
+                        createAvailableDays.classList.remove('hidden');
+                        createAvailableDays.innerHTML = days.map(day => `
+                            <button type="button" 
+                                    onclick="selectCreateDate('${day.date}')"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
+                                ${day.label}
+                            </button>
+                        `).join('');
+                    })
+                    .catch(() => {
+                        if (createAvailableDays) createAvailableDays.classList.add('hidden');
+                    });
+            }
+
+            window.selectCreateDate = function(dateStr) {
+                createDateSelect.value = dateStr;
+                loadCreateSlots();
+            };
+
+            function loadCreateSlots() {
+                const doctorId = doctorSelect.value || '{{ $requestedDoctorId }}';
+                const date = createDateSelect.value;
+                const timeSlotHint = document.getElementById('time_slot_hint');
+                if (timeSlotHint) timeSlotHint.classList.add('hidden');
+
+                if (!doctorId || !date) {
+                    if (createSlotSelect) createSlotSelect.innerHTML = '<option value="">{{ __("file.select_slot") }}</option>';
+                    document.getElementById('create_date_warning').classList.add('hidden');
+                    return;
+                }
+                fetch(`{{ url('doctors') }}/${doctorId}/available-slots?date=${date}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const warningDiv = document.getElementById('create_date_warning');
+                        const warningText = document.getElementById('create_date_warning_text');
+                        
+                        if (data.message && (!data.slots || data.slots.length === 0)) {
+                            warningText.textContent = data.message;
+                            warningDiv.classList.remove('hidden');
+                        } else {
+                            warningDiv.classList.add('hidden');
+                        }
+
+                        createSlotSelect.innerHTML = '<option value="">{{ __("file.select_slot") }}</option>';
+                        const slots = data.slots || [];
+                        const appointments = data.appointments || [];
+                        const oldSlot = '{{ old("slot") }}';
+
+                        if (slots.length === 0 && data.message) {
+                            const opt = new Option(data.message, "");
+                            opt.disabled = true;
+                            createSlotSelect.add(opt);
+                        }
+
+                        slots.forEach(slot => {
+                            const label = slot.label || `${slot.start} – ${slot.end}`;
+                            const val = `${slot.start}|${slot.end}`;
+                            const opt = new Option(label, val);
+                            if (val === oldSlot) opt.selected = true;
+                            createSlotSelect.add(opt);
+                        });
+
+                        if (slots.length === 1 && !oldSlot) {
+                            createSlotSelect.value = `${slots[0].start}|${slots[0].end}`;
+                            createSlotSelect.dispatchEvent(new Event('change'));
+                        }
+
+                        renderCreateUnavailableTimes(appointments);
+                    });
+            }
+
+            function renderCreateUnavailableTimes(appointments) {
+                const container = document.getElementById('create_unavailable_container');
+                const list = document.getElementById('create_unavailable_list');
+                
+                if (!container || !list) return;
+                
+                if (!appointments || appointments.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
+
+                container.classList.remove('hidden');
+                list.innerHTML = appointments.map(a => {
+                    const formatTime = (t) => {
+                        const [h, m] = t.split(':');
+                        const hour = parseInt(h);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const h12 = hour % 12 || 12;
+                        return `${h12}:${m} ${ampm}`;
+                    };
+
+                    return `
+                        <div class="flex items-center justify-between px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg text-xs">
+                            <span class="font-medium text-red-700 dark:text-red-300">
+                                ${formatTime(a.start)} - ${formatTime(a.end)}
+                            </span>
+                            <span class="text-[10px] uppercase tracking-wider text-red-500 dark:text-red-400 font-bold">
+                                ${a.status}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (createDateSelect) {
+                createDateSelect.addEventListener('change', function() {
+                    loadCreateSlots();
+                    loadAvailabilityPanel();
+                    checkRoomAvailability();
+                });
+            }
+
+            if (appointmentTimeInput) {
+                appointmentTimeInput.addEventListener('change', checkRoomAvailability);
+            }
+
+            document.getElementById('duration_minutes').addEventListener('change', checkRoomAvailability);
+
+            function checkRoomAvailability() {
+                const date = document.getElementById('create_date').value;
+                const time = document.getElementById('appointment_time').value;
+                const duration = document.getElementById('duration_minutes').value;
+                const roomSelect = document.getElementById('room_id');
+
+                if (!date || !time) return;
+
+                fetch(`{{ route('appointments.check_room_availability') }}?date=${date}&time=${time}&duration=${duration}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const busyRooms = data.busy_rooms || [];
+                        const currentVal = roomSelect.value;
+
+                        // Restore all hidden options first
+                        Array.from(roomSelect.querySelectorAll('option[data-hidden="1"]')).forEach(opt => {
+                            opt.removeAttribute('data-hidden');
+                            opt.style.display = '';
+                            roomSelect.add(opt);
+                        });
+
+                        // Store hidden options outside the select so they can be restored
+                        if (!roomSelect._hiddenBank) roomSelect._hiddenBank = [];
+                        // Restore previously hidden options
+                        roomSelect._hiddenBank.forEach(opt => {
+                            opt.style.display = '';
+                            roomSelect.add(opt);
+                        });
+                        roomSelect._hiddenBank = [];
+
+                        // Now hide busy ones
+                        Array.from(roomSelect.options).forEach(opt => {
+                            if (!opt.value) return;
+                            const roomId = parseInt(opt.value);
+                            if (busyRooms.includes(roomId)) {
+                                if (opt.selected) roomSelect.value = '';
+                                roomSelect._hiddenBank.push(opt);
+                                roomSelect.remove(opt.index);
+                            }
+                        });
+                    });
+            }
+
+            doctorSelect.addEventListener('change', function () {
+                loadCreateDays();
+                loadCreateSlots();
+            });
+
+            if (doctorSelect && doctorSelect.value) {
+                loadCreateDays();
+                loadCreateSlots();
+            } else if ('{{ $requestedDoctorId }}') {
+                loadCreateDays();
+                loadCreateSlots();
             }
 
             function formatPatientSelection(patient) {

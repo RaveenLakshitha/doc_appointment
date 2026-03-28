@@ -127,9 +127,9 @@ class PatientsImport implements ToModel, WithHeadingRow, WithValidation
             return null;
         }
 
-        $lastPatient = Patient::orderBy('id', 'desc')->first();
-        $nextNumber = $lastPatient ? $lastPatient->id + 1 : 1;
-        $data['medical_record_number'] = 'MRN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        do {
+            $data['medical_record_number'] = 'MRN' . mt_rand(1000000, 9999999);
+        } while (\App\Models\Patient::where('medical_record_number', $data['medical_record_number'])->exists());
 
         Log::info('PatientsImport - Creating new patient with data:', $data);
 

@@ -120,38 +120,12 @@
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.date_format') }}
-                                        <span class="text-red-500">*</span></label>
-                                    <select name="date_format" required
-                                        class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                                        <option value="MM/DD/YYYY" {{ $setting->date_format == 'MM/DD/YYYY' ? 'selected' : '' }}>
-                                            {{ __('file.date_format_mm_dd_yyyy') }}
-                                        </option>
-                                        <option value="DD/MM/YYYY" {{ $setting->date_format == 'DD/MM/YYYY' ? 'selected' : '' }}>
-                                            {{ __('file.date_format_dd_mm_yyyy') }}
-                                        </option>
-                                        <option value="YYYY-MM-DD" {{ $setting->date_format == 'YYYY-MM-DD' ? 'selected' : '' }}>
-                                            {{ __('file.date_format_yyyy_mm_dd') }}
-                                        </option>
-                                    </select>
-                                    @error('date_format') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                                        {{ $message }}
-                                    </p> @enderror
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.time_format') }}
-                                        <span class="text-red-500">*</span></label>
-                                    <select name="time_format" required
-                                        class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
-                                        <option value="12-hour" {{ $setting->time_format == '12-hour' ? 'selected' : '' }}>
-                                            {{ __('file.time_format_12_hour') }}
-                                        </option>
-                                        <option value="24-hour" {{ $setting->time_format == '24-hour' ? 'selected' : '' }}>
-                                            {{ __('file.time_format_24_hour') }}
-                                        </option>
-                                    </select>
-                                    @error('time_format') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.default_tax_rate') ?? 'Default Tax %' }}
+                                        </label>
+                                    <input type="number" step="0.01" min="0" max="100" name="tax_percentage" value="{{ old('tax_percentage', $setting->tax_percentage ?? 0) }}"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                        placeholder="0.00">
+                                    @error('tax_percentage') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
                                         {{ $message }}
                                     </p> @enderror
                                 </div>
@@ -182,7 +156,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.invoice_paper_size') ?? 'Invoice Paper Size' }}
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.invoice_paper_size') ?? 'Bill Paper Size' }}
                                         <span class="text-red-500">*</span></label>
                                     <select name="invoice_paper_size" required
                                         class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">

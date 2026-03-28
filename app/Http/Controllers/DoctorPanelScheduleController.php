@@ -24,7 +24,7 @@ class DoctorPanelScheduleController extends Controller
             return response()->json([]);
         }
 
-        $schedules = DoctorSchedule::with(['doctor', 'days.room.department'])
+        $schedules = DoctorSchedule::with(['doctor', 'days'])
             ->where('doctor_id', $doctor->id)
             ->where('is_active', true)
             ->get();
@@ -46,12 +46,8 @@ class DoctorPanelScheduleController extends Controller
                 
                 $dow = $dowMap[$day->day_of_week];
 
-                $roomInfo = $day->room 
-                    ? $day->room->room_number . ' (' . ($day->room->department?->name ?? '—') . ')'
-                    : '(Room deleted)';
-
                 $event = [
-                    'title' => "Room $roomInfo · $timeLabel",
+                    'title' => "$timeLabel",
                     'startTime' => $startTime,
                     'endTime' => $endTime,
                     'daysOfWeek' => [$dow],
@@ -60,7 +56,6 @@ class DoctorPanelScheduleController extends Controller
                     'borderColor' => '#4f46e5',
                     'textColor' => '#ffffff',
                     'extendedProps' => [
-                        'room' => $roomInfo,
                         'time' => $timeLabel,
                         'days' => ucfirst($day->day_of_week),
                         'is_active' => $schedule->is_active,

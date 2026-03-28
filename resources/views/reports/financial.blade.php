@@ -8,7 +8,7 @@
         <div class="mb-6">
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">Financial Reports</h1>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Track sales, payments, outstanding balances, and overdue invoices
+                Track sales, payments, outstanding balances, and overdue bills
             </p>
         </div>
 
@@ -87,7 +87,7 @@
 
                 <div class="border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm">
                     <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-                        <h3 class="tracking-tight text-sm font-medium">Overdue Invoices</h3>
+                        <h3 class="tracking-tight text-sm font-medium">Overdue Bills</h3>
                         <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                             </path>
@@ -117,7 +117,7 @@
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Invoices</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Bills</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-max">
@@ -125,7 +125,7 @@
                             <tr>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Invoice #</th>
+                                    Bill #</th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Patient</th>
@@ -161,7 +161,7 @@
                             <tr>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Invoice #</th>
+                                    Bill #</th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Patient</th>
@@ -186,7 +186,7 @@
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Overdue Invoices</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Overdue Bills</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-max">
@@ -194,7 +194,7 @@
                             <tr>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Invoice #</th>
+                                    Bill #</th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Patient</th>
@@ -336,7 +336,7 @@
 
                 function updateRecentInvoices(invoices) {
                     const tbody = document.getElementById('recent_invoices_table');
-                    tbody.innerHTML = invoices.length ? '' : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No invoices found</td></tr>';
+                    tbody.innerHTML = invoices.length ? '' : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No bills found</td></tr>';
 
                     invoices.forEach(inv => {
                         tbody.innerHTML += `
@@ -377,7 +377,7 @@
 
                 function updateOverdueInvoices(invoices) {
                     const tbody = document.getElementById('overdue_invoices_table');
-                    tbody.innerHTML = invoices.length ? '' : '<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No overdue invoices</td></tr>';
+                    tbody.innerHTML = invoices.length ? '' : '<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No overdue bills</td></tr>';
 
                     invoices.forEach(inv => {
                         tbody.innerHTML += `

@@ -424,7 +424,7 @@
                             ['Appointment confirmed', 'Dr. Chen confirmed appointment with patient #23456.', '4 hours ago'],
                             ['Staff meeting reminder', 'Weekly staff meeting today at 3:00 PM in Conference Room A.', '5 hours ago'],
                             ['Schedule change', 'Your 2:00 PM appointment has been rescheduled to 3:30 PM.', '6 hours ago'],
-                            ['Invoice paid', 'Patient Maria Garcia has paid invoice #INV-2023-0456.', '8 hours ago']
+                            ['Bill paid', 'Patient Maria Garcia has paid bill #INV-2023-0456.', '8 hours ago']
                         ] as [$title, $message, $time])
                         <div class="flex space-x-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition">
                             <div class="flex-shrink-0">

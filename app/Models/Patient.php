@@ -33,6 +33,10 @@ class Patient extends Model
         'preferred_session_time',
         'recommended_by',
         'recommended_document',
+        
+        // === Preferences ===
+        'age_group_id',
+        'preferred_language_id',
 
         // === Emergency Contact ===
         'emergency_contact_name',
@@ -78,6 +82,13 @@ class Patient extends Model
 
         'preferred_billing_method',
         'payment_methods',
+
+        'tax_id',
+        'tax_full_name',
+        'tax_postal_code',
+        'tax_regime',
+        'tax_invoice_usage',
+        'tax_cfdi_path',
 
         'medical_record_number',
         'is_active',
@@ -145,6 +156,55 @@ class Patient extends Model
     public function invoices()
     {
         return $this->hasMany(BillingInvoice::class);
+    }
+
+    public function ageGroup(): BelongsTo
+    {
+        return $this->belongsTo(AgeGroup::class);
+    }
+
+    public function preferredLanguage(): BelongsTo
+    {
+        return $this->belongsTo(OptionList::class, 'preferred_language_id');
+    }
+
+    /**
+     * Get CFDI usage options with their translation keys.
+     *
+     * @return array
+     */
+    public static function getCfdiUsageOptions(): array
+    {
+        return [
+            'D01' => 'file.cfdi_d01',
+            'D02' => 'file.cfdi_d02',
+            'D03' => 'file.cfdi_d03',
+            'D05' => 'file.cfdi_d05',
+            'D10' => 'file.cfdi_d10',
+            'G01' => 'file.cfdi_g01',
+            'G03' => 'file.cfdi_g03',
+            'I01' => 'file.cfdi_i01',
+            'I02' => 'file.cfdi_i02',
+        ];
+    }
+
+    /**
+     * Get translated label for tax_invoice_usage.
+     *
+     * @return string
+     */
+    public function getTaxInvoiceUsageLabelAttribute(): string
+    {
+        if (!$this->tax_invoice_usage) {
+            return __('file.not_specified');
+        }
+
+        $options = self::getCfdiUsageOptions();
+        if (isset($options[$this->tax_invoice_usage])) {
+            return __($options[$this->tax_invoice_usage]);
+        }
+
+        return $this->tax_invoice_usage;
     }
 
 }

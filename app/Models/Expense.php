@@ -15,6 +15,7 @@ class Expense extends Model
         "user_id",
         "cash_register_id",
         "amount",
+        "expense_date",
         "note",
         "created_at",
         "deleted_at"

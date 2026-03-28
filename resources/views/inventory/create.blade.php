@@ -6,14 +6,14 @@
 
         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
             <a href="{{ route('inventory.index') }}"
-                class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Inventory Items</a>
+                class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{{ __('file.inventory_items') }}</a>
             <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-            <span class="text-gray-900 dark:text-white">Add Item</span>
+            <span class="text-gray-900 dark:text-white">{{ __('file.add_item') }}</span>
         </div>
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">Add New Inventory Item</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create a new inventory item record</p>
+        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">{{ __('file.create_new_inventory_item') }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('file.create_inventory_item_record') }}</p>
     </div>
 
     <form method="POST" action="{{ route('inventory.store') }}" class="space-y-8" enctype="multipart/form-data">
@@ -25,12 +25,12 @@
             <div class="sm:hidden border-b border-gray-200 dark:border-gray-700 p-4">
                 <label for="mobile-tab-select" class="sr-only">Select a tab</label>
                 <select id="mobile-tab-select" onchange="switchTab(this.value)"
-                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-gray-900 dark:focus:ring-gray-500">
-                    <option value="basic">Basic Information</option>
-                    <option value="stock">Stock & Pricing</option>
-                    <option value="supplier">Supplier Details</option>
-                    <option value="medicine">Medicine & Images</option>
-                    <option value="advanced">Advanced Settings</option>
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                    <option value="basic">{{ __('file.basic_information') }}</option>
+                    <option value="stock">{{ __('file.stock_and_pricing') }}</option>
+                    <option value="supplier">{{ __('file.supplier_details') }}</option>
+                    <option value="medicine">{{ __('file.medicine_and_images') }}</option>
+                    <option value="advanced">{{ __('file.advanced_settings') }}</option>
                 </select>
             </div>
 
@@ -46,21 +46,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
-                            <span class="hidden sm:inline">Basic Information</span>
-                            <span class="sm:hidden">Basic</span>
+                            <span class="hidden sm:inline">{{ __('file.basic_information') }}</span>
+                            <span class="sm:hidden">{{ __('file.basic') }}</span>
                         </div>
                     </button>
-                    <button type="button" onclick="switchTab('stock')" id="tab-stock"
-                        class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors snap-start">
-                        <div class="flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                            <span class="hidden sm:inline">Stock & Pricing</span>
-                            <span class="sm:hidden">Stock</span>
-                        </div>
-                    </button>
+
                     <button type="button" onclick="switchTab('supplier')" id="tab-supplier"
                         class="tab-button flex-shrink-0 min-w-max px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors snap-start">
                         <div class="flex items-center justify-center gap-2">
@@ -68,8 +58,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h-4m-4 0H5m14 0h-4m-4 0H5" />
                             </svg>
-                            <span class="hidden sm:inline">Supplier Details</span>
-                            <span class="sm:hidden">Supplier</span>
+                            <span class="hidden sm:inline">{{ __('file.supplier_details') }}</span>
+                            <span class="sm:hidden">{{ __('file.supplier') }}</span>
                         </div>
                     </button>
                     <button type="button" onclick="switchTab('medicine')" id="tab-medicine"
@@ -78,8 +68,8 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
-                            <span class="hidden sm:inline">Medicine & Images</span>
-                            <span class="sm:hidden">Medicine</span>
+                            <span class="hidden sm:inline">{{ __('file.medicine_and_images') }}</span>
+                            <span class="sm:hidden">{{ __('file.medicine') }}</span>
                         </div>
                     </button>
                     <button type="button" onclick="switchTab('advanced')" id="tab-advanced"
@@ -91,8 +81,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <span class="hidden sm:inline">Advanced Settings</span>
-                            <span class="sm:hidden">Advanced</span>
+                            <span class="hidden sm:inline">{{ __('file.advanced_settings') }}</span>
+                            <span class="sm:hidden">{{ __('file.advanced') }}</span>
                         </div>
                     </button>
                 </nav>
@@ -103,7 +93,7 @@
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Item Name
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.item_name') }}
                                     <span class="text-red-500">*</span></label>
                                 <input type="text" name="name" value="{{ old('name') }}" required
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
@@ -112,10 +102,10 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SKU <span
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.sku') }} <span
                                         class="text-red-500">*</span></label>
-                                <input type="text" name="sku" value="{{ old('sku') }}" required
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                <input type="text" name="sku" value="{{ old('sku', $auto_sku ?? '') }}" required readonly
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:text-gray-400 transition-shadow"
                                     placeholder="BAND-FAB-100">
                                 @error('sku') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}
                                 </p> @enderror
@@ -123,11 +113,11 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.category') }}
                                 <span class="text-red-500">*</span></label>
                             <select name="category_id" required
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                <option value="">Select category</option>
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                <option value="">{{ __('file.select_category') }}</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->full_path }}</option>
                                 @endforeach
@@ -139,7 +129,7 @@
 
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.description') }}</label>
                             <textarea name="description" rows="3"
                                 class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
                                 placeholder="Brief description of the item...">{{ old('description') }}</textarea>
@@ -150,11 +140,10 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unit of
-                                    Measure <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.unit_of_measure') }} <span class="text-red-500">*</span></label>
                                 <select name="unit_of_measure" required
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                    <option value="">Select unit</option>
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                    <option value="">{{ __('file.select_unit') }}</option>
                                     @foreach($units as $unit)
                                         <option value="{{ $unit->name }}" {{ old('unit_of_measure') == $unit->name ? 'selected' : '' }}>{{ $unit->display_name }}</option>
                                     @endforeach
@@ -164,8 +153,7 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Units per
-                                    Package <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.units_per_package') }} <span class="text-red-500">*</span></label>
                                 <input type="number" name="unit_quantity" value="{{ old('unit_quantity', 1) }}" required
                                     min="1"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
@@ -179,7 +167,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Manufacturer</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.manufacturer') }}</label>
                                 <input type="text" name="manufacturer" value="{{ old('manufacturer') }}"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="Johnson & Johnson">
@@ -188,7 +176,7 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brand</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.brand') }}</label>
                                 <input type="text" name="brand" value="{{ old('brand') }}"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="Band-Aid">
@@ -197,7 +185,7 @@
                             </div>
                             <div>
                                 <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model/Version</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.model_version') }}</label>
                                 <input type="text" name="model_version" value="{{ old('model_version') }}"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="2024 Edition">
@@ -208,8 +196,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Storage
-                                Location</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.storage_location') }}</label>
                             <input type="text" name="storage_location" value="{{ old('storage_location') }}"
                                 class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                 placeholder="Warehouse A, Shelf 3">
@@ -217,15 +204,10 @@
                                 {{ $message }}
                             </p> @enderror
                         </div>
-                    </div>
-                </div>
 
-                <div id="content-stock" class="tab-content hidden">
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 border-t dark:border-gray-700 pt-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current
-                                    Stock <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.current_stock') }} <span class="text-red-500">*</span></label>
                                 <input type="number" name="current_stock" value="{{ old('current_stock', 0) }}" required
                                     min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
@@ -234,26 +216,8 @@
                                     {{ $message }}
                                 </p> @enderror
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Minimum
-                                    Stock Level</label>
-                                <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', 10) }}"
-                                    min="0"
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
-                                    placeholder="10">
-                                @error('minimum_stock_level') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                                    {{ $message }}
-                                </p> @enderror
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unit Cost
-                                    ({{ $currency_code }}) <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.cost') }} ({{ $currency_code }}) <span class="text-red-500">*</span></label>
                                 <input type="number" step="0.01" name="unit_cost" value="{{ old('unit_cost') }}" required
                                     min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
@@ -263,13 +227,25 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unit
-                                    Price ({{ $currency_code }}) <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.unit_price') }} ({{ $currency_code }}) <span class="text-red-500">*</span></label>
                                 <input type="number" step="0.01" name="unit_price" value="{{ old('unit_price') }}" required
                                     min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="1200.00">
                                 @error('unit_price') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                                    {{ $message }}
+                                </p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.minimum_stock_level') }}</label>
+                                <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', 10) }}"
+                                    min="0"
+                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
+                                    placeholder="10">
+                                @error('minimum_stock_level') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
                                     {{ $message }}
                                 </p> @enderror
                             </div>
@@ -280,11 +256,10 @@
                 <div id="content-supplier" class="tab-content hidden">
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Primary
-                                Supplier</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.primary_supplier') }}</label>
                             <select name="primary_supplier_id"
-                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                <option value="">None</option>
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                <option value="">{{ __('file.none') }}</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ old('primary_supplier_id') == $supplier->id ? 'selected' : '' }}>{{ $supplier->name }}</option>
                                 @endforeach
@@ -296,8 +271,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Supplier
-                                    Item Code</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.supplier_item_code') }}</label>
                                 <input type="text" name="supplier_item_code" value="{{ old('supplier_item_code') }}"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="MED-BAND100">
@@ -306,8 +280,7 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Supplier
-                                    Price ({{ $currency_code }})</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.supplier_price') }} ({{ $currency_code }})</label>
                                 <input type="number" step="0.01" name="supplier_price" value="{{ old('supplier_price') }}"
                                     min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
@@ -320,8 +293,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lead Time
-                                    (Days)</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.lead_time_days') }}</label>
                                 <input type="number" name="lead_time_days" value="{{ old('lead_time_days') }}" min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="3">
@@ -330,8 +302,7 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Minimum
-                                    Order Qty</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.minimum_order_qty') }}</label>
                                 <input type="number" name="minimum_order_quantity"
                                     value="{{ old('minimum_order_quantity') }}" min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
@@ -348,8 +319,7 @@
                     <div class="space-y-8">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Generic
-                                    Name</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.generic_name') }}</label>
                                 <input type="text" name="generic_name" value="{{ old('generic_name') }}"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="Paracetamol / Acetaminophen">
@@ -358,17 +328,16 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Medicine
-                                    Type</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.medicine_type') }}</label>
                                 <select name="medicine_type"
-                                    class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow">
-                                    <option value="">Select type</option>
-                                    <option value="Tablet">Tablet</option>
-                                    <option value="Capsule">Capsule</option>
-                                    <option value="Syrup">Syrup / Suspension</option>
-                                    <option value="Injection">Injection / Ampoule</option>
-                                    <option value="Cream">Cream / Ointment</option>
-                                    <option value="Other">Other</option>
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                                    <option value="">{{ __('file.select_type') }}</option>
+                                    <option value="Tablet">{{ __('file.tablet') }}</option>
+                                    <option value="Capsule">{{ __('file.capsule') }}</option>
+                                    <option value="Syrup">{{ __('file.syrup_suspension') }}</option>
+                                    <option value="Injection">{{ __('file.injection_ampoule') }}</option>
+                                    <option value="Cream">{{ __('file.cream_ointment') }}</option>
+                                    <option value="Other">{{ __('file.other') }}</option>
                                 </select>
                                 @error('medicine_type') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
                                     {{ $message }}
@@ -378,8 +347,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dosage /
-                                    Strength</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.dosage_strength') }}</label>
                                 <input type="text" name="dosage" value="{{ old('dosage') }}"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="500 mg, 250 mg/5 ml">
@@ -387,8 +355,7 @@
                                 </p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tax Rate
-                                    (%)</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.tax_rate_percent') }}</label>
                                 <input type="number" step="0.01" name="tax_rate" value="{{ old('tax_rate') }}" min="0"
                                     class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow"
                                     placeholder="5.00">
@@ -399,8 +366,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Side
-                                Effects</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.side_effects') }}</label>
                             <textarea name="side_effects" rows="3"
                                 class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
                                 placeholder="Nausea, dizziness, rash...">{{ old('side_effects') }}</textarea>
@@ -410,28 +376,33 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precautions &
-                                Warnings</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.precautions_warnings') }}</label>
                             <textarea name="precautions_warnings" rows="3"
                                 class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
-                                placeholder="Not for patients with liver disease...">{{ old('precautions_warnings') }}</textarea>
+                                placeholder="{{ __('file.precautions_warnings') }}...">{{ old('precautions_warnings') }}</textarea>
                             @error('precautions_warnings') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
                                 {{ $message }}
                             </p> @enderror
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Storage
-                                Conditions (select all that apply)</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.storage_conditions') }} (select all that apply)</label>
                             <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 @php
-                                    $conditions = ['Room temperature', 'Cool place', 'Refrigerate (2-8°C)', 'Protect from light', 'Protect from moisture', 'Do not freeze'];
+                                    $conditions = [
+                                        'Room temperature' => __('file.room_temperature'),
+                                        'Cool place' => __('file.cool_place'),
+                                        'Refrigerate (2-8°C)' => __('file.refrigerate_2_8_c'),
+                                        'Protect from light' => __('file.protect_from_light'),
+                                        'Protect from moisture' => __('file.protect_from_moisture'),
+                                        'Do not freeze' => __('file.do_not_freeze')
+                                    ];
                                 @endphp
-                                @foreach($conditions as $condition)
+                                @foreach($conditions as $val => $label)
                                     <label class="flex items-center">
-                                        <input type="checkbox" name="storage_conditions[]" value="{{ $condition }}"
+                                        <input type="checkbox" name="storage_conditions[]" value="{{ $val }}"
                                             class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ $condition }}</span>
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ $label }}</span>
                                     </label>
                                 @endforeach
                             </div>
@@ -444,28 +415,40 @@
                             <label class="flex items-center">
                                 <input type="checkbox" name="is_active" value="1" checked
                                     class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Active / Available</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.active_available') }}</span>
                             </label>
                             <label class="flex items-center">
                                 <input type="checkbox" name="expiry_tracking" id="expiry_tracking" value="1" {{ old('expiry_tracking') ? 'checked' : '' }}
                                     class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Track Expiry</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.expiry_tracking') }}</span>
                             </label>
                             <label class="flex items-center">
                                 <input type="checkbox" name="requires_refrigeration" value="1" {{ old('requires_refrigeration') ? 'checked' : '' }}
                                     class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Requires
-                                    Refrigeration</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.requires_refrigeration') }}</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="controlled_substance" value="1" {{ old('controlled_substance') ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.controlled_substance') }}</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="hazardous_material" value="1" {{ old('hazardous_material') ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.hazardous_material') }}</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="sterile" value="1" {{ old('sterile') ? 'checked' : '' }}
+                                    class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.sterile') }}</span>
                             </label>
                         </div>
 
                         <div id="initial-batch-section" class="border-t dark:border-gray-700 pt-6 mt-6 hidden">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Initial Batch / Opening
-                                Stock</h3>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ __('file.initial_batch_opening_stock') }}</h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Batch
-                                        Number</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.batch_number') }}</label>
                                     <input type="text" name="batch_number" value="{{ old('batch_number') }}"
                                         class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white"
                                         placeholder="LOT-2025-001">
@@ -474,8 +457,7 @@
                                     </p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Expiry
-                                        Date <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.expiry_date') }} <span class="text-red-500">*</span></label>
                                     <input type="date" name="expiry_date" value="{{ old('expiry_date') }}"
                                         class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white">
                                     @error('expiry_date') <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">
@@ -483,8 +465,7 @@
                                     </p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Initial
-                                        Quantity <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.initial_quantity') }} <span class="text-red-500">*</span></label>
                                     <input type="number" name="initial_quantity" value="{{ old('initial_quantity') }}"
                                         min="0"
                                         class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white"
@@ -498,8 +479,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t dark:border-gray-700">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Medicine
-                                    Image</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ __('file.medicine_image') }}</label>
                                 <div
                                     class="flex justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 px-6 pt-5 pb-6">
                                     <div class="space-y-1 text-center">
@@ -516,7 +496,7 @@
                                         <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
                                             <label
                                                 class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500">
-                                                <span>Upload medicine image</span>
+                                                <span>{{ __('file.upload_medicine_image') }}</span>
                                                 <input type="file" name="medicine_image" class="sr-only" accept="image/*"
                                                     onchange="previewImage(this, 'medicine_preview')">
                                             </label>
@@ -549,7 +529,7 @@
                                         <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
                                             <label
                                                 class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500">
-                                                <span>Upload package image</span>
+                                                <span>{{ __('file.upload_package_image') }}</span>
                                                 <input type="file" name="package_image" class="sr-only" accept="image/*"
                                                     onchange="previewImage(this, 'package_preview')">
                                             </label>
@@ -572,23 +552,22 @@
                             <label class="flex items-center">
                                 <input type="checkbox" name="controlled_substance" value="1" {{ old('controlled_substance') ? 'checked' : '' }}
                                     class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600 focus:ring-gray-900 dark:focus:ring-gray-500">
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Controlled Substance</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.controlled_substance') }}</span>
                             </label>
                             <label class="flex items-center">
                                 <input type="checkbox" name="hazardous_material" value="1" {{ old('hazardous_material') ? 'checked' : '' }}
                                     class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600 focus:ring-gray-900 dark:focus:ring-gray-500">
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Hazardous Material</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.hazardous_material') }}</span>
                             </label>
                             <label class="flex items-center">
                                 <input type="checkbox" name="sterile" value="1" {{ old('sterile') ? 'checked' : '' }}
                                     class="h-4 w-4 text-gray-900 border-gray-300 rounded dark:bg-transparent dark:border-gray-600 focus:ring-gray-900 dark:focus:ring-gray-500">
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Sterile Item</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('file.sterile_item') }}</span>
                             </label>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional
-                                Information</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.additional_info') }}</label>
                             <textarea name="additional_info" rows="4"
                                 class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow resize-none"
                                 placeholder="Safety notes, usage instructions, etc.">{{ old('additional_info') }}</textarea>
@@ -606,16 +585,12 @@
                 class="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors duration-200 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Create Item
-            </button>
+                </svg>{{ __('file.create_item') }}</button>
             <a href="{{ route('inventory.index') }}"
                 class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Cancel
-            </a>
+                </svg>{{ __('file.cancel') }}</a>
         </div>
     </form>
     </div>
@@ -680,6 +655,18 @@
                     return;
                 }
             }
+
+            // Handle browser HTML5 validation failures (when required fields are hidden)
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('invalid', function (e) {
+                    const tabContent = e.target.closest('.tab-content');
+                    if (tabContent && tabContent.classList.contains('hidden')) {
+                        const tabId = tabContent.id.replace('content-', '');
+                        switchTab(tabId);
+                    }
+                });
+            });
 
             switchTab('basic');
         });

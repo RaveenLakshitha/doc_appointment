@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\DoctorSchedule;
 use App\Models\DoctorScheduleDay;
 use App\Models\Doctor;
-use App\Models\Room;
 use App\Models\Setting;
 use App\Models\Appointment;
+use App\Models\OptionList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -28,9 +28,9 @@ class DoctorScheduleController extends Controller
     public function create()
     {
         $doctors = Doctor::active()->orderBy('last_name')->orderBy('first_name')->get();
-        $rooms = Room::with('department')->orderBy('room_number')->get();
+        $sessionDurations = OptionList::getOptions('session_duration');
 
-        return view('doctor-schedules.create', compact('doctors', 'rooms'));
+        return view('doctor-schedules.create', compact('doctors', 'sessionDurations'));
     }
 
     public function store(Request $request)
@@ -43,10 +43,9 @@ class DoctorScheduleController extends Controller
             'days_of_week.*' => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'start_times' => 'required|array',
             'end_times' => 'required|array',
-            'rooms' => 'required|array',
-            'rooms.*' => 'nullable|exists:rooms,id',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'session_durations' => 'nullable|array',
             'is_active' => 'sometimes|boolean',
         ]);
 
@@ -55,6 +54,7 @@ class DoctorScheduleController extends Controller
                 'doctor_id' => $validated['doctor_id'],
                 'valid_from' => $validated['valid_from'] ?? null,
                 'valid_until' => $validated['valid_until'] ?? null,
+                'session_durations' => $validated['session_durations'] ?? null,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -62,7 +62,6 @@ class DoctorScheduleController extends Controller
                 DoctorScheduleDay::create([
                     'doctor_schedule_id' => $schedule->id,
                     'day_of_week' => $day,
-                    'room_id' => $validated['rooms'][$day] ?? null,
                     'start_time' => $validated['start_times'][$day] ?? null,
                     'end_time' => $validated['end_times'][$day] ?? null,
                 ]);
@@ -78,9 +77,9 @@ class DoctorScheduleController extends Controller
         $doctorSchedule->load('days');
 
         $doctors = Doctor::active()->orderBy('last_name')->orderBy('first_name')->get();
-        $rooms = Room::with('department')->orderBy('room_number')->get();
+        $sessionDurations = OptionList::getOptions('session_duration');
 
-        return view('doctor-schedules.edit', compact('doctorSchedule', 'doctors', 'rooms'));
+        return view('doctor-schedules.edit', compact('doctorSchedule', 'doctors', 'sessionDurations'));
     }
 
     public function update(Request $request, DoctorSchedule $doctorSchedule)
@@ -91,10 +90,9 @@ class DoctorScheduleController extends Controller
             'days_of_week.*' => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'start_times' => 'required|array',
             'end_times' => 'required|array',
-            'rooms' => 'required|array',
-            'rooms.*' => 'nullable|exists:rooms,id',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'session_durations' => 'nullable|array',
             'is_active' => 'sometimes|boolean',
         ]);
 
@@ -103,6 +101,7 @@ class DoctorScheduleController extends Controller
                 'doctor_id' => $validated['doctor_id'],
                 'valid_from' => $validated['valid_from'] ?? null,
                 'valid_until' => $validated['valid_until'] ?? null,
+                'session_durations' => $validated['session_durations'] ?? null,
                 'is_active' => $validated['is_active'] ?? false,
             ]);
 
@@ -111,7 +110,6 @@ class DoctorScheduleController extends Controller
                 DoctorScheduleDay::create([
                     'doctor_schedule_id' => $doctorSchedule->id,
                     'day_of_week' => $day,
-                    'room_id' => $validated['rooms'][$day] ?? null,
                     'start_time' => $validated['start_times'][$day] ?? null,
                     'end_time' => $validated['end_times'][$day] ?? null,
                 ]);
@@ -138,17 +136,14 @@ class DoctorScheduleController extends Controller
         $length = $request->input('length', 10);
         $searchValue = trim($request->input('search.value', ''));
         $doctorFilter = $request->doctor;
-        $roomFilter = $request->room;
 
         $query = DoctorSchedule::query()
-            ->with(['doctor', 'days.room.department'])
+            ->with(['doctor', 'days'])
             ->when($searchValue !== '', function ($q) use ($searchValue) {
                 $q->whereHas('doctor', fn($sq) => $sq->where('first_name', 'like', "%{$searchValue}%")
-                    ->orWhere('last_name', 'like', "%{$searchValue}%"))
-                    ->orWhereHas('days.room', fn($sq) => $sq->where('room_number', 'like', "%{$searchValue}%"));
+                    ->orWhere('last_name', 'like', "%{$searchValue}%"));
             })
-            ->when($doctorFilter, fn($q) => $q->where('doctor_id', $doctorFilter))
-            ->when($roomFilter, fn($q) => $q->whereHas('days', fn($sq) => $sq->where('room_id', $roomFilter)));
+            ->when($doctorFilter, fn($q) => $q->where('doctor_id', $doctorFilter));
 
         $totalRecords = DoctorSchedule::count();
         $filteredRecords = (clone $query)->count();
@@ -167,17 +162,9 @@ class DoctorScheduleController extends Controller
                 return "{$dayName}: {$start} - {$end}";
             })->join('<br>');
 
-            $roomDisplay = $schedule->days->map(function ($day) {
-                $room = $day->room;
-                $dayName = ucfirst(substr(__('file.' . strtolower($day->day_of_week)), 0, 3));
-                $r = $room ? $room->room_number : 'N/A';
-                return "{$dayName}: {$r}";
-            })->join(', ');
-
             return [
                 'id' => $schedule->id,
                 'doctor' => $schedule->doctor->getFullNameAttribute(),
-                'room' => $roomDisplay,
                 'days' => $days ?: '-',
                 'time' => $timeDisplay,
                 'edit_url' => \Auth::user()->can('doctor-schedules.edit') ? route('doctor-schedules.edit', $schedule) : null,
@@ -201,10 +188,6 @@ class DoctorScheduleController extends Controller
             'doctor' => Doctor::active()->orderBy('last_name')->get()->map(fn($d) => [
                 'id' => $d->id,
                 'name' => $d->full_name
-            ])->pluck('name', 'id'),
-            'room' => Room::orderBy('room_number')->get()->map(fn($r) => [
-                'id' => $r->id,
-                'name' => $r->room_number . ($r->department ? ' - ' . $r->department->name : '')
             ])->pluck('name', 'id'),
             default => response()->json([]),
         };
@@ -241,7 +224,7 @@ class DoctorScheduleController extends Controller
         $end = $request->query('end');
         $doctorId = $request->query('doctor_id');
 
-        $schedules = DoctorSchedule::with(['doctor', 'days.room.department'])
+        $schedules = DoctorSchedule::with(['doctor', 'days'])
             ->when($doctorId, fn($q) => $q->where('doctor_id', $doctorId))
             ->where('is_active', true)
             ->get();
@@ -264,12 +247,8 @@ class DoctorScheduleController extends Controller
                 
                 $dow = $dowMap[$day->day_of_week];
 
-                $roomInfo = $day->room 
-                    ? $day->room->room_number . ' (' . ($day->room->department?->name ?? '—') . ')'
-                    : '(Room deleted)';
-
                 $event = [
-                    'title' => "Dr. $doctorName - Room $roomInfo",
+                    'title' => "$doctorName - $timeLabel",
                     'startTime' => $startTime,
                     'endTime' => $endTime,
                     'daysOfWeek' => [$dow],
@@ -279,7 +258,6 @@ class DoctorScheduleController extends Controller
                     'textColor' => '#ffffff',
                     'extendedProps' => [
                         'doctor' => $doctorName,
-                        'room' => $roomInfo,
                         'time' => $timeLabel,
                         'days' => ucfirst($day->day_of_week),
                         'is_active' => $schedule->is_active,

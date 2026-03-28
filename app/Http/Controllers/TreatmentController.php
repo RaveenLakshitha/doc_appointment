@@ -46,6 +46,7 @@ class TreatmentController extends Controller
             )
             ->editColumn('active', fn($row) => (bool) $row->active)
             ->editColumn('code', fn($row) => $row->code ?? '—')
+            ->editColumn('price', fn($row) => $row->price)
             ->editColumn('appointment_count', fn($row) => $row->appointment_count ?? 0)
             ->make(true);
     }
@@ -63,6 +64,7 @@ class TreatmentController extends Controller
                 'max:255',
                 Rule::unique('treatments', 'name')->whereNull('deleted_at'),
             ],
+            'price' => 'required|numeric|min:0',
             'active' => 'boolean',
         ]);
 
@@ -71,6 +73,7 @@ class TreatmentController extends Controller
             $treatment->restore();
             $treatment->update([
                 'name' => $validated['name'],
+                'price' => $validated['price'],
                 'active' => $request->boolean('active', true),
             ]);
         } else {
@@ -81,6 +84,7 @@ class TreatmentController extends Controller
             Treatment::create([
                 'name' => $validated['name'],
                 'code' => $code,
+                'price' => $validated['price'],
                 'active' => $request->boolean('active', true),
             ]);
         }
@@ -104,11 +108,13 @@ class TreatmentController extends Controller
                 'max:255',
                 Rule::unique('treatments', 'name')->ignore($treatment->id)->whereNull('deleted_at'),
             ],
+            'price' => 'required|numeric|min:0',
             'active' => 'boolean',
         ]);
 
         $treatment->update([
             'name' => $validated['name'],
+            'price' => $validated['price'],
             'active' => $request->boolean('active', $treatment->active),
         ]);
 

@@ -43,7 +43,7 @@
                 <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-right all pr-6" style="width: 80px; min-width: 80px;">
+                            <th class="px-4 sm:px-6 py-3 text-right all pr-6 no-export" style="width: 80px; min-width: 80px;">
                                 <input type="checkbox" id="select-all"
                                     class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
@@ -64,7 +64,7 @@
                                 {{ __('file.description') }}
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
                                 {{ __('file.actions') }}
                             </th>
                         </tr>
@@ -205,6 +205,27 @@
                         processing: "{{ __('file.processing') }}"
                     }
                 });
+
+                function updateBulkDeleteUI() {
+                    const checked = $('.row-checkbox:checked');
+                    const count = checked.length;
+                    $('#bulk-delete-form').toggleClass('hidden', count === 0);
+                    $('#selected-count').text(count);
+
+                    const container = $('#bulk-ids-container');
+                    container.empty();
+                    checked.each(function () {
+                        container.append(`<input type="hidden" name="ids[]" value="${this.value}">`);
+                    });
+                }
+
+                $('#select-all').on('click change', function (e) {
+                    e.stopPropagation();
+                    $('.row-checkbox').prop('checked', this.checked);
+                    updateBulkDeleteUI();
+                });
+
+                $(document).on('change', '.row-checkbox', updateBulkDeleteUI);
 
                 $('#docapp-table tbody').on('click', '.edit-btn', function () {
                     let tr = $(this).closest('tr');

@@ -136,7 +136,9 @@ class InventoryItemController extends Controller
         $suppliers = Supplier::orderBy('name')->get();
         $units = UnitOfMeasure::where('is_active', true)->orderBy('name')->get();
 
-        return view('inventory.create', compact('categories', 'suppliers', 'units'));
+        $auto_sku = 'INV-' . strtoupper(\Illuminate\Support\Str::random(6));
+
+        return view('inventory.create', compact('categories', 'suppliers', 'units', 'auto_sku'));
     }
 
     public function store(Request $request)
@@ -156,17 +158,17 @@ class InventoryItemController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'primary_supplier_id' => ['nullable', 'exists:suppliers,id'],
             'description' => ['nullable', 'string'],
-            'unit_of_measure' => ['nullable', 'string', 'max:50'],
-            'unit_quantity' => ['nullable', 'integer', 'min:1'],
+            'unit_of_measure' => ['required', 'string', 'max:50'],
+            'unit_quantity' => ['required', 'integer', 'min:1'],
             'storage_location' => ['nullable', 'string', 'max:255'],
             'manufacturer' => ['nullable', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
             'model_version' => ['nullable', 'string', 'max:100'],
             'additional_info' => ['nullable', 'string'],
-            'current_stock' => ['nullable', 'integer', 'min:0'],
+            'current_stock' => ['required', 'integer', 'min:0'],
             'minimum_stock_level' => ['nullable', 'integer', 'min:0'],
-            'unit_cost' => ['nullable', 'numeric', 'min:0'],
-            'unit_price' => ['nullable', 'numeric', 'min:0'],
+            'unit_cost' => ['required', 'numeric', 'min:0'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'supplier_item_code' => ['nullable', 'string', 'max:100'],
             'supplier_price' => ['nullable', 'numeric', 'min:0'],
@@ -321,17 +323,17 @@ class InventoryItemController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'primary_supplier_id' => ['nullable', 'exists:suppliers,id'],
             'description' => ['nullable', 'string'],
-            'unit_of_measure' => ['nullable', 'string', 'max:50'],
-            'unit_quantity' => ['nullable', 'integer', 'min:1'],
+            'unit_of_measure' => ['required', 'string', 'max:50'],
+            'unit_quantity' => ['required', 'integer', 'min:1'],
             'storage_location' => ['nullable', 'string', 'max:255'],
             'manufacturer' => ['nullable', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
             'model_version' => ['nullable', 'string', 'max:100'],
             'additional_info' => ['nullable', 'string'],
-            'current_stock' => ['nullable', 'integer', 'min:0'],
+            'current_stock' => ['required', 'integer', 'min:0'],
             'minimum_stock_level' => ['nullable', 'integer', 'min:0'],
-            'unit_cost' => ['nullable', 'numeric', 'min:0'],
-            'unit_price' => ['nullable', 'numeric', 'min:0'],
+            'unit_cost' => ['required', 'numeric', 'min:0'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'supplier_item_code' => ['nullable', 'string', 'max:100'],
             'supplier_price' => ['nullable', 'numeric', 'min:0'],

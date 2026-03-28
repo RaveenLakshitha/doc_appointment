@@ -131,7 +131,52 @@ class WhatsAppFlowController extends Controller
 
     private function processFlow(string $action, string $screen, array $data, ?string $flowToken): array
     {
-        Log::info('Processing screen: ' . $screen, $data);
+        Log::info('Processing (wrapper) screen: ' . $screen, $data);
+
+        if ($action === 'INIT') {
+            return [
+                'version' => '3.0',
+                'screen' => 'LANGUAGE_SELECT',
+                'data' => ['error_message' => '']
+            ];
+        }
+
+        if ($screen === 'LANGUAGE_SELECT' && $action === 'data_exchange') {
+            $lang = $data['preferred_language'] ?? 'en';
+            $suffix = ($lang === 'es') ? '_ES' : '_EN';
+            return [
+                'version' => '3.0',
+                'screen' => 'TYPE' . $suffix,
+                'data' => [
+                    'appointment_type' => '',
+                    'preferred_language' => $lang,
+                    'error_message' => ''
+                ]
+            ];
+        }
+
+        $suffix = '';
+        if (preg_match('/_(EN|ES)$/', $screen, $matches)) {
+            $suffix = '_' . $matches[1];
+            $screen = preg_replace('/_(EN|ES)$/', '', $screen);
+        }
+
+        $response = $this->processFlowInternal($action, $screen, $data, $flowToken);
+
+        if (isset($response['screen']) && !preg_match('/_(EN|ES)$/', $response['screen'])) {
+            $response['screen'] .= $suffix;
+        }
+
+        if (isset($data['preferred_language'])) {
+            $response['data']['preferred_language'] = $data['preferred_language'];
+        }
+
+        return $response;
+    }
+
+    private function processFlowInternal(string $action, string $screen, array $data, ?string $flowToken): array
+    {
+        Log::info('Processing internal screen: ' . $screen, $data);
 
         $response = [
             'version' => '3.0',
@@ -141,16 +186,11 @@ class WhatsAppFlowController extends Controller
             ],
         ];
 
-        if ($action === 'INIT') {
-            $response['screen'] = 'TYPE';
-            return $response;
-        }
-
         if ($screen === 'TYPE' && $action === 'data_exchange') {
             $type = $data['appointment_type'] ?? null;
 
             if (!$type || !in_array($type, ['specific', 'any'])) {
-                $response['data']['error_message'] = 'Please select a valid appointment type';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Por favor seleccione un tipo de cita válido' : 'Please select a valid appointment type';
                 return $response;
             }
 
@@ -167,7 +207,13 @@ class WhatsAppFlowController extends Controller
                     ->map(fn($d) => ['id' => (string) $d->id, 'title' => $d->getFullNameAttribute()])
                     ->toArray();
             } else {
-                $response['data']['specializations'] = Specialization::orderBy('name')
+                $activePrimaryIds = Doctor::active()->pluck('primary_specialization_id')->filter()->unique();
+                $response['data']['specializations'] = Specialization::where(function ($query) use ($activePrimaryIds) {
+                    $query->whereHas('doctors', function ($q) {
+                        $q->active();
+                    })->orWhereIn('id', $activePrimaryIds);
+                })
+                    ->orderBy('name')
                     ->get()
                     ->map(fn($s) => ['id' => (string) $s->id, 'title' => $s->name])
                     ->toArray();
@@ -181,12 +227,17 @@ class WhatsAppFlowController extends Controller
                 $specId = $this->normalizeId($data['specialization'] ?? null);
 
                 if ($specId === null) {
-                    $response['data']['error_message'] = 'Invalid specialization';
+                    $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Especialidad inválida' : 'Invalid specialization';
                     return $response;
                 }
 
-                $doctors = Doctor::where('primary_specialization_id', $specId)
-                    ->active()
+                $doctors = Doctor::active()
+                    ->where(function ($query) use ($specId) {
+                        $query->where('primary_specialization_id', $specId)
+                            ->orWhereHas('specializations', function ($q) use ($specId) {
+                                $q->where('specializations.id', $specId);
+                            });
+                    })
                     ->orderBy('first_name')
                     ->orderBy('last_name')
                     ->get()
@@ -196,7 +247,7 @@ class WhatsAppFlowController extends Controller
                 $response['data']['doctors'] = $doctors;
                 $response['data']['specialization'] = (string) $specId;
                 $response['data']['age_groups'] = $this->getAgeGroupsArray();
-                $response['data']['error_message'] = empty($doctors) ? 'No doctors available for this specialization' : '';
+                $response['data']['error_message'] = empty($doctors) ? (($data['preferred_language'] ?? 'en') === 'es' ? 'No hay terapeutas disponibles para esta especialidad' : 'No therapists available for this specialization') : '';
 
                 return $response;
             }
@@ -276,7 +327,7 @@ class WhatsAppFlowController extends Controller
             $visitType = $data['visit_type'] ?? null;
 
             if (!in_array($visitType, ['first', 'followup'])) {
-                $response['data']['error_message'] = 'Please select visit type';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Por favor seleccione tipo de visita' : 'Please select visit type';
                 return $response;
             }
 
@@ -297,7 +348,7 @@ class WhatsAppFlowController extends Controller
             $phone = trim($data['phone'] ?? '');
 
             if (empty($phone)) {
-                $response['data']['error_message'] = 'Please enter your phone number';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Por favor ingrese su número de teléfono' : 'Please enter your phone number';
                 return $response;
             }
 
@@ -310,7 +361,7 @@ class WhatsAppFlowController extends Controller
                 ->get();
 
             if ($patients->isEmpty()) {
-                $response['data']['error_message'] = 'No patient found with this phone number';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'No se encontró ningún paciente con este número de teléfono' : 'No patient found with this phone number';
                 return $response;
             }
 
@@ -318,7 +369,20 @@ class WhatsAppFlowController extends Controller
                 $patient = $patients->first();
                 $response['screen'] = 'PREFERRED_TIME';
                 $response['data']['patient'] = (string) $patient->id;
-                $response['data']['patient_details'] = "Patient: {$patient->first_name} {$patient->last_name}\nPhone: {$patient->phone}\nGender: " . ucfirst($patient->gender);
+                $is_es = ($data['preferred_language'] ?? 'en') === 'es';
+                $genderStr = ucfirst($patient->gender);
+                if ($is_es) {
+                    $genderStr = match (strtolower($patient->gender)) {
+                        'male' => 'Masculino',
+                        'female' => 'Femenino',
+                        default => ucfirst($patient->gender)
+                    };
+                }
+                $patientLabel = $is_es ? "Paciente" : "Patient";
+                $phoneLabel = $is_es ? "Teléfono" : "Phone";
+                $genderLabel = $is_es ? "Género" : "Gender";
+
+                $response['data']['patient_details'] = "{$patientLabel}: {$patient->first_name} {$patient->last_name}\n{$phoneLabel}: {$patient->phone}\n{$genderLabel}: " . $genderStr;
                 $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
                 $response['data']['visit_type'] = 'followup';
                 $response['data']['doctor'] = $data['doctor'] ?? '';
@@ -328,13 +392,32 @@ class WhatsAppFlowController extends Controller
                 return $response;
             }
 
-            $patientList = $patients->map(function ($p) {
-                $age = $p->date_of_birth ? Carbon::parse($p->date_of_birth)->age : null;
+            $patientList = $patients->map(function ($p) use ($data) {
+                $is_es = ($data['preferred_language'] ?? 'en') === 'es';
+                $age = $p->date_of_birth ? \Carbon\Carbon::parse($p->date_of_birth)->age : null;
                 $display = trim("{$p->first_name} {$p->last_name}");
-                if ($age !== null)
-                    $display .= " ({$age} yrs)";
-                if ($p->gender)
-                    $display .= " • " . ucfirst($p->gender);
+
+                $ageSuffix = $is_es ? ' años' : ' yrs';
+                if ($age !== null) {
+                    $display .= " ({$age}{$ageSuffix})";
+                }
+
+                if ($p->gender) {
+                    $genderStr = ucfirst($p->gender);
+                    if ($is_es) {
+                        $genderStr = match (strtolower($p->gender)) {
+                            'male' => 'Masculino',
+                            'female' => 'Femenino',
+                            default => ucfirst($p->gender)
+                        };
+                    }
+                    $display .= " • " . $genderStr;
+                }
+
+                if (mb_strlen($display) > 30) {
+                    $display = mb_substr($display, 0, 27) . '...';
+                }
+
                 return [
                     'id' => (string) $p->id,
                     'title' => $display,
@@ -358,7 +441,7 @@ class WhatsAppFlowController extends Controller
             $selectedId = $this->normalizeId($data['selected_patient'] ?? null);
 
             if ($selectedId === null) {
-                $response['data']['error_message'] = 'Please select a patient';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Por favor seleccione un paciente' : 'Please select a patient';
                 return $response;
             }
 
@@ -368,13 +451,26 @@ class WhatsAppFlowController extends Controller
                 ->first();
 
             if (!$patient) {
-                $response['data']['error_message'] = 'Selected patient not found or inactive';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'El paciente seleccionado no se encontró o está inactivo' : 'Selected patient not found or inactive';
                 return $response;
             }
 
             $response['screen'] = 'PREFERRED_TIME';
             $response['data']['patient'] = (string) $patient->id;
-            $response['data']['patient_details'] = "Patient: {$patient->first_name} {$patient->last_name}\nPhone: {$patient->phone}\nGender: " . ucfirst($patient->gender);
+            $is_es = ($data['preferred_language'] ?? 'en') === 'es';
+            $genderStr = ucfirst($patient->gender);
+            if ($is_es) {
+                $genderStr = match (strtolower($patient->gender)) {
+                    'male' => 'Masculino',
+                    'female' => 'Femenino',
+                    default => ucfirst($patient->gender)
+                };
+            }
+            $patientLabel = $is_es ? "Paciente" : "Patient";
+            $phoneLabel = $is_es ? "Teléfono" : "Phone";
+            $genderLabel = $is_es ? "Género" : "Gender";
+
+            $response['data']['patient_details'] = "{$patientLabel}: {$patient->first_name} {$patient->last_name}\n{$phoneLabel}: {$patient->phone}\n{$genderLabel}: " . $genderStr;
             $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
             $response['data']['visit_type'] = 'followup';
             $response['data']['doctor'] = $data['doctor'] ?? '';
@@ -392,7 +488,7 @@ class WhatsAppFlowController extends Controller
                 'phone' => 'required|string|regex:/^\+?[0-9]{9,15}$/',
                 'email' => 'nullable|email',
                 'age' => 'required|integer|min:0|max:120',
-                'gender' => 'required|in:male,female,other',
+                'gender' => 'required|in:male,female',
                 'address' => 'nullable|string|max:500',
                 'previous_psychotherapy' => 'nullable|in:yes,no',
                 'preferred_session_time' => 'nullable|string|max:255',
@@ -404,10 +500,9 @@ class WhatsAppFlowController extends Controller
                 return $response;
             }
 
-            $lastPatient = Patient::orderBy('id', 'desc')->first();
-            $nextNumber = $lastPatient ? $lastPatient->id + 1 : 1;
-            $mrn = 'MRN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-
+            do {
+                $mrn = 'MRN' . mt_rand(1000000, 9999999);
+            } while (\App\Models\Patient::where('medical_record_number', $mrn)->exists());
             $patient = Patient::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
@@ -426,7 +521,20 @@ class WhatsAppFlowController extends Controller
 
             $response['screen'] = 'PREFERRED_TIME';
             $response['data']['patient'] = (string) $patient->id;
-            $response['data']['patient_details'] = "Patient: {$patient->first_name} {$patient->last_name}\nPhone: {$patient->phone}\nGender: " . ucfirst($patient->gender);
+            $is_es = ($data['preferred_language'] ?? 'en') === 'es';
+            $genderStr = ucfirst($patient->gender);
+            if ($is_es) {
+                $genderStr = match (strtolower($patient->gender)) {
+                    'male' => 'Masculino',
+                    'female' => 'Femenino',
+                    default => ucfirst($patient->gender)
+                };
+            }
+            $patientLabel = $is_es ? "Paciente" : "Patient";
+            $phoneLabel = $is_es ? "Teléfono" : "Phone";
+            $genderLabel = $is_es ? "Género" : "Gender";
+
+            $response['data']['patient_details'] = "{$patientLabel}: {$patient->first_name} {$patient->last_name}\n{$phoneLabel}: {$patient->phone}\n{$genderLabel}: " . $genderStr;
             $response['data']['appointment_type'] = $data['appointment_type'] ?? 'specific';
             $response['data']['visit_type'] = 'first';
             $response['data']['doctor'] = $data['doctor'] ?? '';
@@ -441,7 +549,7 @@ class WhatsAppFlowController extends Controller
             $pref = $data['preferred_time'] ?? null;
 
             if (!in_array($pref, ['next', '7days', '15days'])) {
-                $response['data']['error_message'] = 'Please select preferred time option';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Por favor seleccione una opción de hora preferida' : 'Please select preferred time option';
                 return $response;
             }
 
@@ -470,35 +578,52 @@ class WhatsAppFlowController extends Controller
             }
 
             $summary = [];
+            $is_es = ($data['preferred_language'] ?? 'en') === 'es';
+
+            $patientLabel = $is_es ? "👤 Paciente:" : "👤 Patient:";
+            $phoneLabel = $is_es ? "📱 Teléfono:" : "📱 Phone:";
+            $therapistLabel = $is_es ? "🧑‍⚕️ Terapeuta:" : "🧑‍⚕️ Therapist:";
+            $deptLabel = $is_es ? "🏥 Departamento:" : "🏥 Department:";
+            $timeLabel = $is_es ? "🕒 Hora Preferida:" : "🕒 Preferred Time:";
+            $reasonLabel = $is_es ? "📝 Motivo:" : "📝 Reason:";
+            $notesLabel = $is_es ? "📌 Notas:" : "📌 Notes:";
 
             $patient = \App\Models\Patient::find($this->normalizeId($data['patient'] ?? null));
             if ($patient) {
-                $summary[] = "👤 Patient: " . $patient->first_name . " " . $patient->last_name;
-                $summary[] = "📱 Phone: " . $patient->phone;
+                $summary[] = "{$patientLabel} " . $patient->first_name . " " . $patient->last_name;
+                $summary[] = "{$phoneLabel} " . $patient->phone;
             }
 
             if (($data['appointment_type'] ?? '') === 'specific' && !empty($data['doctor'])) {
                 $doc = \App\Models\Doctor::find($this->normalizeId($data['doctor']));
                 if ($doc)
-                    $summary[] = "🧑‍⚕️ Doctor: " . $doc->full_name;
+                    $summary[] = "{$therapistLabel} " . $doc->full_name;
             } elseif (($data['appointment_type'] ?? '') === 'any' && !empty($data['specialization'])) {
                 $spec = \App\Models\Specialization::find($this->normalizeId($data['specialization']));
                 if ($spec)
-                    $summary[] = "🏥 Department: " . $spec->name;
+                    $summary[] = "{$deptLabel} " . $spec->name;
             }
 
-            $prefTimeMap = [
-                'next' => 'Next available slot',
-                '7days' => 'Within next 7 days',
-                '15days' => 'Within next 15 days',
-            ];
-            $prefTime = $prefTimeMap[$data['preferred_time'] ?? ''] ?? 'Next available slot';
-            $summary[] = "🕒 Preferred Time: " . $prefTime;
+            if ($is_es) {
+                $prefTimeMap = [
+                    'next' => 'Lo más pronto posible',
+                    '7days' => 'Dentro de los próximos 7 días',
+                    '15days' => 'Dentro de los próximos 15 días',
+                ];
+            } else {
+                $prefTimeMap = [
+                    'next' => 'Next available slot',
+                    '7days' => 'Within next 7 days',
+                    '15days' => 'Within next 15 days',
+                ];
+            }
+            $prefTime = $prefTimeMap[$data['preferred_time'] ?? ''] ?? $prefTimeMap['next'];
+            $summary[] = "{$timeLabel} " . $prefTime;
 
-            $summary[] = "📝 Reason: " . $data['reason'];
+            $summary[] = "{$reasonLabel} " . $data['reason'];
 
             if (!empty($data['notes'])) {
-                $summary[] = "📌 Notes: " . $data['notes'];
+                $summary[] = "{$notesLabel} " . $data['notes'];
             }
 
             $response['screen'] = 'APPOINTMENT_SUMMARY';
@@ -527,16 +652,31 @@ class WhatsAppFlowController extends Controller
             $ageGroupId = $this->normalizeId($data['age_group'] ?? '');
 
             if ($data['appointment_type'] === 'specific' && $doctorId === null) {
-                $response['data']['error_message'] = 'Doctor is required';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Terapeuta requerido' : 'Therapist is required';
                 return $response;
             }
             if ($data['appointment_type'] === 'any' && $specializationId === null) {
-                $response['data']['error_message'] = 'Specialization is required';
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Especialidad requerida' : 'Specialization is required';
                 return $response;
             }
 
             $langSlug = $data['preferred_language'] ?? 'en';
             $langOption = \App\Models\OptionList::where('type', 'language')->where('slug', $langSlug)->first();
+
+            // Prevent duplicates if user hits back and submits again
+            $recentAppointment = Appointment::where('patient_id', $data['patient'])
+                ->where('appointment_type', $data['appointment_type'])
+                ->where('doctor_id', $doctorId)
+                ->where('specialization_id', $specializationId)
+                ->where('reason_for_visit', $data['reason'])
+                ->where('created_at', '>=', now()->subMinutes(5))
+                ->first();
+
+            if ($recentAppointment) {
+                // If they go back and try to submit again, show a friendly validation error
+                $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Esta cita ya ha sido confirmada.' : 'This appointment has already been confirmed.';
+                return $response;
+            }
 
             $appointment = Appointment::create([
                 'patient_id' => $data['patient'],
@@ -555,20 +695,37 @@ class WhatsAppFlowController extends Controller
             Notification::send($recipients, new NewAppointmentCreated($appointment));
 
             $response['screen'] = 'SUCCESS';
+            $is_es = ($data['preferred_language'] ?? 'en') === 'es';
+            if ($is_es) {
+                $prefTimeMap = [
+                    'next' => 'Lo más pronto posible',
+                    '7days' => 'Dentro de los próximos 7 días',
+                    '15days' => 'Dentro de los próximos 15 días',
+                ];
+            } else {
+                $prefTimeMap = [
+                    'next' => 'Next available slot',
+                    '7days' => 'Within next 7 days',
+                    '15days' => 'Within next 15 days',
+                ];
+            }
+            $humanPrefTime = $prefTimeMap[$data['preferred_time'] ?? ''] ?? $prefTimeMap['next'];
+
             $response['data'] = [
                 'appointment_id' => (string) $appointment->id,
-                'success_message' => 'Your appointment request has been submitted successfully! Our team will contact you soon.',
-                'details_text' => "Reason: " . ($data['reason'] ?? 'Not specified')
-                    . "\nPreferred Time: " . ucfirst($data['preferred_time'] ?? 'Next available')
-                    . "\nPatient ID: " . $data['patient']
-                    . ($data['notes'] ? "\nNotes: " . $data['notes'] : ''),
+                'success_message' => $is_es
+                    ? '¡Su solicitud de cita ha sido enviada con éxito! Nuestro equipo se comunicará con usted pronto.'
+                    : 'Your appointment request has been submitted successfully! Our team will contact you soon.',
+                'details_text' => ($is_es ? "Motivo: " : "Reason: ") . ($data['reason'] ?? ($is_es ? 'No especificado' : 'Not specified'))
+                    . ($is_es ? "\nHora Preferida: " : "\nPreferred Time: ") . $humanPrefTime
+                    . (!empty($data['notes']) ? ($is_es ? "\nNotas: " : "\nNotes: ") . $data['notes'] : ''),
                 'error_message' => '',
             ];
 
             return $response;
         }
 
-        $response['data']['error_message'] = 'Invalid action or screen';
+        $response['data']['error_message'] = ($data['preferred_language'] ?? 'en') === 'es' ? 'Acción o pantalla no válida' : 'Invalid action or screen';
         return $response;
     }
 

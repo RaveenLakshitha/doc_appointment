@@ -63,22 +63,26 @@ class BillingInvoiceController extends Controller
         $filteredRecords = (clone $query)->count();
 
         if ($orderColumnIndex == 0) {
-            $query->orderBy('invoice_number', $orderDir);
+            $query->orderBy('id', $orderDir);
         } elseif ($orderColumnIndex == 1) {
-            $query->join('patients', 'billing_invoices.patient_id', '=', 'patients.id')
+            $query->orderBy('invoice_number', $orderDir);
+        } elseif ($orderColumnIndex == 2) {
+            $query->leftJoin('patients', 'billing_invoices.patient_id', '=', 'patients.id')
                 ->orderBy('patients.first_name', $orderDir)
                 ->orderBy('patients.last_name', $orderDir)
                 ->select('billing_invoices.*');
-        } elseif ($orderColumnIndex == 2) {
-            $query->orderBy('invoice_date', $orderDir);
         } elseif ($orderColumnIndex == 3) {
-            $query->orderBy('total', $orderDir);
+            $query->orderBy('invoice_date', $orderDir);
         } elseif ($orderColumnIndex == 4) {
-            $query->orderBy('balance_due', $orderDir);
+            $query->orderBy('total', $orderDir);
         } elseif ($orderColumnIndex == 5) {
+            $query->orderBy('balance_due', $orderDir);
+        } elseif ($orderColumnIndex == 6) {
             $query->orderByRaw("FIELD(status, 'paid', 'partially_paid', 'sent', 'overdue') {$orderDir}");
+        } elseif ($orderColumnIndex == 7) {
+            $query->orderBy('is_printed', $orderDir);
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('id', 'desc');
         }
 
         $invoices = $query->offset($start)->limit($length)->get();
@@ -309,7 +313,7 @@ class BillingInvoiceController extends Controller
                 } else {
                     $item = InventoryItem::findOrFail($id);
                     if ($item->current_stock - $qty < $item->minimum_stock_level) {
-                        throw new \Exception("Cannot fulfill request: Minimum stock level reached for {$item->name}");
+                        throw new \Exception(__('file.min_stock_reached', ['item' => $item->name]));
                     }
                     $price = $item->unit_price;
                     $name = $item->name . ($item->generic_name ? " ({$item->generic_name})" : '');
@@ -426,6 +430,7 @@ class BillingInvoiceController extends Controller
 
             return response()->json([
                 'success' => true,
+                'message' => __('file.sale_success_msg', ['number' => $invoice->invoice_number]),
                 'invoice_id' => $invoice->id,
                 'invoice_number' => $invoice->invoice_number,
                 'total' => $total,

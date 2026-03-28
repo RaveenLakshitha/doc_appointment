@@ -136,6 +136,7 @@ class EmployeeController extends Controller
             ->get();
         $genders = OptionList::where('type', 'gender')
             ->where('status', true)
+            ->whereIn('slug', ['male', 'female'])
             ->orderBy('order')
             ->get();
 
@@ -155,7 +156,7 @@ class EmployeeController extends Controller
             'last_name' => 'nullable|string|max:100',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'date_of_birth' => 'nullable|date',
-            'gender' => 'nullable|in:male,female,other',
+            'gender' => 'nullable|in:male,female',
             'department_id' => 'nullable|exists:departments,id',
             'position' => 'nullable|string|max:100',
             'profession' => 'nullable|string|max:100',
@@ -256,6 +257,7 @@ class EmployeeController extends Controller
         $supervisors = Employee::where('id', '!=', $employee->id)->orderBy('first_name')->orderBy('middle_name')->orderBy('last_name')->get();
         $genders = OptionList::where('type', 'gender')
             ->where('status', true)
+            ->whereIn('slug', ['male', 'female'])
             ->orderBy('order')
             ->get();
 
@@ -275,7 +277,7 @@ class EmployeeController extends Controller
             'last_name' => 'nullable|string|max:100',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'date_of_birth' => 'nullable|date',
-            'gender' => 'nullable|in:male,female,other',
+            'gender' => 'nullable|in:male,female',
             'department_id' => 'nullable|exists:departments,id',
             'position' => 'nullable|string|max:100',
             'profession' => 'nullable|string|max:100',

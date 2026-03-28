@@ -213,50 +213,7 @@
                             @error('doctor_id') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label for="age_group_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    {{ __('file.age_group') }}
-                                </label>
-                                <select name="age_group_id" id="age_group_id" {{ !$isPrivileged ? 'disabled' : '' }}
-                                        class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
-                                    <option value="">{{ __('file.select_age_group') }}</option>
-                                    @foreach($ageGroups as $ag)
-                                        <option value="{{ $ag->id }}" {{ old('age_group_id', $appointment->age_group_id) == $ag->id ? 'selected' : '' }}>
-                                            {{ $ag->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="preferred_language_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    {{ __('file.preferred_language') }}
-                                </label>
-                                <select name="preferred_language_id" id="preferred_language_id" {{ !$isPrivileged ? 'disabled' : '' }}
-                                        class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
-                                    <option value="">{{ __('file.select_language') }}</option>
-                                    @foreach($languages as $id => $name)
-                                        <option value="{{ $id }}" {{ old('preferred_language_id', $appointment->preferred_language_id) == $id ? 'selected' : '' }}>
-                                            {{ $name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="preferred_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    {{ __('file.preferred_time') }}
-                                </label>
-                                <select name="preferred_time" id="preferred_time" {{ !$isPrivileged ? 'disabled' : '' }}
-                                        class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
-                                    <option value="">{{ __('file.select_time') ?? 'Select Time' }}</option>
-                                    @foreach($preferredTimeOptions as $value => $label)
-                                        <option value="{{ $value }}" {{ old('preferred_time', $appointment->preferred_time) == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -270,14 +227,38 @@
                             <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 {{ __('file.date') }}
                             </label>
-                            <input type="date" name="date" id="date_input" {{ !$isPrivileged ? 'disabled' : '' }}
-                                   min="{{ now()->format('Y-m-d') }}"
-                                   value="{{ old('date', $appointment->scheduled_start?->format('Y-m-d') ?? '') }}"
-                                   class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow [color-scheme:light] dark:[color-scheme:dark] {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
+                            
+                            <div id="edit_available_days_container" class="space-y-3 hidden mb-3">
+                                <div id="edit_available_days" class="flex flex-wrap gap-2">
+                                    <!-- Quick select days will go here -->
+                                </div>
+                                <button type="button" id="toggle_edit_date" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    {{ __('file.pick_another_date') ?? 'Pick another date' }}
+                                </button>
+                            </div>
+
+                            <div id="edit_date_input_group">
+                                <input type="date" name="date" id="date_input" {{ !$isPrivileged ? 'disabled' : '' }}
+                                    min="{{ now()->format('Y-m-d') }}"
+                                    value="{{ old('date', $appointment->scheduled_start?->format('Y-m-d') ?? '') }}"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow [color-scheme:light] dark:[color-scheme:dark] {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
+                            </div>
+
+                            <div id="edit_date_warning" class="mt-2 hidden">
+                                <div class="flex items-center p-2 text-xs text-amber-800 border border-amber-200 rounded-lg bg-amber-50 dark:bg-gray-800 dark:text-amber-400 dark:border-amber-900">
+                                    <svg class="flex-shrink-0 inline w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                    </svg>
+                                    <span class="sr-only">Warning</span>
+                                    <div id="edit_date_warning_text">
+                                        <!-- Warning message will go here -->
+                                    </div>
+                                </div>
+                            </div>
                             @error('date') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
 
-                        <div>
+                        <div id="slot-group" class="hidden">
                             <label for="slot" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 {{ __('file.time_slot') }}
                             </label>
@@ -286,6 +267,35 @@
                                 <option value="">{{ __('file.select_date_first') }}</option>
                             </select>
                             @error('slot') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.appointment_time') ?? 'Appointment Time' }} <span class="text-red-500">*</span></label>
+                            <input type="time" name="appointment_time" id="appointment_time" value="{{ old('appointment_time', $appointment->scheduled_start?->format('H:i') ?? '') }}" required class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-500 focus:border-transparent dark:bg-transparent dark:text-white transition-shadow {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}" {{ !$isPrivileged ? 'disabled' : '' }}>
+                            @error('appointment_time') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            <p id="time_slot_hint" class="mt-1.5 text-xs text-indigo-600 dark:text-indigo-400 hidden"></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.duration_minutes') ?? 'Duration' }} <span class="text-red-500">*</span></label>
+                            <select name="duration_minutes" id="duration_minutes" required {{ !$isPrivileged ? 'disabled' : '' }} class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
+                                <option value="15" {{ old('duration_minutes', $appointment->duration_minutes) == 15 ? 'selected' : '' }}>15 {{ __('file.min') ?? 'min' }}</option>
+                                <option value="30" {{ old('duration_minutes', $appointment->duration_minutes) == 30 ? 'selected' : '' }}>30 {{ __('file.min') ?? 'min' }}</option>
+                                <option value="45" {{ old('duration_minutes', $appointment->duration_minutes) == 45 ? 'selected' : '' }}>45 {{ __('file.min') ?? 'min' }}</option>
+                                <option value="60" {{ old('duration_minutes', $appointment->duration_minutes) == 60 ? 'selected' : '' }}>1 {{ __('file.hour') ?? 'hr' }}</option>
+                            </select>
+                            @error('duration_minutes') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="room_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('file.room') }}</label>
+                            <select name="room_id" id="room_id" {{ !$isPrivileged ? 'disabled' : '' }} class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all {{ !$isPrivileged ? 'bg-gray-50 dark:bg-gray-800' : '' }}">
+                                <option value="">{{ __('file.select_room') ?? 'Select Room' }}</option>
+                                @foreach(\App\Models\Room::active()->get() as $room)
+                                    <option value="{{ $room->id }}" {{ old('room_id', $appointment->room_id) == $room->id ? 'selected' : '' }}>{{ $room->name }} ({{ $room->room_number }})</option>
+                                @endforeach
+                            </select>
+                            @error('room_id') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                         </div>
 
 
@@ -480,14 +490,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const slotSelect    = document.getElementById('slot_select');
     const treatmentsList = document.getElementById('treatments-checkbox-list');
 
-    const ageGroupSelect = document.getElementById('age_group_id');
-    const languageSelect = document.getElementById('preferred_language_id');
+
 
     const preDoctorId          = '{{ $appointment->doctor_id ?? "" }}';
     const currentTreatmentIds  = {{ json_encode($appointment->treatments->pluck('id')->toArray()) }};
 
-    const ALL_AGE_GROUPS = @json($ageGroups);
-    const ALL_LANGUAGES = @json($languages);
+
 
     function getCurrentType() {
         let val = '{{ \App\Models\Appointment::TYPE_SPECIFIC }}';
@@ -507,6 +515,37 @@ document.addEventListener('DOMContentLoaded', function () {
         const status = getStatus();
         const isSpecific = type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}';
         const isAny      = type === '{{ \App\Models\Appointment::TYPE_ANY }}';
+
+        const slotGroup = document.getElementById('slot-group');
+        const slotSelect = document.getElementById('slot_select');
+
+        if (slotGroup) slotGroup.classList.toggle('hidden', !isSpecific);
+
+        if (isSpecific && slotSelect) {
+            slotSelect.style.pointerEvents = 'none';
+            slotSelect.classList.add('bg-gray-100', 'dark:bg-gray-800', 'opacity-60', 'cursor-not-allowed');
+            slotSelect.setAttribute('tabindex', '-1');
+        } else if (slotSelect) {
+            slotSelect.style.pointerEvents = '';
+            slotSelect.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'opacity-60', 'cursor-not-allowed');
+            slotSelect.removeAttribute('tabindex');
+        }
+        
+        const timeSlotHint = document.getElementById('time_slot_hint');
+        const appointmentTimeInput = document.getElementById('appointment_time');
+        if (isAny) {
+            if (timeSlotHint) timeSlotHint.classList.add('hidden');
+            if (appointmentTimeInput) {
+                appointmentTimeInput.removeAttribute('min');
+                appointmentTimeInput.removeAttribute('max');
+                appointmentTimeInput.setCustomValidity('');
+            }
+        } else if (isSpecific) {
+            const createSlot = document.getElementById('slot_select');
+            if (createSlot && createSlot.value) {
+                createSlot.dispatchEvent(new Event('change'));
+            }
+        }
 
         if (specGroup) specGroup.classList.toggle('hidden', !(isAny || status === 'approved'));
         if (doctorGroup) doctorGroup.classList.toggle('hidden', !(isSpecific || status === 'approved'));
@@ -563,6 +602,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function resetSlots() {
         slotSelect.innerHTML = '<option value="">{{ __("file.select_date_first") }}</option>';
         slotSelect.disabled  = true;
+        const timeSlotHint = document.getElementById('time_slot_hint');
+        if (timeSlotHint) timeSlotHint.classList.add('hidden');
     }
 
     function loadSlots() {
@@ -580,6 +621,16 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(url)
             .then(r => r.json())
             .then(data => {
+                const warningDiv = document.getElementById('edit_date_warning');
+                const warningText = document.getElementById('edit_date_warning_text');
+                
+                if (data.message && (!data.slots || data.slots.length === 0)) {
+                    warningText.textContent = data.message;
+                    warningDiv.classList.remove('hidden');
+                } else {
+                    warningDiv.classList.add('hidden');
+                }
+
                 slotSelect.innerHTML = '<option value="">{{ __("file.select_time_slot") }}</option>';
                 if (data.slots?.length) {
                     data.slots.forEach(s => {
@@ -592,6 +643,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         slotSelect.appendChild(opt);
                     });
+
+                    if (data.slots.length === 1 && !slotSelect.value) {
+                        slotSelect.value = `${data.slots[0].start}|${data.slots[0].end}`;
+                        slotSelect.dispatchEvent(new Event('change'));
+                    }
                 } else {
                     slotSelect.innerHTML = '<option value="">No available slots</option>';
                 }
@@ -602,39 +658,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function resetAttributes() {
-        const currentAgeGroup = ageGroupSelect.value;
-        const currentLang = languageSelect.value;
-
-        ageGroupSelect.innerHTML = '<option value="">{{ __("file.select_age_group") }}</option>';
-        ALL_AGE_GROUPS.forEach(ag => {
-            const opt = new Option(ag.name, ag.id);
-            if (currentAgeGroup == ag.id) opt.selected = true;
-            ageGroupSelect.add(opt);
-        });
-
-        languageSelect.innerHTML = '<option value="">{{ __("file.select_language") }}</option>';
-        Object.entries(ALL_LANGUAGES).forEach(([id, name]) => {
-            const opt = new Option(name, id);
-            if (currentLang == id) opt.selected = true;
-            languageSelect.add(opt);
-        });
+        // Future attributes
     }
 
     function loadFilteredDoctors() {
         if (!doctorSelect) return;
 
         const specId = specSelect.value;
-        const ageGroupId = ageGroupSelect.value;
-        const langId = languageSelect.value;
-        const status = getStatus();
         const type = getCurrentType();
-
         let url = '{{ route("appointments.doctors.filtered") }}?';
         // Only apply filters if it's 'Any Doctor' mode
         if (type === '{{ \App\Models\Appointment::TYPE_ANY }}') {
             if (specId) url += `specialization_id=${specId}&`;
-            if (ageGroupId) url += `age_group_id=${ageGroupId}&`;
-            if (langId) url += `preferred_language_id=${langId}&`;
         }
 
         fetch(url)
@@ -668,31 +703,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     specSelect.value = data.specialization_id;
                 }
 
-                // Filter age groups
-                const currentAgeGroup = ageGroupSelect.value;
-                ageGroupSelect.innerHTML = '<option value="">{{ __("file.select_age_group") }}</option>';
-                const supportedAgeGroups = data.age_groups || [];
-                
-                const ageGroupsToPopulate = ALL_AGE_GROUPS.filter(ag => supportedAgeGroups.includes(ag.id));
-                ageGroupsToPopulate.forEach(ag => {
-                    const opt = new Option(ag.name, ag.id);
-                    if (currentAgeGroup == ag.id) opt.selected = true;
-                    ageGroupSelect.add(opt);
-                });
-
-                // Filter languages
-                const currentLang = languageSelect.value;
-                languageSelect.innerHTML = '<option value="">{{ __("file.select_language") }}</option>';
-                const supportedLanguages = data.languages || [];
-
-                const langsToPopulate = Object.entries(ALL_LANGUAGES).filter(([id, name]) => 
-                    supportedLanguages.includes(parseInt(id))
-                );
-                langsToPopulate.forEach(([id, name]) => {
-                    const opt = new Option(name, id);
-                    if (currentLang == id) opt.selected = true;
-                    languageSelect.add(opt);
-                });
             })
             .finally(() => {
                 isAutoPopulating = false;
@@ -753,14 +763,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (specSelect && doctorSelect) {
         specSelect.addEventListener('change', loadFilteredDoctors);
-        ageGroupSelect.addEventListener('change', loadFilteredDoctors);
-        languageSelect.addEventListener('change', loadFilteredDoctors);
 
         doctorSelect.addEventListener('change', () => {
             loadDoctorAttributes(doctorSelect.value);
             resetSlots();
             if (dateInput.value) loadSlots();
             loadDoctorTreatments();
+            loadEditDays();
         });
 
         const statusSelect = document.querySelector('select[name="status"]');
@@ -769,19 +778,237 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    dateInput.addEventListener('change', () => {
-        if ((doctorSelect?.value || preDoctorId) && dateInput.value) {
-            loadSlots();
+    if (slotSelect && dateInput) {
+        slotSelect.addEventListener('change', function() {
+            const type = getCurrentType();
+            const appointmentTimeInput = document.getElementById('appointment_time');
+            const timeSlotHint = document.getElementById('time_slot_hint');
+            
+            if (type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}' && this.value) {
+                const [start, end] = this.value.split('|');
+                if (appointmentTimeInput) {
+                    appointmentTimeInput.min = start;
+                    appointmentTimeInput.max = end;
+                }
+
+                if (appointmentTimeInput && appointmentTimeInput.value) {
+                    if (appointmentTimeInput.value < start || appointmentTimeInput.value > end) {
+                        appointmentTimeInput.setCustomValidity(`{{ __('file.time_must_be_between') }} ${start} {{ __('file.and') }} ${end}`);
+                        if (timeSlotHint) {
+                            timeSlotHint.textContent = `{{ __('file.please_select_a_time_between') }} ${start} {{ __('file.and') }} ${end}`;
+                            timeSlotHint.classList.remove('hidden');
+                        }
+                    } else {
+                        appointmentTimeInput.setCustomValidity('');
+                        if (timeSlotHint) timeSlotHint.classList.add('hidden');
+                    }
+                } else {
+                    if (timeSlotHint) {
+                        timeSlotHint.textContent = `{{ __('file.please_select_a_time_between') }} ${start} {{ __('file.and') }} ${end}`;
+                        timeSlotHint.classList.remove('hidden');
+                    }
+                }
+            } else {
+                if (appointmentTimeInput) {
+                    appointmentTimeInput.removeAttribute('min');
+                    appointmentTimeInput.removeAttribute('max');
+                    appointmentTimeInput.setCustomValidity('');
+                }
+                if (timeSlotHint) {
+                    timeSlotHint.classList.add('hidden');
+                }
+            }
+        });
+
+        const appointmentTimeInput = document.getElementById('appointment_time');
+        if (appointmentTimeInput) {
+            appointmentTimeInput.addEventListener('input', function() {
+                const type = getCurrentType();
+                const timeSlotHint = document.getElementById('time_slot_hint');
+                if (type === '{{ \App\Models\Appointment::TYPE_SPECIFIC }}' && slotSelect.value) {
+                    const [start, end] = slotSelect.value.split('|');
+                    if (this.value && (this.value < start || this.value > end)) {
+                        this.setCustomValidity(`{{ __('file.time_must_be_between') }} ${start} {{ __('file.and') }} ${end}`);
+                        if (timeSlotHint) {
+                            timeSlotHint.textContent = `{{ __('file.please_select_a_time_between') }} ${start} {{ __('file.and') }} ${end}`;
+                            timeSlotHint.classList.remove('hidden');
+                        }
+                    } else {
+                        this.setCustomValidity('');
+                        if (timeSlotHint && this.value) timeSlotHint.classList.add('hidden');
+                    }
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
         }
-    });
+    }
+
+    if (dateInput) {
+        dateInput.addEventListener('change', () => {
+            if ((doctorSelect?.value || preDoctorId) && dateInput.value) {
+                loadSlots();
+            }
+            checkRoomAvailability();
+        });
+    }
+
+    const appointmentTimeInput = document.getElementById('appointment_time');
+    if (appointmentTimeInput) {
+        appointmentTimeInput.addEventListener('change', function() {
+            checkRoomAvailability();
+            filterDurationBySlot();
+        });
+    }
+    
+    const durationSelect = document.getElementById('duration_minutes');
+    if (durationSelect) {
+        durationSelect.addEventListener('change', checkRoomAvailability);
+    }
+
+    // Remove duration options that would push past the slot end
+    function filterDurationBySlot() {
+        const dSel = document.getElementById('duration_minutes');
+        const slotSel = document.getElementById('slot_select');
+        const timeSel = document.getElementById('appointment_time');
+        if (!dSel || !slotSel || !timeSel || !slotSel.value || !timeSel.value) {
+            if (dSel && dSel._hiddenBank) {
+                dSel._hiddenBank.forEach(opt => dSel.add(opt));
+                dSel._hiddenBank = [];
+            }
+            return;
+        }
+        const [, slotEnd] = slotSel.value.split('|');
+        const [apptH, apptM] = timeSel.value.split(':').map(Number);
+        const [endH, endM] = slotEnd.split(':').map(Number);
+        const maxMinutes = (endH * 60 + endM) - (apptH * 60 + apptM);
+
+        if (!dSel._hiddenBank) dSel._hiddenBank = [];
+        dSel._hiddenBank.forEach(opt => dSel.add(opt));
+        dSel._hiddenBank = [];
+
+        Array.from(dSel.options).forEach(opt => {
+            if (!opt.value) return;
+            if (parseInt(opt.value) > maxMinutes) {
+                if (opt.selected) dSel.value = '';
+                dSel._hiddenBank.push(opt);
+                dSel.remove(opt.index);
+            }
+        });
+    }
+
+    function checkRoomAvailability() {
+        if (!dateInput || !appointmentTimeInput || !durationSelect) return;
+        
+        const date = dateInput.value;
+        const time = appointmentTimeInput.value;
+        const duration = durationSelect.value;
+        const roomSelect = document.getElementById('room_id');
+        const excludeId = '{{ $appointment->id }}';
+
+        if (!date || !time || !roomSelect) return;
+
+        fetch(`{{ route('appointments.check_room_availability') }}?date=${date}&time=${time}&duration=${duration}&exclude_id=${excludeId}`)
+            .then(r => r.json())
+            .then(data => {
+                const busyRooms = data.busy_rooms || [];
+
+                // Restore previously hidden options
+                if (!roomSelect._hiddenBank) roomSelect._hiddenBank = [];
+                roomSelect._hiddenBank.forEach(opt => roomSelect.add(opt));
+                roomSelect._hiddenBank = [];
+
+                // Remove busy options
+                Array.from(roomSelect.options).forEach(opt => {
+                    if (!opt.value) return;
+                    const roomId = parseInt(opt.value);
+                    if (busyRooms.includes(roomId)) {
+                        if (opt.selected) roomSelect.value = '';
+                        roomSelect._hiddenBank.push(opt);
+                        roomSelect.remove(opt.index);
+                    }
+                });
+            });
+    }
+
+    // Initial check
+    checkRoomAvailability();
 
     // Initial loads on page load
     updateVisibility();
+
+    function loadEditDays() {
+        const doctorId = doctorSelect.value || preDoctorId;
+        const container = document.getElementById('edit_available_days');
+        const containerWrapper = document.getElementById('edit_available_days_container');
+        const inputGroup = document.getElementById('edit_date_input_group');
+        const dateInputEl = document.getElementById('date_input');
+        const toggleBtn = document.getElementById('toggle_edit_date');
+
+        if (!doctorId || !container) return;
+
+        const url = '{{ route("doctors.available-days", ":doctor") }}'.replace(':doctor', doctorId);
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                container.innerHTML = '';
+                if (data.days && data.days.length > 0) {
+                    data.days.forEach(day => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors';
+                        
+                        // Check if this date is currently selected
+                        const isSelected = dateInputEl.value === day.date;
+                        if (isSelected) {
+                            btn.className += ' border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400';
+                        } else {
+                            btn.className += ' border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30';
+                        }
+                        
+                        btn.textContent = day.label;
+                        btn.onclick = () => {
+                            dateInputEl.value = day.date;
+                            dateInputEl.dispatchEvent(new Event('change'));
+                            
+                            // Highlight selected button
+                            container.querySelectorAll('button').forEach(b => {
+                                b.className = 'px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors';
+                            });
+                            btn.className = 'px-3 py-1.5 text-xs font-medium rounded-lg border border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors';
+                        };
+                        container.appendChild(btn);
+                    });
+                    containerWrapper.classList.remove('hidden');
+                    inputGroup.classList.add('hidden');
+                } else {
+                    containerWrapper.classList.add('hidden');
+                    inputGroup.classList.remove('hidden');
+                }
+            })
+            .catch(e => {
+                console.error('Error loading available days:', e);
+                containerWrapper.classList.add('hidden');
+                inputGroup.classList.remove('hidden');
+            });
+
+        if (toggleBtn) {
+            toggleBtn.onclick = () => {
+                inputGroup.classList.toggle('hidden');
+                if (!inputGroup.classList.contains('hidden')) {
+                    toggleBtn.textContent = '{{ __("file.use_available_days") ?? "Use available days" }}';
+                } else {
+                    toggleBtn.textContent = '{{ __("file.pick_another_date") ?? "Pick another date" }}';
+                }
+            };
+        }
+    }
 
     if (preDoctorId) {
         loadDoctorAttributes(preDoctorId);
         loadSlots();
         loadDoctorTreatments();
+        loadEditDays();
     }
 });
 </script>

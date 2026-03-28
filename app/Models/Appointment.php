@@ -57,18 +57,21 @@ class Appointment extends Model
         'age_group_id',
         'preferred_language_id',
         'preferred_time',
+        'duration_minutes',
     ];
 
     protected $casts = [
         'scheduled_start' => 'datetime',
         'scheduled_end' => 'datetime',
         'cancelled_at' => 'datetime',
+        'completed_at' => 'datetime',
         'status' => 'string',
         'appointment_type' => 'string',
         'appointment_id' => 'integer', // Assuming integer based on typical ID fields
         'type' => 'string',  // e.g. 'POS', 'Appointment', 'Insurance', 'Manual'
         'age_group_id' => 'integer',
         'preferred_language_id' => 'integer',
+        'duration_minutes' => 'integer',
     ];
 
     // Relationships
@@ -207,4 +210,29 @@ class Appointment extends Model
         return $this->belongsTo(OptionList::class, 'preferred_language_id');
     }
 
+    /**
+     * Generates a robust sequential appointment number for the current year.
+     * Format: VN-YY-000001
+     */
+    public static function generateNextAppointmentNumber(): string
+    {
+        $yearSuffix = now()->format('y');
+        $prefix = "VN-{$yearSuffix}-";
+
+        // Find the last generated number for this year, including soft-deleted ones.
+        // Since we use zero-padding (%06d), alphabetical sort works correctly for sequences.
+        $lastAppointment = self::withTrashed()
+            ->where('appointment_number', 'like', $prefix . '%')
+            ->whereNotNull('appointment_number')
+            ->orderBy('appointment_number', 'desc')
+            ->first();
+
+        $nextSeq = 1;
+        if ($lastAppointment) {
+            $lastNumber = (int) str_replace($prefix, '', $lastAppointment->appointment_number);
+            $nextSeq = $lastNumber + 1;
+        }
+
+        return sprintf("%s%06d", $prefix, $nextSeq);
+    }
 }

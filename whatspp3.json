@@ -16,7 +16,7 @@
             "VISIT_TYPE"
         ],
         "DOCTOR_SELECT": [
-            "VISIT_TYPE"
+            "AGE_GROUP"
         ],
         "VISIT_TYPE": [
             "PATIENT_NEW",
@@ -430,11 +430,7 @@
                                 "type": "Footer",
                                 "label": "Continue",
                                 "on-click-action": {
-                                    "name": "navigate",
-                                    "next": {
-                                        "type": "screen",
-                                        "name": "VISIT_TYPE"
-                                    },
+                                    "name": "data_exchange",
                                     "payload": {
                                         "appointment_type": "${data.appointment_type}",
                                         "doctor": "${form.doctor}",
@@ -929,6 +925,10 @@
                     "type": "string",
                     "__example__": ""
                 },
+                "patient_details": {
+                    "type": "string",
+                    "__example__": ""
+                },
                 "visit_type": {
                     "type": "string",
                     "__example__": "first"
@@ -965,6 +965,10 @@
                         "type": "Form",
                         "name": "preferred_time_form",
                         "children": [
+                            {
+                                "type": "TextBody",
+                                "text": "${data.patient_details}"
+                            },
                             {
                                 "type": "TextBody",
                                 "text": "When do you prefer to meet the doctor?"

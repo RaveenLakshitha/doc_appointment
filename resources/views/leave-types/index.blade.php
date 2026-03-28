@@ -433,7 +433,22 @@
                         }
                     ],
                     layout: {
-                        topStart: { buttons: ['pageLength', { extend: 'collection', text: '{{ __('file.Export') }}', buttons: ['copy', 'excel', 'csv', 'pdf', 'print'] }] },
+                        topStart: {
+                            buttons: [
+                                'pageLength',
+                                {
+                                    extend: 'collection',
+                                    text: '{{ __('file.Export') }}',
+                                    buttons: [
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'LeaveTypes_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'LeaveTypes_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'LeaveTypes_{{ date("Y-m-d") }}', title: 'Leave Types List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
+                                    ]
+                                }
+                            ]
+                        },
                         topEnd: 'search',
                         bottomStart: 'info',
                         bottomEnd: 'paging'
@@ -476,6 +491,10 @@
                         bulkIdsInput.value = '';
                     }
                 }
+
+                selectAll.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
 
                 selectAll.addEventListener('change', function () {
                     const isChecked = this.checked;
