@@ -1,0 +1,408 @@
+@extends('layouts.app')
+
+@section('title', __('file.payrolls') ?? 'Conciliations')
+
+@section('content')
+    <div class="px-4 sm:px-6 lg:px-4 pb-4 sm:py-12 pt-20">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
+                    {{ __('file.payrolls') ?? 'Conciliations' }}
+                </h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('file.manage_payroll_desc') }}
+                </p>
+            </div>
+
+            <div class="flex flex-row-reverse sm:flex-row gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="relative">
+                    <button type="button" id="filter-toggle"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition border border-gray-300 dark:border-gray-600 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        {{ __('file.filters') }}
+                        <span id="filter-count"
+                            class="hidden ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"></span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <a href="{{ route('payrolls.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="hidden sm:inline">{{ __('file.Create Payroll') }}</span>
+                    <span class="sm:hidden">{{ __('file.add') }}</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Drawer -->
+        <div id="filter-backdrop"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 opacity-0"></div>
+
+        <div id="filter-drawer"
+            class="fixed z-50 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out
+                                    bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl translate-y-full
+                                    md:top-0 md:right-0 md:bottom-auto md:left-auto md:h-full md:w-96 md:max-h-none md:rounded-none md:rounded-l-lg md:translate-y-0 md:translate-x-full">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('file.filters') }}</h3>
+                <button type="button" id="close-drawer"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto max-h-[calc(85vh-140px)] md:max-h-[calc(100vh-140px)]">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.recipient_type') }}</label>
+                        <select id="filter-recipient-type"
+                            class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                            <option value="">{{ __('file.all_types') }}</option>
+                            <option value="doctor">{{ __('file.therapist') }}</option>
+                            <option value="employee">{{ __('file.employee') }}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.payment_method') }}</label>
+                        <select id="filter-payment-method"
+                            class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                            <option value="">{{ __('file.all_methods') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.start_date') }}</label>
+                            <input type="date" id="filter-start-date"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('file.end_date') }}</label>
+                            <input type="date" id="filter-end-date"
+                                class="w-full px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white transition-shadow">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="absolute bottom-0 left-0 right-0 flex gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                <button type="button" id="clear-filters"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    {{ __('file.clear') }}
+                </button>
+                <button type="button" id="apply-filters"
+                    class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
+                    {{ __('file.apply') }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Bulk Delete Form -->
+        <div id="bulk-delete-form" class="hidden mb-6">
+            <form method="POST" action="{{ route('payrolls.bulkDelete') }}" id="bulk-delete-form-el"
+                class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                @csrf
+                <div id="bulk-ids-container"></div>
+                <span class="text-sm font-medium text-red-800 dark:text-red-300">
+                    <span id="selected-count">0</span> {{ __('file.records_selected') }}
+                </span>
+                <button type="submit"
+                    class="w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition">
+                    {{ __('file.delete_selected') }}
+                </button>
+            </form>
+        </div>
+
+        <!-- Table Container -->
+        <div
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="docapp-table" class="w-full divide-y divide-gray-200 dark:divide-gray-700 display nowrap"
+                    style="width:100%">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-center no-export" style="width: 80px; min-width: 80px;">
+                                <input type="checkbox" id="select-all"
+                                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">
+                                {{ __('file.date') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">
+                                {{ __('file.recipient') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                {{ __('file.type') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider all">
+                                {{ __('file.amount') }}</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop">
+                                {{ __('file.method') }}</th>
+                            <th
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider desktop no-export">
+                                {{ __('file.action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterToggle = document.getElementById('filter-toggle');
+                const filterDrawer = document.getElementById('filter-drawer');
+                const filterBackdrop = document.getElementById('filter-backdrop');
+                const closeDrawer = document.getElementById('close-drawer');
+                const filterCount = document.getElementById('filter-count');
+
+                const filterRecipientType = document.getElementById('filter-recipient-type');
+                const filterPaymentMethod = document.getElementById('filter-payment-method');
+                const filterStartDate = document.getElementById('filter-start-date');
+                const filterEndDate = document.getElementById('filter-end-date');
+
+                // Drawer logic
+                function openDrawer() {
+                    filterBackdrop.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    setTimeout(() => {
+                        filterBackdrop.classList.add('opacity-100');
+                        filterBackdrop.classList.remove('opacity-0');
+                        if (window.innerWidth >= 768) {
+                            filterDrawer.classList.remove('md:translate-x-full');
+                        } else {
+                            filterDrawer.classList.remove('translate-y-full');
+                        }
+                    }, 10);
+                }
+
+                function closeDrawerFunc() {
+                    filterBackdrop.classList.remove('opacity-100');
+                    filterBackdrop.classList.add('opacity-0');
+                    if (window.innerWidth >= 768) {
+                        filterDrawer.classList.add('md:translate-x-full');
+                    } else {
+                        filterDrawer.classList.add('translate-y-full');
+                    }
+                    setTimeout(() => {
+                        filterBackdrop.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    }, 300);
+                }
+
+                filterToggle.addEventListener('click', (e) => { e.stopPropagation(); openDrawer(); });
+                closeDrawer.addEventListener('click', closeDrawerFunc);
+                filterBackdrop.addEventListener('click', closeDrawerFunc);
+
+                function updateFilterCount() {
+                    const count = [filterRecipientType.value, filterPaymentMethod.value, filterStartDate.value, filterEndDate.value]
+                        .filter(Boolean).length;
+                    if (count > 0) {
+                        filterCount.textContent = count;
+                        filterCount.classList.remove('hidden');
+                    } else {
+                        filterCount.classList.add('hidden');
+                    }
+                }
+
+                // Load filter options
+                $.get('{{ route("payrolls.filters") }}', { column: 'payment_method' }, data => {
+                    $.each(data, (id, name) => $('#filter-payment-method').append(`<option value="${id}">${name}</option>`));
+                });
+
+                const table = $('#docapp-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    responsive: false,
+                    ajax: {
+                        url: '{{ route("payrolls.datatable") }}',
+                        data: function (d) {
+                            d.recipient_type = filterRecipientType.value;
+                            d.payment_method = filterPaymentMethod.value;
+                            d.start_date = filterStartDate.value;
+                            d.end_date = filterEndDate.value;
+                        }
+                    },
+                    order: [[1, 'desc']],
+                    language: {
+                        search: "",
+                        searchPlaceholder: "{{ __('file.search_payrolls') }}",
+                        lengthMenu: "{{ __('file.show_entries') }}",
+                        info: "{{ __('file.showing_entries_payrolls') }}",
+                        infoEmpty: "{{ __('file.no_payrolls_found') }}",
+                        infoFiltered: "({{ __('file.filtered from _MAX_ total entries') }})",
+                        processing: "{{ __('file.processing') }}",
+                        entries: {
+                            _: '{{ strtolower(__('file.payrolls')) }}',
+                            1: '{{ strtolower(__('file.payroll')) }}'
+                        }
+                    },
+                    columnDefs: [
+                        { targets: 0, orderable: false, responsivePriority: 1 },
+                        { targets: [1, 2, 4], responsivePriority: 1 },
+                        { targets: -1, orderable: false, searchable: false, responsivePriority: 1 },
+                        { targets: 'no-export', exportable: false }
+                    ],
+                    columns: [
+                        {
+                            data: 'id',
+                            render: data => `<input type="checkbox" name="ids[]" value="${data}" class="row-checkbox w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">`,
+                            className: 'text-center',
+                            orderable: false
+                        },
+                        { data: 'date', render: data => `<div class="text-sm text-gray-900 dark:text-white font-medium">${data}</div>` },
+                        { data: 'recipient_name', render: data => `<div class="font-medium text-gray-900 dark:text-white">${data}</div>` },
+                        {
+                            data: 'payable_type',
+                            render: data => data === 'App\\Models\\Doctor'
+                                ? '<span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">{{ __("file.therapist") }}</span>'
+                                : '<span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">{{ __("file.employee") }}</span>'
+                        },
+                        {
+                            data: 'amount',
+                            render: data => `<div class="font-bold text-gray-900 dark:text-white">{{ \App\Models\Setting::getCurrencySymbol() }}${parseFloat(data).toFixed(2)}</div>`
+                        },
+                        { 
+                            data: 'payment_method', 
+                            render: data => {
+                                const methods = {
+                                    'Cash': '{{ __('file.cash') }}',
+                                    'Check': '{{ __('file.check') }}',
+                                    'Transfer': '{{ __('file.transfer') }}',
+                                    'Card': '{{ __('file.card') }}'
+                                };
+                                const label = methods[data] || data;
+                                return `<span class="uppercase text-xs font-medium text-gray-500 dark:text-gray-400">${label}</span>`;
+                            }
+                        },
+                        {
+                            data: null,
+                            className: 'text-right whitespace-nowrap',
+                            render: (data, type, row) => `
+                                        <div class="flex items-center justify-end gap-1">
+                                            <a href="${row.actions.show_url}" class="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="{{ __('file.view') }}">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            </a>
+                                            <a href="${row.actions.edit_url}" class="p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="{{ __('file.edit') }}">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </a>
+                                            <form method="POST" action="${row.actions.delete_url}" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" onclick="return confirm(\'{{ __("file.are_you_sure") }}\')" class="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors" title="{{ __('file.delete') }}">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    `
+                        }
+                    ],
+                    layout: {
+                        topStart: {
+                            buttons: [
+                                { extend: 'pageLength', className: 'btn btn-sm btn-light' },
+                                {
+                                    extend: 'collection', text: "{{ __('file.Export') }}", className: 'btn btn-sm btn-dark',
+                                    buttons: [
+                                        { extend: 'copy', text: "{{ __('file.copy') }}", exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'excel', text: 'Excel', filename: 'Conciliations_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'csv', text: 'CSV', filename: 'Conciliations_{{ date("Y-m-d") }}', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'pdf', text: 'PDF', filename: 'Conciliations_{{ date("Y-m-d") }}', title: 'Conciliation List', exportOptions: { columns: ':not(.no-export)' } },
+                                        { extend: 'print', text: "{{ __('file.print') }}", exportOptions: { columns: ':not(.no-export)' } }
+                                    ]
+                                }
+                            ]
+                        },
+                        topEnd: 'search',
+                        bottomStart: 'info',
+                        bottomEnd: 'paging'
+                    },
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    language: {
+                        buttons: {
+                            pageLength: {
+                                _: "{{ __('file.show_d_rows') }}",
+                                '-1': "{{ __('file.show_all_rows') }}"
+                            }
+                        },
+                        search: "",
+                        searchPlaceholder: "{{ __('file.search_payrolls') }}",
+                        processing: "{{ __('file.processing') }}..."
+                    },
+                    autoWidth: false
+                });
+
+                document.getElementById('apply-filters').addEventListener('click', () => { table.draw(); updateFilterCount(); closeDrawerFunc(); });
+                document.getElementById('clear-filters').addEventListener('click', () => {
+                    filterRecipientType.value = ''; filterPaymentMethod.value = '';
+                    filterStartDate.value = ''; filterEndDate.value = '';
+                    table.draw(); updateFilterCount();
+                });
+
+                // Bulk delete
+                $('#select-all').on('click change', function () {
+                    $('.row-checkbox').prop('checked', this.checked);
+                    updateBulkDelete();
+                });
+
+                $(document).on('change', '.row-checkbox', updateBulkDelete);
+
+                function updateBulkDelete() {
+                    const checked = $('.row-checkbox:checked');
+                    const count = checked.length;
+                    $('#bulk-delete-form').toggleClass('hidden', count === 0);
+                    $('#selected-count').text(count);
+
+                    const container = document.getElementById('bulk-ids-container');
+                    container.innerHTML = '';
+                    checked.each(function () {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = this.value;
+                        container.appendChild(input);
+                    });
+                }
+
+                $('#bulk-delete-form-el').on('submit', function (e) {
+                    e.preventDefault();
+                    if (confirm('{{ __("file.are_you_sure_delete_selected") }}')) {
+                        $.ajax({
+                            url: this.action,
+                            method: 'POST',
+                            data: $(this).serialize(),
+                            success: (response) => {
+                                table.draw(false);
+                                $('.row-checkbox').prop('checked', false);
+                                $('#select-all').prop('checked', false);
+                                updateBulkDelete();
+                                if (typeof showNotification === 'function') showNotification('Success', response.message, 'success');
+                            }
+                        });
+                    }
+                });
+
+                updateFilterCount();
+            });
+        </script>
+    @endpush
+@endsection
