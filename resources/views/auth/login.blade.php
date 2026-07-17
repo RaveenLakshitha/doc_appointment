@@ -23,7 +23,7 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-6 p-4 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-sm" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+    <form method="POST" action="{{ route('login') }}" class="space-y-6" onsubmit="Array.from(this.querySelectorAll('button')).forEach(b => b.classList.add('opacity-50', 'pointer-events-none'))">
         @csrf
 
         <!-- Email Address -->
@@ -125,6 +125,17 @@
             </button>
         </div>
         
+        @if(config('app.demo_mode'))
+        <div class="mt-8 border-t border-slate-200 pt-6">
+            <p class="text-sm text-center text-slate-500 font-semibold mb-4">{{ __('Demo Accounts') }}</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" onclick="if(this.dataset.clicked) return; this.dataset.clicked = true; this.classList.add('opacity-50', 'pointer-events-none'); document.getElementById('email').value='admin@demo.com'; document.getElementById('password').value='password'; this.closest('form').submit();" class="text-sm py-2.5 px-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow">Admin</button>
+                <button type="button" onclick="if(this.dataset.clicked) return; this.dataset.clicked = true; this.classList.add('opacity-50', 'pointer-events-none'); document.getElementById('email').value='doctor@demo.com'; document.getElementById('password').value='password'; this.closest('form').submit();" class="text-sm py-2.5 px-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow">Doctor</button>
+                <button type="button" onclick="if(this.dataset.clicked) return; this.dataset.clicked = true; this.classList.add('opacity-50', 'pointer-events-none'); document.getElementById('email').value='receptionist@demo.com'; document.getElementById('password').value='password'; this.closest('form').submit();" class="text-sm py-2.5 px-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow">Receptionist</button>
+                <button type="button" onclick="if(this.dataset.clicked) return; this.dataset.clicked = true; this.classList.add('opacity-50', 'pointer-events-none'); document.getElementById('email').value='hr@demo.com'; document.getElementById('password').value='password'; this.closest('form').submit();" class="text-sm py-2.5 px-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow">HR</button>
+            </div>
+        </div>
+        @endif
     </form>
     <!-- Auto-refresh CSRF token to prevent 419 errors on stale tabs -->
     <script>

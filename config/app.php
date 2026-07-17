@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Demo Mode
+    |--------------------------------------------------------------------------
+    |
+    | When demo mode is enabled, destructive actions will be blocked by
+    | DemoModeMiddleware to prevent users from altering core data.
+    |
+    */
+
+    'demo_mode' => env('APP_DEMO_MODE', false),
+
 ];

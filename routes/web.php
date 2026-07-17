@@ -57,7 +57,9 @@ use App\Http\Controllers\PurchaseController;
 // Public / Guest routes
 // ─────────────────────────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])
+        ->middleware('cache.headers:private;max_age=0;must_revalidate;no_store')
+        ->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 });

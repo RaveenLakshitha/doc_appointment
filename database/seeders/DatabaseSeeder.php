@@ -45,6 +45,9 @@ class DatabaseSeeder extends Seeder
       //PrescriptionSeeder::class,
       // AppointmentSeeder::class,
       // AppointmentRequestSeeder::class,
+
+      // Demo users for Demo Mode
+      DemoUserSeeder::class,
     ]);
 
     // User::factory()->create([
