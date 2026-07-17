@@ -22,3 +22,12 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Antigravity & Vibe Coding ignores
+*.zip
+*.rar
+*.tar.gz
+.gemini/
+tmp_*.php
+test*.php
+test.php
