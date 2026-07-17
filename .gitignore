@@ -29,5 +29,12 @@ Thumbs.db
 *.tar.gz
 .gemini/
 tmp_*.php
+tmp_*.txt
 test*.php
 test.php
+migrations_list.txt
+
+# File Upload Directories
+/public/patient_documents/
+/public/temp_attachments/
+/public/uploads/
